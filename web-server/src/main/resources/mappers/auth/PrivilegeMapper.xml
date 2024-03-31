@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nxin.framework.mapper.auth.PrivilegeMapper">
+
+    <select id="selectByUserId" resultType="com.nxin.framework.entity.auth.Privilege">
+        SELECT auth_privilege.id,
+        auth_privilege.name,
+        auth_privilege.category,
+        auth_privilege.create_time,
+        auth_privilege.status,
+        auth_privilege.creator,
+        auth_privilege.modifier,
+        auth_privilege.modify_time,
+        auth_privilege.version
+        FROM auth_privilege
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        where auth_privilege.status='1' and auth_resource.status='1' and auth_user_privilege.user_id=#{userId}
+    </select>
+
+    <select id="selectByPrivilegeIdAndUserId" resultType="com.nxin.framework.entity.auth.Privilege">
+        SELECT auth_privilege.id,
+        auth_privilege.name,
+        auth_privilege.category,
+        auth_privilege.create_time,
+        auth_privilege.status,
+        auth_privilege.creator,
+        auth_privilege.modifier,
+        auth_privilege.modify_time,
+        auth_privilege.version
+        FROM auth_privilege
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        where auth_privilege.status='1' and auth_resource.status='1' and auth_user_privilege.user_id=#{userId} and auth_privilege.id=#{privilegeId}
+    </select>
+
+    <select id="selectByUserAndResource" resultType="com.nxin.framework.entity.auth.Privilege">
+        SELECT auth_privilege.id,
+        auth_privilege.name,
+        auth_privilege.category,
+        auth_privilege.create_time,
+        auth_privilege.status,
+        auth_privilege.creator,
+        auth_privilege.modifier,
+        auth_privilege.modify_time,
+        auth_privilege.version
+        FROM auth_privilege
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        inner join auth_user on auth_user.id=auth_user_privilege.user_id
+        where auth_privilege.status='1' and auth_resource.status='1' and auth_user.status='1' and auth_user.id=#{userId}
+        and auth_resource.category=#{resourceCategory}
+        and auth_resource.level=#{resourceLevel}
+        <if test="resourceCode != null and resourceCode != ''">
+            and auth_resource.code=#{resourceCode}
+        </if>
+        <if test="rw != null and rw != ''">
+            and auth_privilege.category=#{rw}
+        </if>
+    </select>
+
+    <select id="findByRwAndResource" resultType="com.nxin.framework.entity.auth.Privilege">
+        SELECT auth_privilege.id,
+        auth_privilege.name,
+        auth_privilege.category,
+        auth_privilege.create_time,
+        auth_privilege.status,
+        auth_privilege.creator,
+        auth_privilege.modifier,
+        auth_privilege.modify_time,
+        auth_privilege.version
+        FROM auth_privilege
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        where auth_privilege.status='1' and auth_resource.status='1'
+        and auth_resource.code=#{resourceCode}
+        and auth_resource.category=#{resourceCategory}
+        and auth_resource.level=#{resourceLevel}
+        <if test="rw != null and rw != ''">
+            and auth_privilege.category=#{rw}
+        </if>
+    </select>
+
+    <select id="selectByUserAndName" resultType="com.nxin.framework.entity.auth.Privilege">
+        SELECT auth_privilege.id,
+        auth_privilege.name,
+        auth_privilege.category,
+        auth_privilege.create_time,
+        auth_privilege.status,
+        auth_privilege.creator,
+        auth_privilege.modifier,
+        auth_privilege.modify_time,
+        auth_privilege.version
+        FROM auth_privilege
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        inner join auth_user on auth_user.id=auth_user_privilege.user_id
+        where auth_privilege.status='1' and auth_resource.status='1'
+        and auth_user.id=#{userId} and auth_privilege.name like concat(#{userId}, '%') and auth_resource.level<![CDATA[<>]]>'1'
+    </select>
+
+    <select id="selectByResourceIds" resultType="com.nxin.framework.entity.auth.Privilege">
+        SELECT auth_privilege.id,
+        auth_privilege.name,
+        auth_privilege.category,
+        auth_privilege.create_time,
+        auth_privilege.status,
+        auth_privilege.creator,
+        auth_privilege.modifier,
+        auth_privilege.modify_time,
+        auth_privilege.version
+        FROM auth_privilege
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        where auth_privilege.status='1' and auth_resource.status='1' and auth_resource.code in
+        <foreach collection="resources" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <insert id="grantPrivileges">
+        insert into auth_user_privilege (user_id, privilege_id) values
+        <foreach collection="privileges" item="privilegeId" separator=",">
+            (#{userId}, #{privilegeId})
+        </foreach>
+    </insert>
+
+    <delete id="deletePrivilegesByUserId">
+        delete from auth_user_privilege where user_id=#{userId}
+    </delete>
+
+    <delete id="deletePrivilegesByResourceAndUsers">
+        delete from auth_user_privilege where privilege_id in (
+            select auth_privilege.id from auth_privilege
+            inner join auth_resource on auth_privilege.resource_id=auth_resource.id
+            where auth_resource.code=#{resourceCode} and auth_resource.category=#{resourceCategory}
+            and auth_resource.level=#{resourceLevel} and auth_resource.status='1'
+        )
+        <if test="users != null and users.size() > 0">
+            and user_id in
+            <foreach collection="users" item="userId" open="(" close=")" separator=",">
+                #{userId}
+            </foreach>
+        </if>
+    </delete>
+
+    <delete id="deleteGrantedPrivileges">
+        delete from auth_user_privilege where user_id=#{userId} and privilege_id in
+        <foreach collection="privileges" item="privilegeId" open="(" close=")" separator=",">
+            #{privilegeId}
+        </foreach>
+    </delete>
+</mapper>

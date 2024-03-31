@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nxin.framework.mapper.auth.UserMapper">
+
+    <select id="findByResource" resultType="com.nxin.framework.entity.auth.User">
+        SELECT auth_user.id,
+        auth_user.name,
+        auth_user.gender,
+        auth_user.password,
+        auth_user.email,
+        auth_user.mobile,
+        auth_user.wechat,
+        auth_user.birth_date,
+        auth_user.status,
+        auth_user.creator,
+        auth_user.create_time,
+        auth_user.modifier,
+        auth_user.modify_time,
+        auth_user.version
+        FROM auth_user
+        inner join auth_user_privilege on auth_user_privilege.user_id=auth_user.id
+        inner join auth_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        inner join auth_resource on auth_resource.id=auth_privilege.resource_id
+        where auth_user.status='1' and auth_privilege.status='1' and auth_resource.status='1' and auth_resource.code=#{resourceCode}
+        and auth_resource.category=#{resourceCategory} and auth_resource.level=#{resourceLevel}
+        <if test="rw != null and rw != ''">
+            and auth_privilege.category=#{rw}
+        </if>
+    </select>
+
+    <select id="findByPrivilege" resultType="com.nxin.framework.entity.auth.User">
+        SELECT auth_user.id,
+        auth_user.name,
+        auth_user.gender,
+        auth_user.password,
+        auth_user.email,
+        auth_user.mobile,
+        auth_user.wechat,
+        auth_user.birth_date,
+        auth_user.status,
+        auth_user.creator,
+        auth_user.create_time,
+        auth_user.modifier,
+        auth_user.modify_time,
+        auth_user.version
+        FROM auth_user
+        inner join auth_user_privilege on auth_user_privilege.user_id=auth_user.id
+        inner join auth_privilege on auth_privilege.id=auth_user_privilege.privilege_id
+        where auth_user.status='1' and auth_privilege.status='1' and auth_privilege.id=#{privilegeId}
+    </select>
+</mapper>

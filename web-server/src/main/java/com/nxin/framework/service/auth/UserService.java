@@ -1,0 +1,96 @@
+package com.nxin.framework.service.auth;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nxin.framework.entity.auth.User;
+import com.nxin.framework.enums.Constant;
+import com.nxin.framework.mapper.auth.UserMapper;
+import com.nxin.framework.utils.LoginUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+
+@Slf4j
+@Service
+public class UserService extends ServiceImpl<UserMapper, User> {
+
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private PrivilegeService privilegeService;
+    @Autowired
+    private ResourceService resourceService;
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Value("${init.password}")
+    private String password;
+
+    public User one(Long id) {
+        return userMapper.selectById(id);
+    }
+
+    public User one(String email) {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
+        queryWrapper.eq(User.EMAIL_COLUMN, email);
+        return userMapper.selectOne(queryWrapper);
+    }
+
+    public List<User> findByResource(String resourceCode, String resourceCategory, String resourceLevel, String rw) {
+        List<User> users = userMapper.findByResource(resourceCode, resourceCategory, resourceLevel, rw);
+        User user = one(LoginUtils.getUsername());
+        if (resourceService.isRoot(user.getId())) {
+            users.add(user);
+        }
+        return users;
+    }
+
+    public List<User> findByPrivilege(Long privilegeId) {
+        return userMapper.findByPrivilege(privilegeId);
+    }
+
+    public IPage<User> search(String name, int pageNo, int pageSize) {
+        Page<User> page = new Page<>(pageNo, pageSize);
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
+        if (StringUtils.hasLength(name)) {
+            queryWrapper.likeRight(User.NAME_COLUMN, name);
+        }
+        return userMapper.selectPage(page, queryWrapper);
+    }
+
+    public User lock(User user) {
+        user.setStatus(Constant.LOCKED);
+        save(user);
+        return user;
+    }
+
+    @Transactional
+    public User close(User user) {
+        privilegeService.deletePrivilegesByUserId(user.getId());
+        save(user);
+        return user;
+    }
+
+    public boolean save(User user) {
+        if (user.getId() != null) {
+            user.setModifier(LoginUtils.getUsername());
+            return userMapper.updateById(user) > 0;
+        }
+        user.setCreator(LoginUtils.getUsername());
+        user.setModifier(LoginUtils.getUsername());
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+        user.setStatus(Constant.ACTIVE);
+        user.setVersion(1);
+        return userMapper.insert(user) > 0;
+    }
+}
