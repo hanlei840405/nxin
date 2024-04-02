@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nxin.framework.mapper.kettle.ShellPublishMapper">
+
+    <select id="selectLatestByShellId" resultType="com.nxin.framework.entity.kettle.ShellPublish">
+        SELECT kettle_shell_publish.id,
+        kettle_shell_publish.project_id,
+        kettle_shell_publish.business_id,
+        kettle_shell_publish.create_time,
+        kettle_shell_publish.creator,
+        kettle_shell_publish.deploy_time,
+        kettle_shell_publish.description,
+        kettle_shell_publish.prod,
+        kettle_shell_publish.name,
+        kettle_shell_publish.reference,
+        kettle_shell_publish.streaming,
+        kettle_shell_publish.task_id,
+        kettle_shell_publish.shell_id,
+        kettle_shell_publish.md5_graph,
+        kettle_shell_publish.md5_xml,
+        kettle_shell_publish.modifier,
+        kettle_shell_publish.modify_time,
+        kettle_shell_publish.status,
+        kettle_shell_publish.version
+        FROM kettle_shell_publish
+        WHERE kettle_shell_publish.shell_id=#{shellId}
+        order by id desc
+        limit 1
+    </select>
+
+    <select id="selectLatestByProdAndShellId" resultType="com.nxin.framework.entity.kettle.ShellPublish">
+        SELECT kettle_shell_publish.id,
+        kettle_shell_publish.project_id,
+        kettle_shell_publish.business_id,
+        kettle_shell_publish.create_time,
+        kettle_shell_publish.creator,
+        kettle_shell_publish.deploy_time,
+        kettle_shell_publish.description,
+        kettle_shell_publish.prod,
+        kettle_shell_publish.name,
+        kettle_shell_publish.reference,
+        kettle_shell_publish.streaming,
+        kettle_shell_publish.task_id,
+        kettle_shell_publish.shell_id,
+        kettle_shell_publish.md5_graph,
+        kettle_shell_publish.md5_xml,
+        kettle_shell_publish.modifier,
+        kettle_shell_publish.modify_time,
+        kettle_shell_publish.status,
+        kettle_shell_publish.version
+        FROM kettle_shell_publish
+        WHERE kettle_shell_publish.shell_id=#{shellId} and kettle_shell_publish.prod='1'
+        order by id desc
+        limit 1
+    </select>
+</mapper>

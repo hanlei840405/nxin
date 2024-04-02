@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nxin.framework.mapper.basic.ProjectMapper">
+    <resultMap id="extendProjectMap" type="com.nxin.framework.entity.basic.Project">
+        <result property="id" column="id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="description" column="description" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="creator" column="creator" jdbcType="VARCHAR"/>
+        <result property="modifier" column="modifier" jdbcType="VARCHAR"/>
+        <result property="modifyTime" column="modify_time" jdbcType="TIMESTAMP"/>
+        <result property="version" column="version" jdbcType="INTEGER"/>
+        <association property="manager" javaType="com.nxin.framework.entity.auth.User">
+            <result property="name" column="manager_name" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+    <select id="selectByMemberIdAndName" resultMap="extendProjectMap">
+        SELECT basic_project.id,
+        basic_project.name,
+        basic_project.user_id,
+        basic_project.description,
+        basic_project.status,
+        basic_project.create_time,
+        basic_project.creator,
+        basic_project.modifier,
+        basic_project.modify_time,
+        basic_project.version,
+        auth_user.name as manager_name
+        FROM basic_project
+        inner join auth_user on basic_project.user_id=auth_user.id
+        where
+        basic_project.status='1' and auth_user.status='1'
+        and auth_user.id=#{userId}
+        <if test="name != null and name != ''">
+            and basic_project like concat(#{name}, '%')
+        </if>
+        union
+        SELECT basic_project.id,
+        basic_project.name,
+        basic_project.user_id,
+        basic_project.description,
+        basic_project.status,
+        basic_project.create_time,
+        basic_project.creator,
+        basic_project.modifier,
+        basic_project.modify_time,
+        basic_project.version,
+        auth_user.name as manager_name
+        FROM basic_project
+        inner join auth_user on basic_project.user_id=auth_user.id
+        left join basic_project_user on basic_project.id=basic_project_user.project_id and basic_project_user.user_id=#{userId}
+        where
+        basic_project.status='1' and auth_user.status='1'
+        <if test="name != null and name != ''">
+            and basic_project like concat(#{name}, '%')
+        </if>
+    </select>
+
+    <insert id="insertMember">
+        insert into basic_project_user (project_id, user_id) values
+        <foreach collection="users" item="userId" separator=",">
+            (#{projectId}, #{userId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteMember">
+        delete from basic_project_user where project_id=#{projectId} and user_id in
+        <foreach collection="users" item="userId" open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+    </delete>
+</mapper>

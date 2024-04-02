@@ -1,0 +1,73 @@
+package com.nxin.framework.enums;
+
+import java.util.Arrays;
+import java.util.List;
+
+public interface Constant {
+    String DOT = ".";
+    String ACTIVE = "1";
+    String INACTIVE = "0";
+    String LOCKED = "2";
+    String JOB = "1";
+    String TRANSFORM = "2";
+    String TRANS_SUFFIX = "ktr";
+    String JOB_SUFFIX = "kjb";
+    String GRAPH_SUFFIX = "graph";
+    String ENCODING_UTF_8 = "UTF-8";
+    String PASSWORD_ENCRYPTED_PREFIX = "Encrypted ";
+    String AUTHORITY_PROBATION = "PROBATION";
+    String ETL_START_NAME = "Start";
+    String ETL_PARALLEL = "parallel";
+    String NUMBER = "Number";
+    String BOOLEAN = "Boolean";
+    String SHELL_MODE_DESIGN = "DESIGN";
+    String SHELL_MODE_SAVE = "SAVE";
+    String SHELL_MODE_RUN = "RUN";
+    String STREAMING = "1";
+    String BATCH = "0";
+    String ENV_PRODUCTION = "production";
+    String ENV_PUBLISH = "publish";
+    String ENV_DEV = "dev";
+    String[] ENV_BUCKET = new String[]{"production", "publish", "dev"};
+    String VAR_ATTACHMENT_DIR = "attachmentDir"; // 步骤中有使用上传的文件的存放位置
+    String VAR_REFERENCES = Constant.VAR_REFERENCES; // 记录脚本依赖的其他脚本的ID
+    String RESOURCE_CATEGORY_ROOT = "ROOT";
+    String RESOURCE_CATEGORY_HOME = "HOME";
+    String RESOURCE_CATEGORY_BASIC = "BASIC";
+    String RESOURCE_CATEGORY_ETL = "ETL";
+    String RESOURCE_CATEGORY_JOB = "JOB";
+    String RESOURCE_CATEGORY_REPORT = "REPORT";
+    String RESOURCE_CATEGORY_SYSTEM = "SYSTEM";
+    String RESOURCE_CATEGORY_PROJECT = "PROJECT";
+    String RESOURCE_CATEGORY_SYSTEM_MEMBER = "USER";
+    String RESOURCE_LEVEL_ROOT = "0";
+    String RESOURCE_LEVEL_SYSTEM_MENU = "1";
+    String RESOURCE_LEVEL_BUSINESS = "2";
+    String PRIVILEGE_READ = "R";
+    String PRIVILEGE_READ_WRITE = "RW";
+    List<String> STREAMING_STEP = Arrays.asList("KafkaConsumerInput", "RecordsFromStream");
+    String[] TRIM_TYPE_CODE = new String[]{"none", "left", "right", "both"};
+    String[] VALUE_TYPE_CODE = new String[]{"field", "variable"};
+    String[] FIELD_TYPE_CODE = new String[]{"string", "number", "datetime", "boolean"};
+    String[] SUCCESS_CONDITION_BOOLEAN_CODE = new String[]{"true", "false"};
+    String[] SUCCESS_CONDITION_CODE = new String[]{"equal", "different", "contains", "notcontains", "startswith", "notstatwith", "endswith", "notendwith", "regexp", "inlist", "notinlist"};
+    String OWNER_DESIGNER = "designer";
+    String OWNER_TASK = "task";
+    String TOPIC_SHUTDOWN = "SHUTDOWN";
+    int EXCEPTION_NOT_FOUNT = 10001;
+    int EXCEPTION_UNAUTHORIZED = 10002;
+    int EXCEPTION_OWNER = 10003;
+    int EXCEPTION_DISABLED = 10004;
+    int EXCEPTION_BAD_CREDENTIALS = 10005;
+    int EXCEPTION_DUPLICATED = 10006;
+    int EXCEPTION_DATASOURCE_CONNECT = 10007;
+    int EXCEPTION_SQL_GRAMMAR = 10008;
+    int EXCEPTION_ETL_GRAMMAR = 10009;
+    int EXCEPTION_DATA = 10010;
+    int EXCEPTION_RECORDS_NOT_MATCH = 10011;
+    int EXCEPTION_ADD_SCHEDULE = 10012;
+    int EXCEPTION_CONNECTION_FAILURE = 10013;
+    int EXCEPTION_REMOVE_SCHEDULE = 10014;
+    int EXCEPTION_FORBIDDEN_REMOVE_SELF = 10015;
+    int EXCEPTION_FILE_NOT_EXIST = 10016;
+}
