@@ -104,10 +104,13 @@ public class FileService {
             fileSystemManager.init();
             // 这里替换成你的文件路径
             FileObject file = fileSystemManager.resolveFile(prefixUrl + env + File.separator + path, getOptions());
-            // 打开文件输入流
-            try (InputStream is = file.getContent().getInputStream()) {
-                return IOUtils.toString(is);
+            if (file.exists()) {
+                // 打开文件输入流
+                try (InputStream is = file.getContent().getInputStream()) {
+                    return IOUtils.toString(is);
+                }
             }
+            return null;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
@@ -155,7 +158,7 @@ public class FileService {
                         log.error(e.getMessage(), e);
                     }
                 }
-                modifyFileContent(productionPath, localRootPath);
+//                modifyFileContent(productionPath, localRootPath);
             }
             return productionPath;
         }

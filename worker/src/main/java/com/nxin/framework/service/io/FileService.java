@@ -58,7 +58,7 @@ public class FileService {
             String productionPath = localRootPath + nativePath + entry.getKey();
             File entryFile = new File(productionPath);
             if (!entryFile.exists()) {
-                InputStream inputStream = inputStream(env, ossPath + entry.getKey());
+                InputStream inputStream = inputStream(env, ossPath);
                 try {
                     FileUtils.copyInputStreamToFile(inputStream, entryFile);
                 } catch (IOException e) {
@@ -92,6 +92,7 @@ public class FileService {
     }
 
     private void modifyFileContent(String file, String target) {
+        target = target.substring(0, target.lastIndexOf(File.separator));
         try {
             SAXReader reader = new SAXReader();
             Document document = reader.read(new File(file));
@@ -106,7 +107,7 @@ public class FileService {
                             String value = filenameElement.getTextTrim();
                             if (StringUtils.hasLength(value)) {
 //                                    String[] path = value.split(File.separator);
-                                filenameElement.setText(target + (value.replace(devDir, "")));
+                                filenameElement.setText(target + value);
                             }
                         }
                     }
@@ -119,7 +120,7 @@ public class FileService {
                             String value = step.getTextTrim();
                             if (StringUtils.hasLength(value)) {
 //                                    String[] path = value.split(File.separator);
-                                step.setText(target + (value.replace(devDir, "")));
+                                step.setText(target + value);
                             }
                         }
                     }

@@ -21,7 +21,9 @@ import com.nxin.framework.utils.LoginUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.json.simple.JSONObject;
+import org.pentaho.di.base.AbstractMeta;
 import org.pentaho.di.core.DBCache;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LoggingObjectType;
@@ -31,6 +33,8 @@ import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
+import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.www.CarteObjectEntry;
 import org.pentaho.di.www.CarteSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,22 +131,27 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     @Transactional
     public void save(Shell shell, String description) throws RecordsNotMatchException, IOException, FileNotExistedException {
         if (shell.getExecutable()) {
-//            String isStreaming = Constant.BATCH;
-//            Map<String, Object> result;
+            String isStreaming = Constant.BATCH;
+            Map<String, Object> result;
             String suffix;
+            AbstractMeta abstractMeta;
+            String content = fileService.content(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX);
+            shell.setContent(content);
             if (Constant.JOB.equals(shell.getCategory())) {
-//                result = kettleGeneratorService.getJobMeta(shell);
+                result = kettleGeneratorService.getJobMeta(shell, true);
                 suffix = Constant.JOB_SUFFIX;
+                abstractMeta = (JobMeta)result.get("jobMeta");
             } else {
-//                result = kettleGeneratorService.getTransMeta(shell, true);
-//                TransMeta transMeta = (TransMeta) result.get("transMeta");
-//                StepMeta[] stepMetas = transMeta.getStepsArray();
-//                for (StepMeta stepMeta : stepMetas) {
-//                    if (Constant.STREAMING_STEP.contains(stepMeta.getTypeId())) {
-//                        isStreaming = Constant.STREAMING;
-//                    }
-//                }
+                result = kettleGeneratorService.getTransMeta(shell, true);
+                TransMeta transMeta = (TransMeta) result.get("transMeta");
+                StepMeta[] stepMetas = transMeta.getStepsArray();
+                for (StepMeta stepMeta : stepMetas) {
+                    if (Constant.STREAMING_STEP.contains(stepMeta.getTypeId())) {
+                        isStreaming = Constant.STREAMING;
+                    }
+                }
                 suffix = Constant.TRANS_SUFFIX;
+                abstractMeta = (TransMeta) result.get("transMeta");
             }
             ShellPublish shellPublish = new ShellPublish();
             shellPublish.setName(shell.getName());
@@ -154,8 +163,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             shellPublish.setVersion(1);
             shellPublish.setCreator(LoginUtils.getUsername());
             // 将脚本文件目录指定到publish目录下
-//            String reference = (String) result.get("referenceIds");
-            String reference = shell.getReference();
+            String reference = (String) result.get("referenceIds");
             List<ShellPublish> referencedList = new ArrayList<>(0);
             if (StringUtils.hasLength(reference)) {
                 String[] references = reference.split(",");
@@ -163,7 +171,6 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                     ShellPublish latestReferenceShellPublish = shellPublishMapper.selectLatestByShellId(Long.parseLong(referenceId));
                     if (latestReferenceShellPublish != null) {
                         referencedList.add(latestReferenceShellPublish);
-                        latestReferenceShellPublish.setShell(shellService.one(latestReferenceShellPublish.getShellId()));
                     }
                 }
                 // 如果关联脚本有未发布的，将抛出异常
@@ -172,34 +179,16 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                 }
                 shellPublish.setReference(referencedList.stream().map(item -> String.valueOf(item.getId())).collect(Collectors.joining(",")));
             }
-//            Map<Long, String> shellPublishLocation = referencedList.stream().collect(Collectors.toMap(ShellPublish::getShellId,
-//                    item -> item.getShell().getProjectId() + File.separator + item.getShell().getParentId() + File.separator + item.getShell().getId() + File.separator + item.getId() + File.separator));
-//            InputStream inputStream = fileService.inputStream(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + suffix);
-            // 将脚本文件复制到publish目录下
-//            File folder = new File(publishDir + tenant.getId() + File.separator + shell.getProject().getId() + File.separator + shell.getShell().getId() + File.separator + shellPublish.getBusinessId());
-//            if (!folder.exists()) {
-//                folder.mkdirs();
-//            }
-//            String fileName = shell.getName().concat(shell.getCategory().equals(Constant.TRANSFORM) ? ".ktr" : ".kjb");
-//            String direct = publishDir + tenant.getId() + File.separator + shell.getProject().getId() + File.separator + shell.getShell().getId() + File.separator + shellPublish.getBusinessId() + File.separator;
-//            File target = new File(direct + fileName);
-//            Files.copy(new File(shell.getXml()), target);
-//            File publishFile = publishReferenceFileName(inputStream, shellPublishLocation, shell.getCategory());
-//            String md5 = fileService.createFile(Constant.ENV_PUBLISH, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + File.separator + shell.getId() + Constant.DOT + suffix, publishFile);
             shellPublishMapper.insert(shellPublish);
-            String md5 = fileService.copyFile(Constant.ENV_DEV,
-                    shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + suffix,
-                    Constant.ENV_PUBLISH,
-                    shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + File.separator + shell.getId() + Constant.DOT + suffix);
-            shellPublish.setMd5Xml(md5);
-            md5 = fileService.copyFile(Constant.ENV_DEV,
-                    shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX,
-                    Constant.ENV_PUBLISH,
-                    shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX);
-            shellPublish.setMd5Graph(md5);
-//            shellPublish.setXml(target.getCanonicalPath());
-//            referencedList.add(shellPublish);
-//            shellPublishMapper.saveAll(referencedList);
+            try {
+                String md5Shell = fileService.createFile(Constant.ENV_PUBLISH, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + Constant.DOT + suffix, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + abstractMeta.getXML());
+                shellPublish.setMd5Xml(md5Shell);
+            } catch (KettleException e) {
+                log.error(e.getMessage(), e);
+            }
+            String md5graph = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + Constant.DOT + Constant.GRAPH_SUFFIX, shell.getContent());
+            shellPublish.setMd5Graph(md5graph);
+            shellPublishMapper.updateById(shellPublish);
         }
     }
 
@@ -259,7 +248,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                 } else {
                     suffix = Constant.TRANS_SUFFIX;
                 }
-                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + File.separator;
+                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
                 String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
                 String name = shell.getId() + Constant.DOT + suffix;
                 referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
@@ -270,7 +259,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", shellPublish.getId().toString());
             jsonObject.put("referencePathList", referencePathList);
-            jsonObject.put("rootPath", productionDir + UUID.randomUUID() + File.separator);
+            jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
             jsonObject.put("shellId", shellPublish.getShellId().toString());
             jsonObject.put("projectId", shellPublish.getProjectId().toString());
             scheduleService.create(shellPublish.getProjectId().toString(), taskId, shellPublish.getName(), cron, misfire, jsonObject.toJSONString());

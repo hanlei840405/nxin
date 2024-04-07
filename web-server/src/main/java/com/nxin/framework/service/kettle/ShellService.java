@@ -109,7 +109,7 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
                 }
             } else if (Constant.JOB.equals(shell.getCategory())) {
                 try {
-                    Map<String, Object> jobResult = kettleGeneratorService.getJobMeta(shell);
+                    Map<String, Object> jobResult = kettleGeneratorService.getJobMeta(shell, false);
                     JobMeta jobMeta = (JobMeta) jobResult.get("jobMeta");
                     String reference = (String) jobResult.get("referenceIds");
                     if (StringUtils.hasLength(reference)) {
