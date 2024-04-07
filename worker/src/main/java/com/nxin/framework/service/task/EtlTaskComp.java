@@ -19,6 +19,7 @@ import org.pentaho.di.www.CarteSingleton;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,8 @@ public class EtlTaskComp extends QuartzJobBean {
     private FileService fileService;
     @Autowired
     private TransactionTemplate transactionTemplate;
+    @Value("${production.dir}")
+    private String productionDir;
 
     /**
      * 可以选择将任务发布到kettle集群执行
@@ -65,7 +68,7 @@ public class EtlTaskComp extends QuartzJobBean {
         try {
             String entryJobPath = null;
             for (Map<String, String> referencePathMap : referencePathList) {
-                String path = fileService.downloadFile(Constant.ENV_PUBLISH, rootPath, referencePathMap);
+                String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
                 if (referencePathMap.containsKey(shellId + Constant.DOT + Constant.JOB_SUFFIX)) {
                     entryJobPath = path;
                 }

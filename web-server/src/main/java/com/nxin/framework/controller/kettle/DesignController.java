@@ -116,7 +116,7 @@ public class DesignController {
                 } else if (Constant.JOB.equals(existed.getCategory())) {
                     JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
                     jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
-                    Map<String, Object> jobMap = kettleGeneratorService.getJobMeta(existed);
+                    Map<String, Object> jobMap = kettleGeneratorService.getJobMeta(existed, false);
                     JobMeta jobMeta = (JobMeta) jobMap.get("jobMeta");
                     JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
                     spoonLoggingObject.setContainerObjectId(id);

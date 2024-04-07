@@ -158,7 +158,7 @@ public class FileService {
                         log.error(e.getMessage(), e);
                     }
                 }
-                modifyFileContent(productionPath, localRootPath);
+//                modifyFileContent(productionPath, localRootPath);
             }
             return productionPath;
         }

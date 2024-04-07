@@ -2,7 +2,6 @@ package com.nxin.framework.converter.kettle.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxgraph.model.mxCell;
-import com.mxgraph.view.mxGraph;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
@@ -13,8 +12,6 @@ import java.io.IOException;
 public abstract class JobConvertChain {
 
     protected ObjectMapper objectMapper = new ObjectMapper();
-
-    protected mxGraph graph = new mxGraph();
 
     protected JobConvertChain next;
 

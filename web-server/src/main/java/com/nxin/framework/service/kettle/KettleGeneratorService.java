@@ -68,6 +68,8 @@ public class KettleGeneratorService {
     private String etlLogDatasourcePassword;
     @Value("${dev.dir}")
     private String devDir;
+    @Value("${production.dir}")
+    private String productionDir;
     @Autowired
     private FileService fileService;
     @Autowired
@@ -113,7 +115,8 @@ public class KettleGeneratorService {
 //            performanceLogTable.setConnectionName(etlLogDatasourceName);
 //            performanceLogTable.setTableName("log_etl_transform_performance");
             transMeta.setLogLevel(LogLevel.DETAILED);
-            ConvertFactory.getVariable().put("dir", devDir);
+            String dir = prod ? File.separator : devDir;
+            ConvertFactory.getVariable().put("dir", dir);
             Set<Long> referenceIds = new HashSet<>(0);
             Map<String, String> idNameMapping = new HashMap<>(0);
             for (Object element : elements) {
@@ -139,11 +142,11 @@ public class KettleGeneratorService {
                 List<Shell> shells = shellService.listByIds(referenceIds);
                 shells.forEach(item -> {
                     String suffix = item.getCategory().equals(Constant.JOB) ? Constant.JOB_SUFFIX : Constant.TRANS_SUFFIX;
-                    File folder = new File(devDir + item.getProjectId() + File.separator + item.getParentId());
+                    File folder = new File(dir + item.getProjectId() + File.separator + item.getParentId());
                     if (!folder.exists()) {
                         folder.mkdirs();
                     }
-                    String path = devDir + item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix;
+                    String path = dir + item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix;
                     File file = new File(path);
                     boolean download = true;
                     if (file.exists()) {
@@ -183,7 +186,7 @@ public class KettleGeneratorService {
         return null;
     }
 
-    public Map<String, Object> getJobMeta(Shell shell) {
+    public Map<String, Object> getJobMeta(Shell shell, boolean prod) {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         try {
             Document document = XMLHandler.loadXMLString(content);
@@ -207,7 +210,8 @@ public class KettleGeneratorService {
             channelLogTable.setConnectionName(etlLogDatasourceName);
             channelLogTable.setTableName("log_etl_transform_channel");
             jobMeta.setLogLevel(LogLevel.DETAILED);
-            ConvertFactory.getVariable().put("dir", devDir);
+            String dir = prod ? File.separator : devDir;
+            ConvertFactory.getVariable().put("dir", dir);
 
             Set<Long> referenceIds = new HashSet<>(0);
             for (Object element : elements) {
@@ -228,11 +232,11 @@ public class KettleGeneratorService {
                 shells.forEach(item -> {
                     String suffix = item.getCategory().equals(Constant.JOB) ? Constant.JOB_SUFFIX : Constant.TRANS_SUFFIX;
                     InputStream inputStream = fileService.inputStream(Constant.ENV_DEV, item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix);
-                    File folder = new File(devDir + item.getProjectId() + File.separator + item.getParentId());
+                    File folder = new File(dir + item.getProjectId() + File.separator + item.getParentId());
                     if (!folder.exists()) {
                         folder.mkdirs();
                     }
-                    String path = devDir + item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix;
+                    String path = dir + item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix;
                     File file = new File(path);
                     boolean download = true;
                     if (file.exists()) {
