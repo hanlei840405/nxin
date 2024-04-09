@@ -57,8 +57,6 @@ import java.util.stream.Collectors;
 public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPublish> {
     @Value("${dev.dir}")
     private String devDir;
-    @Value("${production.dir}")
-    private String productionDir;
     @Value("${etl.log.send-delay}")
     private Integer sendDelay = 5;
     @Autowired
@@ -267,34 +265,35 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     }
 
     /**
-     * 上线新版并下线旧版
+     * 发布cdc任务
      *
      * @param shellPublish
      */
     @Transactional
-    public void deployStreaming(ShellPublish shellPublish) throws KettleXMLException {
-        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
-        // 找到已发行的版本，停止运行
-        if (deployedShellPublish != null) {
-            List<ShellPublish> deployedShellPublishes = new ArrayList<>(0);
-            deployedShellPublish.setProd(Constant.INACTIVE);
-            // 将关联脚本也一并下线
-            String reference = deployedShellPublish.getReference();
-            if (StringUtils.hasLength(reference)) {
-                List<Long> referenceIds = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
-                deployedShellPublishes.addAll(this.listByIds(referenceIds));
-            }
-            // 如果之前任务为schedule任务，则将之前发布的任务停止
-            if (StringUtils.hasLength(deployedShellPublish.getTaskId())) {
-                ResponseDto responseDto = scheduleService.stop(shellPublish.getProjectId().toString(), deployedShellPublish.getTaskId());
-                if (!responseDto.isSuccess()) {
-                    throw new RuntimeException(responseDto.getMessage());
-                }
-            }
-            deployedShellPublishes.add(deployedShellPublish);
-            deployedShellPublishes.forEach(deployed -> deployed.setProd(Constant.INACTIVE));
-            this.updateBatchById(deployedShellPublishes); // 将正在执行的脚本更新为下线状态
-        }
+    public void deployStreaming(ShellPublish shellPublish) {
+        // todo 重构
+//        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
+//        // 找到已发行的版本，停止运行
+//        if (deployedShellPublish != null) {
+//            List<ShellPublish> deployedShellPublishes = new ArrayList<>(0);
+//            deployedShellPublish.setProd(Constant.INACTIVE);
+//            // 将关联脚本也一并下线
+//            String reference = deployedShellPublish.getReference();
+//            if (StringUtils.hasLength(reference)) {
+//                List<Long> referenceIds = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
+//                deployedShellPublishes.addAll(this.listByIds(referenceIds));
+//            }
+//            // 如果之前任务为schedule任务，则将之前发布的任务停止
+//            if (StringUtils.hasLength(deployedShellPublish.getTaskId())) {
+//                ResponseDto responseDto = scheduleService.stop(shellPublish.getProjectId().toString(), deployedShellPublish.getTaskId());
+//                if (!responseDto.isSuccess()) {
+//                    throw new RuntimeException(responseDto.getMessage());
+//                }
+//            }
+//            deployedShellPublishes.add(deployedShellPublish);
+//            deployedShellPublishes.forEach(deployed -> deployed.setProd(Constant.INACTIVE));
+//            this.updateBatchById(deployedShellPublishes); // 将正在执行的脚本更新为下线状态
+//        }
 //        String taskId;
 //        if (StringUtils.hasLength(shellPublish.getTaskId())) {
 //            taskId = shellPublish.getTaskId();
@@ -311,7 +310,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //            taskId = UUID.randomUUID().toString();
 //            shellPublish.setTaskId(taskId);
 //        }
-
+//
         // 创建生产环境目录
 //        File folder = new File(productionDir + shellPublish.getShell().getProject().getTenant().getId() + File.separator + shellPublish.getShell().getProject().getId() + File.separator + shellPublish.getShell().getId());
 //        if (!folder.exists()) {
@@ -347,101 +346,101 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //        shellPublish.setProdPath(direct + fileName);
 //        referencedList.add(shellPublish);
 //        shellPublishMapper.saveAll(referencedList);
-
-        List<Map<String, String>> referencePathList = new ArrayList<>();
-        // 将新关联的脚本启用上线
-        String reference = shellPublish.getReference();
-        if (StringUtils.hasLength(reference)) {
-            String taskId = UUID.randomUUID().toString();
-            List<Long> ids = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
-            ids.add(shellPublish.getId());
-            List<ShellPublish> toExecuteList = this.listByIds(ids);
-            toExecuteList.forEach(item -> {
-                Shell shell = shellService.one(item.getShellId());
-                String suffix;
-                if (Constant.JOB.equals(shell.getCategory())) {
-                    suffix = Constant.JOB_SUFFIX;
-                } else {
-                    suffix = Constant.TRANS_SUFFIX;
-                }
-                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + File.separator;
-                String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
-                String name = shell.getId() + Constant.DOT + suffix;
-                referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
-                item.setProd(Constant.ACTIVE);
-                item.setTaskId(taskId);
-            });
-            this.updateBatchById(toExecuteList);
-
-            String rootPath = productionDir + UUID.randomUUID() + File.separator;
-
-            Shell shell = shellService.one(shellPublish.getShellId());
-            String name = shell.getId() + Constant.DOT + Constant.JOB_SUFFIX;
-            String entryJobPath = null;
-            for (Map<String, String> referencePathMap : referencePathList) {
-                String path = fileService.downloadFile(Constant.ENV_PUBLISH, rootPath, referencePathMap);
-                if (referencePathMap.containsKey(name)) {
-                    entryJobPath = path;
-                }
-            }
-            if (StringUtils.hasLength(entryJobPath)) {
-                shellPublish.setTaskId(taskId);
-                DBCache.getInstance().clear(null);
-                SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
-                spoonLoggingObject.setContainerObjectId(taskId);
-                JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
-                jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
-                JobMeta jobMeta = new JobMeta(entryJobPath, null);
-                JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
-                spoonLoggingObject.setLogLevel(jobExecutionConfiguration.getLogLevel());
-                Job job = new Job(null, jobMeta, spoonLoggingObject);
-                job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
-                job.setGatheringMetrics(true);
-                job.setLogLevel(LogLevel.BASIC);
-                job.start();
-                taskExecutor.execute(() -> {
-                    CarteSingleton.getInstance().getJobMap().addJob(job.getName(), taskId, job, jobConfiguration);
-                    while (!job.isStopped() && !job.isFinished()) {
-                        log.info("【{}】正在运行", job.getName());
-                        List<String> logChannelIds = LoggingRegistry.getInstance().getLogChannelChildren(job.getLogChannelId());
-                        taskHistoryService.save(logChannelIds.stream().map(logChannelId -> {
-                            TaskHistory taskHistory = new TaskHistory();
-                            taskHistory.setLogChannelId(logChannelId);
-                            taskHistory.setShellPublishId(shellPublish.getId());
-                            taskHistory.setStatus(Constant.ACTIVE);
-                            taskHistory.setBeginTime(LocalDateTime.now());
-                            return taskHistory;
-                        }).collect(Collectors.toList()));
-                        try {
-                            TimeUnit.SECONDS.sleep(sendDelay);
-                        } catch (InterruptedException e) {
-                            log.error(e.toString());
-                        }
-                    }
-                    log.info("【{}】中断运行", job.getName());
-                    List<String> logChannelIds = LoggingRegistry.getInstance().getLogChannelChildren(job.getLogChannelId());
-                    taskHistoryService.save(logChannelIds.stream().map(logChannelId -> {
-                        TaskHistory taskHistory = new TaskHistory();
-                        taskHistory.setLogChannelId(logChannelId);
-                        taskHistory.setShellPublishId(shellPublish.getId());
-                        taskHistory.setStatus(Constant.ACTIVE);
-                        taskHistory.setBeginTime(LocalDateTime.now());
-                        return taskHistory;
-                    }).collect(Collectors.toList()));
-                });
-                // 将流处理任务纳入进程管理，可随时中断
-                RunningProcess runningProcess = new RunningProcess();
-                runningProcess.setProd(Constant.ACTIVE);
-                runningProcess.setOwner(Constant.OWNER_TASK);
-                runningProcess.setProjectId(shellPublish.getProjectId());
-                runningProcess.setShellId(shellPublish.getShellId());
-                runningProcess.setShellPublishId(shellPublish.getId());
-                runningProcess.setInstanceId(taskId);
-                runningProcess.setInstanceName(job.getName());
-                runningProcess.setCategory(Constant.JOB);
-                runningProcessService.save(runningProcess);
-            }
-        }
+//
+//        List<Map<String, String>> referencePathList = new ArrayList<>();
+//        // 将新关联的脚本启用上线
+//        String reference = shellPublish.getReference();
+//        if (StringUtils.hasLength(reference)) {
+//            String taskId = UUID.randomUUID().toString();
+//            List<Long> ids = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
+//            ids.add(shellPublish.getId());
+//            List<ShellPublish> toExecuteList = this.listByIds(ids);
+//            toExecuteList.forEach(item -> {
+//                Shell shell = shellService.one(item.getShellId());
+//                String suffix;
+//                if (Constant.JOB.equals(shell.getCategory())) {
+//                    suffix = Constant.JOB_SUFFIX;
+//                } else {
+//                    suffix = Constant.TRANS_SUFFIX;
+//                }
+//                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + File.separator;
+//                String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
+//                String name = shell.getId() + Constant.DOT + suffix;
+//                referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
+//                item.setProd(Constant.ACTIVE);
+//                item.setTaskId(taskId);
+//            });
+//            this.updateBatchById(toExecuteList);
+//
+//            String rootPath = productionDir + UUID.randomUUID() + File.separator;
+//
+//            Shell shell = shellService.one(shellPublish.getShellId());
+//            String name = shell.getId() + Constant.DOT + Constant.JOB_SUFFIX;
+//            String entryJobPath = null;
+//            for (Map<String, String> referencePathMap : referencePathList) {
+//                String path = fileService.downloadFile(Constant.ENV_PUBLISH, rootPath, referencePathMap);
+//                if (referencePathMap.containsKey(name)) {
+//                    entryJobPath = path;
+//                }
+//            }
+//            if (StringUtils.hasLength(entryJobPath)) {
+//                shellPublish.setTaskId(taskId);
+//                DBCache.getInstance().clear(null);
+//                SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
+//                spoonLoggingObject.setContainerObjectId(taskId);
+//                JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
+//                jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
+//                JobMeta jobMeta = new JobMeta(entryJobPath, null);
+//                JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
+//                spoonLoggingObject.setLogLevel(jobExecutionConfiguration.getLogLevel());
+//                Job job = new Job(null, jobMeta, spoonLoggingObject);
+//                job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
+//                job.setGatheringMetrics(true);
+//                job.setLogLevel(LogLevel.BASIC);
+//                job.start();
+//                taskExecutor.execute(() -> {
+//                    CarteSingleton.getInstance().getJobMap().addJob(job.getName(), taskId, job, jobConfiguration);
+//                    while (!job.isStopped() && !job.isFinished()) {
+//                        log.info("【{}】正在运行", job.getName());
+//                        List<String> logChannelIds = LoggingRegistry.getInstance().getLogChannelChildren(job.getLogChannelId());
+//                        taskHistoryService.save(logChannelIds.stream().map(logChannelId -> {
+//                            TaskHistory taskHistory = new TaskHistory();
+//                            taskHistory.setLogChannelId(logChannelId);
+//                            taskHistory.setShellPublishId(shellPublish.getId());
+//                            taskHistory.setStatus(Constant.ACTIVE);
+//                            taskHistory.setBeginTime(LocalDateTime.now());
+//                            return taskHistory;
+//                        }).collect(Collectors.toList()));
+//                        try {
+//                            TimeUnit.SECONDS.sleep(sendDelay);
+//                        } catch (InterruptedException e) {
+//                            log.error(e.toString());
+//                        }
+//                    }
+//                    log.info("【{}】中断运行", job.getName());
+//                    List<String> logChannelIds = LoggingRegistry.getInstance().getLogChannelChildren(job.getLogChannelId());
+//                    taskHistoryService.save(logChannelIds.stream().map(logChannelId -> {
+//                        TaskHistory taskHistory = new TaskHistory();
+//                        taskHistory.setLogChannelId(logChannelId);
+//                        taskHistory.setShellPublishId(shellPublish.getId());
+//                        taskHistory.setStatus(Constant.ACTIVE);
+//                        taskHistory.setBeginTime(LocalDateTime.now());
+//                        return taskHistory;
+//                    }).collect(Collectors.toList()));
+//                });
+//                // 将流处理任务纳入进程管理，可随时中断
+//                RunningProcess runningProcess = new RunningProcess();
+//                runningProcess.setProd(Constant.ACTIVE);
+//                runningProcess.setOwner(Constant.OWNER_TASK);
+//                runningProcess.setProjectId(shellPublish.getProjectId());
+//                runningProcess.setShellId(shellPublish.getShellId());
+//                runningProcess.setShellPublishId(shellPublish.getId());
+//                runningProcess.setInstanceId(taskId);
+//                runningProcess.setInstanceName(job.getName());
+//                runningProcess.setCategory(Constant.JOB);
+//                runningProcessService.save(runningProcess);
+//            }
+//        }
     }
 
     @Transactional

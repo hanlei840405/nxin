@@ -4,6 +4,8 @@ import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.job.common.*;
 import com.nxin.framework.converter.kettle.job.condition.JobEntrySimpleEvalChain;
 import com.nxin.framework.converter.kettle.job.shell.JobEntryEvalChain;
+import com.nxin.framework.converter.kettle.job.transfer.JobEntryFTPPutChain;
+import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
 import org.pentaho.di.core.exception.KettleException;
@@ -11,7 +13,7 @@ import org.pentaho.di.core.exception.KettleException;
 public class JobConvertFactory extends ConvertFactory {
     private static JobConvertChain beginChain;
 
-    public static void init(DatasourceService datasourceService, ShellService shellService) {
+    public static void init(ShellService shellService, String attachmentDir) {
         JobConvertChain beginChain = new BeginChain();
         JobConvertChain jobEntrySpecialChain = new JobEntrySpecialChain();
         JobConvertChain jobEntryDummyChain = new JobEntryDummyChain();
@@ -21,9 +23,12 @@ public class JobConvertFactory extends ConvertFactory {
         JobConvertChain jobEntrySetVariablesChain = new JobEntrySetVariablesChain();
         JobConvertChain jobEntryEvalChain = new JobEntryEvalChain();
         JobConvertChain jobEntrySimpleEvalChain = new JobEntrySimpleEvalChain();
+        JobEntryFTPPutChain jobEntryFTPPutChain = new JobEntryFTPPutChain();
         JobConvertChain jobHopChain = new JobHopChain();
         JobConvertChain endChain = new EndChain();
         jobEntryTransChain.setShellService(shellService);
+        jobEntryFTPPutChain.setShellService(shellService);
+        jobEntryFTPPutChain.getJobVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
         beginChain.setNext(jobEntrySpecialChain);
         jobEntrySpecialChain.setNext(jobEntryDummyChain);
         jobEntryDummyChain.setNext(jobEntryTransChain);
@@ -32,7 +37,8 @@ public class JobConvertFactory extends ConvertFactory {
         jobEntrySuccessChain.setNext(jobEntrySetVariablesChain);
         jobEntrySetVariablesChain.setNext(jobEntryEvalChain);
         jobEntryEvalChain.setNext(jobEntrySimpleEvalChain);
-        jobEntrySimpleEvalChain.setNext(jobHopChain);
+        jobEntrySimpleEvalChain.setNext(jobEntryFTPPutChain);
+        jobEntryFTPPutChain.setNext(jobHopChain);
         jobHopChain.setNext(endChain);
         JobConvertFactory.beginChain = beginChain;
     }

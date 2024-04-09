@@ -70,10 +70,10 @@ mybatis-plus:
 #      logic-delete-field: status
 #      logic-delete-value: 0
 #      logic-not-delete-value: 1
+attachment:
+  dir: ${user.home}/.etl-designer/attachment/
 production:
   dir: ${user.home}/.etl-designer/production/
-dev:
-  dir: ${user.home}/.etl-designer/dev/
 setting:
   trans:
     records-size: 10000

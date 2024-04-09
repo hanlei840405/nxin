@@ -15,6 +15,7 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.excelwriter.ExcelWriterStepField;
 import org.pentaho.di.trans.steps.excelwriter.ExcelWriterStepMeta;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,8 +85,12 @@ public class ExcelWriterChain extends TransformConvertChain {
             excelWriterStepMeta.setAppendLines(append);
             excelWriterStepMeta.setAppendOmitHeader(deleteHeader);
             excelWriterStepMeta.setMakeSheetActive(asActiveSheet);
-            String folder = (String) ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR);
-            excelWriterStepMeta.setFileName(folder + filename);
+            String attachmentDir = (String) ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR);
+            File folder = new File(attachmentDir);
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            excelWriterStepMeta.setFileName(attachmentDir + filename);
             List<Map<String, String>> parameters = (List<Map<String, String>>) formAttributes.get("parameters");
             for (Map<String, String> parameter : parameters) {
                 ExcelWriterStepField excelWriterStepField = new ExcelWriterStepField();
