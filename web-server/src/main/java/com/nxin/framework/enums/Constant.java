@@ -70,4 +70,8 @@ public interface Constant {
     int EXCEPTION_REMOVE_SCHEDULE = 10014;
     int EXCEPTION_FORBIDDEN_REMOVE_SELF = 10015;
     int EXCEPTION_FILE_NOT_EXIST = 10016;
+    String MYSQL = "MySQL";
+    String GENERIC = "Generic";
+    String POSTGRESQL = "POSTGRESQL";
+    String ORACLE = "ORACLE";
 }

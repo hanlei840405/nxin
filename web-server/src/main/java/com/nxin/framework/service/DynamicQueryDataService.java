@@ -3,6 +3,7 @@ package com.nxin.framework.service;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.service.basic.DatasourceService;
+import com.nxin.framework.utils.DatabaseMetaUtils;
 import lombok.SneakyThrows;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.database.Database;
@@ -28,16 +29,16 @@ public class DynamicQueryDataService {
     @Autowired
     private DatasourceService datasourceService;
 
-    public Map<String, Object> preview(String name, String category, String host, String schemaName, String port, String username, String password, String sql) throws KettleDatabaseException, KettleValueException {
+    public Map<String, Object> preview(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String sql) throws KettleDatabaseException, KettleValueException {
         Map<String, Object> result = new HashMap<>(0);
         List<String> headers = new ArrayList<>(0);
         List<Map<String, String>> records = new ArrayList<>(0);
-        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
+        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category,  host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
+//        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
         List<SqlScriptStatement> statements = databaseMeta.getDatabaseInterface().getSqlScriptStatements(sql + Const.CR);
         Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
         try {
             db.connect();
-//            db.setQueryLimit(20);
             for (SqlScriptStatement sss : statements) {
                 List<Object[]> rows = db.getRows(sss.getStatement(), 20);
                 RowMetaInterface rowMeta = db.getReturnRowMeta();
@@ -66,65 +67,10 @@ public class DynamicQueryDataService {
     }
 
     @SneakyThrows
-    public Map<String, Object> query(String name, String category, String host, String schemaName, String port, String username, String password, String sql) throws KettleDatabaseException, KettleValueException {
-        Map<String, Object> result = new HashMap<>(0);
-        List<String> headers = new ArrayList<>(0);
-        List<Map<String, Object>> records = new ArrayList<>(0);
-        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
-        Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
-        try {
-            db.connect();
-            ResultSet rs = db.openQuery(sql + Const.CR);
-            RowMetaInterface rowMeta = db.getReturnRowMeta();
-            for (int i = 0; i < rowMeta.size(); i++) {
-                ValueMetaInterface v = rowMeta.getValueMeta(i);
-                headers.add(v.getName());
-            }
-            while (rs.next()) {
-                Map<String, Object> record = new HashMap<>(0);
-                for (String header : headers) {
-                    record.put(header, rs.getObject(header));
-                }
-                records.add(record);
-            }
-            result.put("headers", headers);
-            result.put("records", records);
-            return result;
-        } finally {
-            db.close();
-        }
-    }
-
-    @SneakyThrows
-    public boolean exist(String name, String category, String host, String schemaName, String port, String username, String password, String tableName) {
-        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
-        Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
-        try {
-            db.connect();
-            boolean exist = db.checkTableExists(schemaName, tableName);
-            return exist;
-        } finally {
-            db.close();
-        }
-    }
-
-    @SneakyThrows
-    public boolean execute(String name, String category, String host, String schemaName, String port, String username, String password, String sql) {
-        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
-        Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
-        try {
-            db.connect();
-            boolean exist = db.execStatement(sql).isSafeStop();
-            return exist;
-        } finally {
-            db.close();
-        }
-    }
-
-    @SneakyThrows
-    public List<Map<String, Object>> structure(String name, String category, String host, String schemaName, String port, String username, String password, String type, String tableName) {
+    public List<Map<String, Object>> structure(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String type, String tableName) {
         List<Map<String, Object>> response = new ArrayList<>(0);
-        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
+        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category,  host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
+//        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
         Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
         try {
             db.connect();
