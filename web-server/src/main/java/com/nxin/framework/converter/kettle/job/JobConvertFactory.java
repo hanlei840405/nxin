@@ -5,6 +5,7 @@ import com.nxin.framework.converter.kettle.job.common.*;
 import com.nxin.framework.converter.kettle.job.condition.JobEntrySimpleEvalChain;
 import com.nxin.framework.converter.kettle.job.shell.JobEntryEvalChain;
 import com.nxin.framework.converter.kettle.job.transfer.JobEntryFTPPutChain;
+import com.nxin.framework.converter.kettle.job.transfer.JobEntryMailChain;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
@@ -24,6 +25,7 @@ public class JobConvertFactory extends ConvertFactory {
         JobConvertChain jobEntryEvalChain = new JobEntryEvalChain();
         JobConvertChain jobEntrySimpleEvalChain = new JobEntrySimpleEvalChain();
         JobEntryFTPPutChain jobEntryFTPPutChain = new JobEntryFTPPutChain();
+        JobEntryMailChain jobEntryMailChain = new JobEntryMailChain();
         JobConvertChain jobHopChain = new JobHopChain();
         JobConvertChain endChain = new EndChain();
         jobEntryTransChain.setShellService(shellService);
@@ -38,7 +40,8 @@ public class JobConvertFactory extends ConvertFactory {
         jobEntrySetVariablesChain.setNext(jobEntryEvalChain);
         jobEntryEvalChain.setNext(jobEntrySimpleEvalChain);
         jobEntrySimpleEvalChain.setNext(jobEntryFTPPutChain);
-        jobEntryFTPPutChain.setNext(jobHopChain);
+        jobEntryFTPPutChain.setNext(jobEntryMailChain);
+        jobEntryMailChain.setNext(jobHopChain);
         jobHopChain.setNext(endChain);
         JobConvertFactory.beginChain = beginChain;
     }
