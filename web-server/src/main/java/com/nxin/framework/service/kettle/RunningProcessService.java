@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.mapper.kettle.RunningProcessMapper;
-import org.pentaho.di.www.CarteObjectEntry;
-import org.pentaho.di.www.CarteSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,18 +21,29 @@ public class RunningProcessService extends ServiceImpl<RunningProcessMapper, Run
 //        return runningProcessMapper.selectById(id);
 //    }
 
-    public RunningProcess instanceId(String instanceId) {
+    public RunningProcess shellId(Long shellId) {
         QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(RunningProcess.INSTANCE_ID_COLUMN, instanceId);
-        queryWrapper.eq(RunningProcess.STATUS_COLUMN, Constant.ACTIVE);
+        queryWrapper.eq(RunningProcess.SHELL_ID_COLUMN, shellId);
+        queryWrapper.eq(RunningProcess.PROD_COLUMN, "1");
         return runningProcessMapper.selectOne(queryWrapper);
     }
 
-    public IPage<RunningProcess> page(List<Long> projectIds, int pageNo, int pageSize) {
-        Page<RunningProcess> page = new Page<>(pageNo, pageSize);
+    public RunningProcess shellPublishId(Long shellPublishId) {
         QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
-        queryWrapper.in(RunningProcess.PROJECT_ID_COLUMN, projectIds);
-        return runningProcessMapper.selectPage(page, queryWrapper);
+        queryWrapper.eq(RunningProcess.SHELL_PUBLISH_ID_COLUMN, shellPublishId);
+        queryWrapper.eq(RunningProcess.PROD_COLUMN, "1");
+        return runningProcessMapper.selectOne(queryWrapper);
+    }
+
+    public RunningProcess instanceId(String instanceId) {
+        QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(RunningProcess.INSTANCE_ID_COLUMN, instanceId);
+        return runningProcessMapper.selectOne(queryWrapper);
+    }
+
+    public IPage<RunningProcess> page(List<Long> projectIds, String streamingOrBatch, int pageNo, int pageSize) {
+        Page<RunningProcess> page = new Page<>(pageNo, pageSize);
+        return runningProcessMapper.selectStreamingRunningProcess(page, Constant.JOB, streamingOrBatch, projectIds);
     }
 //
 //    public RunningProcess save(RunningProcess runningProcess, Tenant tenant) {

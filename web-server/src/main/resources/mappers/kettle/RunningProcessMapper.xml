@@ -2,4 +2,30 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.nxin.framework.mapper.kettle.RunningProcessMapper">
 
+    <select id="selectStreamingRunningProcess" resultType="com.nxin.framework.entity.kettle.RunningProcess">
+        SELECT kettle_running_process.id,
+        kettle_running_process.category,
+        kettle_running_process.create_time,
+        kettle_running_process.instance_id,
+        kettle_shell_publish.name as instance_name,
+        kettle_running_process.owner,
+        kettle_running_process.prod,
+        kettle_running_process.project_id,
+        kettle_running_process.shell_id,
+        kettle_running_process.shell_publish_id,
+        kettle_running_process.version,
+        kettle_running_process.creator,
+        kettle_running_process.modifier,
+        kettle_running_process.modify_time,
+        kettle_running_process.status
+        FROM kettle_running_process
+        inner join kettle_shell_publish on kettle_running_process.shell_publish_id=kettle_shell_publish.id
+        where kettle_running_process.category=#{category} and kettle_running_process.project_id in
+        <foreach collection="projectIds" item="projectId" open="(" close=")" separator=",">
+            #{projectId}
+        </foreach>
+        <if test="streaming != null and streaming != ''">
+            and kettle_shell_publish.streaming=#{streaming}
+        </if>
+    </select>
 </mapper>

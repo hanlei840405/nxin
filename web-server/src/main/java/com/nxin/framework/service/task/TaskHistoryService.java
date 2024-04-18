@@ -20,6 +20,13 @@ public class TaskHistoryService extends ServiceImpl<TaskHistoryMapper, TaskHisto
     @Autowired
     private TaskHistoryMapper taskHistoryMapper;
 
+    public TaskHistory runningProcessId(Long runningProcessId) {
+        QueryWrapper<TaskHistory> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(TaskHistory.RUNNING_PROCESS_ID_COLUMN, runningProcessId);
+        queryWrapper.le(TaskHistory.STATUS_COLUMN, Constant.ACTIVE);
+        return taskHistoryMapper.selectOne(queryWrapper);
+    }
+
     public IPage<TaskHistory> allByShellPublish(Long shellPublishId, LocalDate begin, LocalDate end, int pageNo, int pageSize) {
         IPage<TaskHistory> page = new Page<>(pageNo, pageSize);
         QueryWrapper<TaskHistory> queryWrapper = new QueryWrapper<>();

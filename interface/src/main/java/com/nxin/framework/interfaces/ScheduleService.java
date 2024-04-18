@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ScheduleService {
-    ResponseDto create(String group, String id, String description, String cron, Integer misfire, String data);
+    ResponseDto createBatch(String group, String id, String description, String cron, Integer misfire, String data);
 
     ResponseDto<List<CronTriggerDto>> findAllCronTrigger(List<String> groupList);
 
@@ -18,4 +18,5 @@ public interface ScheduleService {
     ResponseDto stop(String group, String id);
 
     ResponseDto modify(String group, String id, String cron, Integer misfire);
+    ResponseDto createStreaming(String shellPathMap);
 }

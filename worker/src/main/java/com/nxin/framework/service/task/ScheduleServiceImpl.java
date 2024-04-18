@@ -3,26 +3,48 @@ package com.nxin.framework.service.task;
 import com.alibaba.fastjson2.JSON;
 import com.nxin.framework.dto.CronTriggerDto;
 import com.nxin.framework.dto.ResponseDto;
+import com.nxin.framework.entity.kettle.RunningProcess;
+import com.nxin.framework.entity.task.TaskHistory;
+import com.nxin.framework.enums.Constant;
 import com.nxin.framework.interfaces.ScheduleService;
+import com.nxin.framework.service.io.FileService;
+import com.nxin.framework.service.kettle.RunningProcessService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.logging.LogLevel;
+import org.pentaho.di.core.logging.LoggingObjectType;
+import org.pentaho.di.core.logging.SimpleLoggingObject;
+import org.pentaho.di.job.Job;
+import org.pentaho.di.job.JobConfiguration;
+import org.pentaho.di.job.JobExecutionConfiguration;
+import org.pentaho.di.job.JobMeta;
+import org.pentaho.di.www.CarteSingleton;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Slf4j
 @DubboService
 public class ScheduleServiceImpl implements ScheduleService {
     @Autowired
     private Scheduler scheduler;
+    @Autowired
+    private RunningProcessService runningProcessService;
+    @Autowired
+    private TaskHistoryService taskHistoryService;
+    @Autowired
+    private FileService fileService;
+    @Value("${production.dir}")
+    private String productionDir;
 
     @Override
-    public ResponseDto create(String group, String id, String description, String cron, Integer misfire, String data) {
+    public ResponseDto createBatch(String group, String id, String description, String cron, Integer misfire, String data) {
         CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
         if (misfire == -1) {
             cronScheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
@@ -100,7 +122,6 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
     }
 
-    @Transactional
     @Override
     public ResponseDto stop(String group, String id) {
         try {
@@ -138,6 +159,64 @@ public class ScheduleServiceImpl implements ScheduleService {
         } catch (SchedulerException e) {
             log.error(e.getMessage(), e);
             return ResponseDto.builder().success(false).message(e.getMessage()).build();
+        }
+    }
+
+    @Override
+    public ResponseDto createStreaming(String shellPathMap) {
+        Map<String, Object> jobDataMap = JSON.parseObject(shellPathMap);
+        Number id = (Number) jobDataMap.get("id");
+        Number shellId = (Number) jobDataMap.get("shellId");
+        Number projectId = (Number) jobDataMap.get("projectId");
+        String rootPath = (String) jobDataMap.get("rootPath");
+        List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
+        SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
+        String uuid = UUID.randomUUID().toString();
+        spoonLoggingObject.setContainerObjectId(uuid);
+        JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
+        jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
+
+        try {
+            String entryJobPath = null;
+            for (Map<String, String> referencePathMap : referencePathList) {
+                String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
+                if (referencePathMap.containsKey(shellId + Constant.DOT + Constant.JOB_SUFFIX)) {
+                    entryJobPath = path;
+                }
+            }
+            if (StringUtils.hasLength(entryJobPath)) {
+                JobMeta jobMeta = new JobMeta(entryJobPath, null);
+                JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
+                spoonLoggingObject.setLogLevel(jobExecutionConfiguration.getLogLevel());
+                Job job = new Job(null, jobMeta, spoonLoggingObject);
+                job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
+                job.setGatheringMetrics(true);
+                job.start();
+                CarteSingleton.getInstance().getJobMap().addJob(job.getName(), uuid, job, jobConfiguration);
+                RunningProcess runningProcess = new RunningProcess();
+                runningProcess.setProd("1");
+                runningProcess.setOwner(Constant.OWNER_TASK);
+                runningProcess.setShellPublishId(id.longValue());
+                runningProcess.setShellId(shellId.longValue());
+                runningProcess.setProjectId(projectId.longValue());
+                runningProcess.setInstanceId(uuid);
+                runningProcess.setInstanceName(job.getName());
+                runningProcess.setCategory(Constant.JOB);
+                runningProcess.setVersion(1);
+                runningProcessService.save(runningProcess);
+
+                TaskHistory taskHistory = new TaskHistory();
+                taskHistory.setShellPublishId(id.longValue());
+                taskHistory.setBeginTime(LocalDateTime.now());
+                taskHistory.setLogChannelId(job.getLogChannelId());
+                taskHistory.setRunningProcessId(runningProcess.getId());
+                taskHistory.setStatus(Constant.ACTIVE);
+                taskHistoryService.save(taskHistory);
+            }
+            return ResponseDto.builder().success(true).build();
+        } catch (KettleXMLException e) {
+            log.error(e.getMessage(), e);
+            return ResponseDto.builder().success(false).build();
         }
     }
 }

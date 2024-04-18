@@ -40,7 +40,6 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             String localDirectory;
             if (transformShell.getExecutable()) {
                 localDirectory = getJobVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + transformShell.getProjectId() + File.separator + transformShell.getParentId() + File.separator + transformShell.getId();
-
             } else {
                 throw new UnExecutableException();
             }

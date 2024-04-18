@@ -170,7 +170,7 @@ public class DesignController {
                         Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
                         if (job != null) {
                             job.stopAll();
-                            CarteSingleton.getInstance().getJobMap().removeJob(new CarteObjectEntry(job.getName(), crudDto.getPayload()));
+                            CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
                             runningProcessService.delete(runningProcessService.instanceId(crudDto.getPayload()));
                             return ResponseEntity.ok(result);
                         }
@@ -178,7 +178,7 @@ public class DesignController {
                         Trans trans = CarteSingleton.getInstance().getTransformationMap().getTransformation(carteObjectEntry);
                         if (trans != null) {
                             trans.stopAll();
-                            CarteSingleton.getInstance().getTransformationMap().removeTransformation(new CarteObjectEntry(trans.getName(), crudDto.getPayload()));
+                            CarteSingleton.getInstance().getTransformationMap().removeTransformation(carteObjectEntry);
                             runningProcessService.delete(runningProcessService.instanceId(crudDto.getPayload()));
                             return ResponseEntity.ok(result);
                         }
