@@ -87,7 +87,7 @@ public class ProcessController {
                 jsonObject.put("taskHistoryId", String.valueOf(crudDto.getId()));
                 jsonObject.put("name", runningProcess.getInstanceName());
                 jsonObject.put("instanceId", runningProcess.getInstanceId());
-                stringRedisTemplate.convertAndSend(Constant.TOPIC_SHUTDOWN, jsonObject.toJSONString());
+                stringRedisTemplate.convertAndSend(Constant.TOPIC_TASK_SHUTDOWN, jsonObject.toJSONString());
                 // 将关联脚本也一并下线
                 List<ShellPublish> deployedShellPublishes = new ArrayList<>(0);
                 String reference = persisted.getReference();

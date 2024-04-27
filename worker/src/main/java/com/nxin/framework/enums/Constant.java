@@ -54,7 +54,7 @@ public interface Constant {
     String[] SUCCESS_CONDITION_CODE = new String[]{"equal", "different", "contains", "notcontains", "startswith", "notstatwith", "endswith", "notendwith", "regexp", "inlist", "notinlist"};
     String OWNER_DESIGNER = "designer";
     String OWNER_TASK = "task";
-    String TOPIC_SHUTDOWN = "SHUTDOWN";
+    String TOPIC_TASK_SHUTDOWN = "TASK_SHUTDOWN";
     int EXCEPTION_NOT_FOUNT = 10001;
     int EXCEPTION_UNAUTHORIZED = 10002;
     int EXCEPTION_OWNER = 10003;

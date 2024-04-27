@@ -15,6 +15,7 @@ import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellService;
 import com.nxin.framework.utils.LoginUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONObject;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LoggingObjectType;
@@ -32,6 +33,7 @@ import org.pentaho.di.www.CarteSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -69,6 +71,8 @@ public class DesignController {
     private SimpMessagingTemplate simpMessagingTemplate;
     @Autowired
     private ApplicationContext applicationContext;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     private static final String CHANNEL_TYPE_TRANS = "TRANS";
 
@@ -77,7 +81,7 @@ public class DesignController {
     private static final String CHANNEL_TYPE_JOB = "JOB";
 
     @PostMapping("/execute/{id}")
-    public ResponseEntity<Map<String, Object>> execute(@PathVariable("id") String id, @RequestBody Shell shell) throws IOException, KettleException {
+    public ResponseEntity execute(@PathVariable("id") String id, @RequestBody Shell shell) throws IOException, KettleException {
         Shell existed = shellService.one(shell.getId());
         if (existed != null) {
             existed.setContent(shell.getContent());
@@ -97,9 +101,6 @@ public class DesignController {
                     transExecutionConfiguration.setLogLevel(LogLevel.BASIC);
                     Map<String, Object> transMap = kettleGeneratorService.getTransMeta(existed, false);
                     TransMeta transMeta = (TransMeta) transMap.get("transMeta");
-//                    File tempFile = File.createTempFile(transMeta.getName(), ".ktr", null);
-//                    Files.write(transMeta.getXML().getBytes(StandardCharsets.UTF_8), tempFile);
-//                    transMeta = new TransMeta(tempFile.getPath());
                     TransConfiguration transConfiguration = new TransConfiguration(transMeta, transExecutionConfiguration);
                     spoonLoggingObject.setLogLevel(transExecutionConfiguration.getLogLevel());
                     Trans trans = new Trans(transMeta, spoonLoggingObject);
@@ -112,7 +113,7 @@ public class DesignController {
                     runningProcess.setCategory(Constant.TRANSFORM);
                     runningProcess.setVersion(1);
                     runningProcessService.save(runningProcess);
-                    return ResponseEntity.ok(Collections.EMPTY_MAP);
+                    return ResponseEntity.ok().build();
                 } else if (Constant.JOB.equals(existed.getCategory())) {
                     JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
                     jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
@@ -131,7 +132,7 @@ public class DesignController {
                     runningProcess.setCategory(Constant.JOB);
                     runningProcess.setVersion(1);
                     runningProcessService.save(runningProcess);
-                    return ResponseEntity.ok(Collections.EMPTY_MAP);
+                    return ResponseEntity.ok().build();
                 } else {
                     return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
                 }
@@ -141,48 +142,19 @@ public class DesignController {
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
-//    @PostMapping("/pause")
-//    public ResponseEntity<String> pause(@RequestBody CrudDto crudDto, Principal principal) {
-//        User loginUser = userService.one(principal.getName());
-//        Shell existed = shellService.one(crudDto.getId(), loginUser.getTenant().getId());
-//        if (existed != null && existed.getProject().getUsers().contains(loginUser)) {
-//            CarteObjectEntry carteObjectEntry = new CarteObjectEntry(existed.getName(), crudDto.getPayload());
-//            Trans trans = CarteSingleton.getInstance().getTransformationMap().getTransformation(carteObjectEntry);
-//            if (trans != null) {
-//                trans.pauseRunning();
-//                return ResponseEntity.ok(trans.getStatus());
-//            }
-//            return ResponseEntity.status(EXCEPTION_NOT_FOUNT).build();
-//        }
-//        return ResponseEntity.status(EXCEPTION_UNAUTHORIZED).build();
-//    }
-
     @PostMapping("/stop")
-    public ResponseEntity<Map<String, Object>> stop(@RequestBody CrudDto crudDto) {
+    public ResponseEntity stop(@RequestBody CrudDto crudDto) {
         Shell existed = shellService.one(crudDto.getId());
         if (existed != null) {
             List<User> members = userService.findByResource(existed.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
                 try {
-                    Map<String, Object> result = new HashMap<>(0);
-                    CarteObjectEntry carteObjectEntry = new CarteObjectEntry(existed.getName(), crudDto.getPayload());
-                    if (Constant.JOB.equals(existed.getCategory())) {
-                        Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
-                        if (job != null) {
-                            job.stopAll();
-                            CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
-                            runningProcessService.delete(runningProcessService.instanceId(crudDto.getPayload()));
-                            return ResponseEntity.ok(result);
-                        }
-                    } else {
-                        Trans trans = CarteSingleton.getInstance().getTransformationMap().getTransformation(carteObjectEntry);
-                        if (trans != null) {
-                            trans.stopAll();
-                            CarteSingleton.getInstance().getTransformationMap().removeTransformation(carteObjectEntry);
-                            runningProcessService.delete(runningProcessService.instanceId(crudDto.getPayload()));
-                            return ResponseEntity.ok(result);
-                        }
-                    }
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("category", existed.getCategory());
+                    jsonObject.put("name", existed.getName());
+                    jsonObject.put("instanceId", crudDto.getPayload());
+                    stringRedisTemplate.convertAndSend(Constant.TOPIC_DESIGNER_SHUTDOWN, jsonObject.toJSONString());
+                    return ResponseEntity.ok().build();
                 } catch (NullPointerException e) {
                     return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
                 }

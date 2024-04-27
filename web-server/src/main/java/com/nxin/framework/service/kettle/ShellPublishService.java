@@ -276,7 +276,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                     jsonObject.put("taskHistoryId", String.valueOf(taskHistory.getId()));
                     jsonObject.put("name", runningProcess.getInstanceName());
                     jsonObject.put("instanceId", runningProcess.getInstanceId());
-                    stringRedisTemplate.convertAndSend(Constant.TOPIC_SHUTDOWN, jsonObject.toJSONString());
+                    stringRedisTemplate.convertAndSend(Constant.TOPIC_TASK_SHUTDOWN, jsonObject.toJSONString());
                 }
             }
             // 将关联脚本也一并下线

@@ -71,7 +71,7 @@ public class BeanConfig {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(listenerAdapter, new PatternTopic(Constant.TOPIC_SHUTDOWN));
+        container.addMessageListener(listenerAdapter, new PatternTopic(Constant.TOPIC_TASK_SHUTDOWN));
         return container;
     }
 
