@@ -24,22 +24,25 @@ public class TopicShutdownListener {
         String name = jsonObject.getString("name");
         String instanceId = jsonObject.getString("instanceId");
         String category = jsonObject.getString("category");
-        RunningProcess runningProcess = runningProcessService.instanceId(instanceId);
         CarteObjectEntry carteObjectEntry = new CarteObjectEntry(name, instanceId);
+        boolean shutdown = false;
         if (Constant.JOB.equals(category)) {
             Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
             if (job != null) {
                 job.stopAll();
                 CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
+                shutdown = true;
             }
         } else {
             Trans trans = CarteSingleton.getInstance().getTransformationMap().getTransformation(carteObjectEntry);
             if (trans != null) {
                 trans.stopAll();
                 CarteSingleton.getInstance().getTransformationMap().removeTransformation(carteObjectEntry);
+                shutdown = true;
             }
         }
-        if (runningProcess != null) {
+        RunningProcess runningProcess = runningProcessService.instanceId(instanceId);
+        if (shutdown && runningProcess != null) {
             runningProcessService.delete(runningProcess);
         }
     }
