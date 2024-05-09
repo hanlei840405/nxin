@@ -2,36 +2,26 @@ package com.nxin.framework.converter.kettle.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxgraph.model.mxCell;
-import com.mxgraph.view.mxGraph;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
-import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
 import org.pentaho.di.job.JobMeta;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class JobConvertChain {
 
     protected ObjectMapper objectMapper = new ObjectMapper();
 
-    protected mxGraph graph = new mxGraph();
-
     protected JobConvertChain next;
-
-    protected DatasourceService datasourceService;
 
     private ShellService shellService;
 
+    private Map<String, Object> jobVariable = new HashMap<>();
+
     public void setNext(JobConvertChain next) {
         this.next = next;
-    }
-
-    public DatasourceService getDatasourceService() {
-        return datasourceService;
-    }
-
-    public void setDatasourceService(DatasourceService datasourceService) {
-        this.datasourceService = datasourceService;
     }
 
     public ShellService getShellService() {
@@ -40,6 +30,10 @@ public abstract class JobConvertChain {
 
     public void setShellService(ShellService shellService) {
         this.shellService = shellService;
+    }
+
+    public Map<String, Object> getJobVariable() {
+        return jobVariable;
     }
 
     /**

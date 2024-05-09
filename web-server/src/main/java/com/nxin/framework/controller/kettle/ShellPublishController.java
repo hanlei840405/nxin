@@ -71,7 +71,7 @@ public class ShellPublishController {
             Shell shell = shellService.one(persisted.getShellId());
             List<User> members = userService.findByResource(shell.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-                return ResponseEntity.ok(fileService.content(Constant.ENV_PUBLISH, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + persisted.getId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX));
+                return ResponseEntity.ok(fileService.content(Constant.ENV_PUBLISH, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + persisted.getId() + Constant.DOT + Constant.GRAPH_SUFFIX));
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
@@ -126,7 +126,7 @@ public class ShellPublishController {
                 if (Constant.BATCH.equals(persisted.getStreaming())) {
                     shellPublishService.deploySchedule(persisted, shellPublishDto.getCron(), shellPublishDto.getMisfire());
                 } else {
-//                        shellPublishService.deployStreaming(persisted);
+                    shellPublishService.deployStreaming(persisted);
                 }
                 return ResponseEntity.ok(shellPublishConverter.convert(persisted));
             }

@@ -60,6 +60,12 @@ public class RunningProcess implements Serializable {
 
     public static String INSTANCE_ID_COLUMN = "instance_id";
 
+    public static String SHELL_ID_COLUMN = "shell_id";
+
+    public static String SHELL_PUBLISH_ID_COLUMN = "shell_publish_id";
+
+    public static String PROD_COLUMN = "prod";
+
     public static String STATUS_COLUMN = "status";
 
     public Long getId() {

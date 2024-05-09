@@ -68,6 +68,8 @@ public class KettleGeneratorService {
     private String etlLogDatasourcePassword;
     @Value("${dev.dir}")
     private String devDir;
+    @Value("${attachment.dir}")
+    private String attachmentDir;
     @Autowired
     private FileService fileService;
     @Autowired
@@ -76,12 +78,12 @@ public class KettleGeneratorService {
     public Map<String, Object> getTransMeta(Shell shell, boolean prod) {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         try {
-            StringBuilder builder = new StringBuilder();
-            String env = prod ? Constant.ENV_PRODUCTION : Constant.ENV_DEV;
+            StringBuilder builder = new StringBuilder(attachmentDir);
+//            String env = prod ? Constant.ENV_PRODUCTION : Constant.ENV_DEV;
 //            builder.append(shell.getProjectId()).append(File.separator).append(shell.getParentId()).append(File.separator).append(shell.getId()).append(File.separator).append(env).append(File.separator);
             builder.append(shell.getProjectId()).append(File.separator).append(shell.getParentId()).append(File.separator).append(shell.getId()).append(File.separator); // 转换中如果有需要存储上传文件的目录 todo 是否需要考虑上传文件
-            String remotePath = fileService.createFolder(env, builder.toString());
-            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, remotePath);
+//            fileService.createFolder(env, builder.toString());
+            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, builder.toString());
             Document document = XMLHandler.loadXMLString(content);
             mxCodec codec = new mxCodec();
             mxGraph graph = new mxGraph();
@@ -187,6 +189,8 @@ public class KettleGeneratorService {
     public Map<String, Object> getJobMeta(Shell shell, boolean prod) {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         try {
+            StringBuilder builder = new StringBuilder(attachmentDir);
+            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, builder.toString());
             Document document = XMLHandler.loadXMLString(content);
             mxCodec codec = new mxCodec();
             mxGraph graph = new mxGraph();

@@ -15,22 +15,22 @@ import java.io.File;
 @Slf4j
 @Component
 public class StartListener implements ApplicationListener<ContextRefreshedEvent> {
-    @Value("${dev.dir}")
-    private String devDir;
     @Value("${production.dir}")
     private String productionDir;
+    @Value("${attachment.dir}")
+    private String attachmentDir;
     @Autowired
     private Scheduler scheduler;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-        File dev = new File(devDir);
-        if (!dev.exists()) {
-            dev.mkdirs();
-        }
         File production = new File(productionDir);
         if (!production.exists()) {
             production.mkdirs();
+        }
+        File attachment = new File(attachmentDir);
+        if (!attachment.exists()) {
+            attachment.mkdirs();
         }
         try {
             scheduler.getListenerManager().addJobListener(new JobListener());

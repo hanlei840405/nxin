@@ -43,7 +43,7 @@ public class PreviewDataController {
             List<User> members = userService.findByResource(datasource.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
                 try {
-                    Map<String, Object> result = dynamicQueryDataService.preview(datasource.getName(), DatasourceType.getValue(datasource.getCategory()), datasource.getHost(), datasource.getSchemaName(), datasource.getPort().toString(), datasource.getUsername(), datasource.getPassword(), payload.sql);
+                    Map<String, Object> result = dynamicQueryDataService.preview(datasource.getName(), datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), payload.sql);
                     return ResponseEntity.ok(result);
                 } catch (KettleDatabaseException | KettleValueException e) {
                     return ResponseEntity.status(Constant.EXCEPTION_SQL_GRAMMAR).build();
@@ -60,7 +60,7 @@ public class PreviewDataController {
         if (datasource != null && datasource.getProjectId() != null) {
             List<User> members = userService.findByResource(datasource.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
-                List<Map<String, Object>> response = dynamicQueryDataService.structure(datasource.getName(), DatasourceType.getValue(datasource.getCategory()), datasource.getHost(), datasource.getSchemaName(), datasource.getPort().toString(), datasource.getUsername(), datasource.getPassword(), payload.category, payload.name);
+                List<Map<String, Object>> response = dynamicQueryDataService.structure(datasource.getName(), datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), payload.category, payload.name);
                 return ResponseEntity.ok(response);
             }
         }

@@ -82,6 +82,8 @@ jwt:
   secret: nxin
   expirationDateInMs: 0
   refreshExpirationDateInMs: 9000000
+attachment:
+  dir: ${user.home}/.etl-designer/attachment/
 production:
   dir: ${user.home}/.etl-designer/production/
 dev:

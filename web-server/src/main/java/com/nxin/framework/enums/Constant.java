@@ -53,7 +53,8 @@ public interface Constant {
     String[] SUCCESS_CONDITION_CODE = new String[]{"equal", "different", "contains", "notcontains", "startswith", "notstatwith", "endswith", "notendwith", "regexp", "inlist", "notinlist"};
     String OWNER_DESIGNER = "designer";
     String OWNER_TASK = "task";
-    String TOPIC_SHUTDOWN = "SHUTDOWN";
+    String TOPIC_DESIGNER_SHUTDOWN = "DESIGNER_SHUTDOWN";
+    String TOPIC_TASK_SHUTDOWN = "TASK_SHUTDOWN";
     int EXCEPTION_NOT_FOUNT = 10001;
     int EXCEPTION_UNAUTHORIZED = 10002;
     int EXCEPTION_OWNER = 10003;
@@ -70,4 +71,8 @@ public interface Constant {
     int EXCEPTION_REMOVE_SCHEDULE = 10014;
     int EXCEPTION_FORBIDDEN_REMOVE_SELF = 10015;
     int EXCEPTION_FILE_NOT_EXIST = 10016;
+    String MYSQL = "MySQL";
+    String GENERIC = "Generic";
+    String POSTGRESQL = "POSTGRESQL";
+    String ORACLE = "ORACLE";
 }

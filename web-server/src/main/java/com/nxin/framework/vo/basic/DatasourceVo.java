@@ -28,4 +28,6 @@ public class DatasourceVo extends BaseVo {
     private Integer poolMinIdle;
     private Integer poolMaxWait;
     private Long projectId;
+    private String driver;
+    private String url;
 }

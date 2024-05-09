@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.task.TaskHistoryConverter;
 import com.nxin.framework.dto.CronTriggerDto;
+import com.nxin.framework.dto.CrudDto;
 import com.nxin.framework.dto.ResponseDto;
 import com.nxin.framework.dto.kettle.ShellPublishDto;
 import com.nxin.framework.dto.task.TaskHistoryDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Project;
+import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
@@ -31,7 +33,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Date;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +64,7 @@ public class TaskController {
     private BeanConverter<TaskHistoryVo, TaskHistory> taskHistoryConverter = new TaskHistoryConverter();
 
     @PostMapping("/task/batches")
-    public ResponseEntity<PageVo<TaskVo>> runningBatchTasks(@RequestBody ShellPublishDto shellPublishDto) {
+    public ResponseEntity<PageVo<TaskVo>> runningBatchTasks(@RequestBody CrudDto crudDto) {
         User user = userService.one(LoginUtils.getUsername());
         List<Project> projects = projectService.search(null, user.getId());
         if (!projects.isEmpty()) {
@@ -72,8 +76,7 @@ public class TaskController {
                 } else {
                     List<CronTriggerDto> cronTriggerDtoList = responseDto.getData();
                     Map<Long, CronTriggerDto> shellMap = cronTriggerDtoList.stream().collect(Collectors.toMap(CronTriggerDto::getShellId, item -> item));
-                    IPage<ShellPublish> shellPublishIPage = shellPublishService.online(shellPublishDto.getName(), shellPublishDto.getStreaming(), shellMap.keySet(), shellPublishDto.getPageNo(), shellPublishDto.getPageSize());
-//                List<ShellPublishVo> shellPublishVos = shellPublishConverter.convert(shellPublishIPage.getRecords());
+                    IPage<ShellPublish> shellPublishIPage = shellPublishService.online(crudDto.getPayload(), Constant.BATCH, shellMap.keySet(), crudDto.getPageNo(), crudDto.getPageSize());
                     List<TaskVo> taskVos = shellPublishIPage.getRecords().stream().map(shellPublish -> {
                         TaskVo taskVo = new TaskVo();
                         taskVo.setName(shellPublish.getName());
@@ -94,6 +97,25 @@ public class TaskController {
             } else {
                 taskVoPageVo = new PageVo<>(0, Collections.EMPTY_LIST);
             }
+            return ResponseEntity.ok(taskVoPageVo);
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+    }
+
+    @PostMapping("/task/streaming")
+    public ResponseEntity<PageVo<TaskVo>> runningStreamingTasks(@RequestBody CrudDto crudDto) {
+        User user = userService.one(LoginUtils.getUsername());
+        List<Project> projects = projectService.search(null, user.getId());
+        if (!projects.isEmpty()) {
+            IPage<RunningProcess> runningProcessIPage = runningProcessService.page(projects.stream().map(Project::getId).collect(Collectors.toList()), Constant.STREAMING, crudDto.getPageNo(), crudDto.getPageSize());
+            List<TaskVo> taskVos = runningProcessIPage.getRecords().stream().map(runningProcess -> {
+                TaskVo taskVo = new TaskVo();
+                taskVo.setName(runningProcess.getInstanceName());
+                taskVo.setStartTime(Date.from(runningProcess.getCreateTime().atZone(ZoneId.systemDefault()).toInstant()));
+                taskVo.setId(runningProcess.getId());
+                return taskVo;
+            }).collect(Collectors.toList());
+            PageVo<TaskVo> taskVoPageVo = new PageVo<>(runningProcessIPage.getTotal(), taskVos);
             return ResponseEntity.ok(taskVoPageVo);
         }
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();

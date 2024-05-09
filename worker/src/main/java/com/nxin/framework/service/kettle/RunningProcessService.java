@@ -24,7 +24,6 @@ public class RunningProcessService extends ServiceImpl<RunningProcessMapper, Run
     public RunningProcess instanceId(String instanceId) {
         QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(RunningProcess.INSTANCE_ID_COLUMN, instanceId);
-        queryWrapper.eq(RunningProcess.STATUS_COLUMN, Constant.ACTIVE);
         return runningProcessMapper.selectOne(queryWrapper);
     }
 

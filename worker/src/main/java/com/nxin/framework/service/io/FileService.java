@@ -27,8 +27,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class FileService {
-    @Value("${dev.dir}")
-    private String devDir;
     @Value("${ftp.lang}")
     private String lang;
     @Value("${ftp.prefix-url}")

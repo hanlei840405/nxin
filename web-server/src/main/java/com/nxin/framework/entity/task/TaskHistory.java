@@ -43,6 +43,8 @@ public class TaskHistory implements Serializable {
 
     public static String SHELL_PUBLISH_ID_COLUMN = "shell_publish_id";
 
+    public static String RUNNING_PROCESS_ID_COLUMN = "running_process_id";
+
     public static String BEGIN_TIME_COLUMN = "begin_time";
 
     public static String END_TIME_COLUMN = "end_time";

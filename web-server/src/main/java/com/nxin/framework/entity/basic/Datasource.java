@@ -66,6 +66,10 @@ public class Datasource implements Serializable {
 
     private String indexSpace;
 
+    private String driver;
+
+    private String url;
+
     private String status;
 
     @TableField(fill = FieldFill.INSERT)
@@ -261,6 +265,22 @@ public class Datasource implements Serializable {
         this.indexSpace = indexSpace;
     }
 
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -319,7 +339,7 @@ public class Datasource implements Serializable {
             ", useCursor = " + useCursor +
             ", usePool = " + usePool +
             ", username = " + username +
-            ", password = " + password +
+//            ", password = " + password +
             ", parameter = " + parameter +
             ", poolInitial = " + poolInitial +
             ", poolInitialSize = " + poolInitialSize +
@@ -333,6 +353,8 @@ public class Datasource implements Serializable {
             ", port = " + port +
             ", dataSpace = " + dataSpace +
             ", indexSpace = " + indexSpace +
+            ", driver = " + driver +
+            ", url = " + url +
             ", status = " + status +
             ", createTime = " + createTime +
             ", creator = " + creator +
