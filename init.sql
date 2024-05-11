@@ -67,7 +67,7 @@ CREATE TABLE `auth_privilege` (
   `modify_time` datetime DEFAULT NULL,
   `version` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -93,7 +93,7 @@ CREATE TABLE `auth_privilege_resource_启弃` (
   `resource_id` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_resource_privilege` (`resource_id`,`privilege_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,7 +126,7 @@ CREATE TABLE `auth_resource` (
   `modify_time` datetime DEFAULT NULL,
   `version` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -163,7 +163,7 @@ CREATE TABLE `auth_user` (
   `version` int NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uni_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -189,7 +189,7 @@ CREATE TABLE `auth_user_privilege` (
   `user_id` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_user_privilege` (`user_id`,`privilege_id`) /*!80000 INVISIBLE */
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -231,6 +231,8 @@ CREATE TABLE `basic_datasource` (
   `port` int DEFAULT NULL,
   `data_space` varchar(255) DEFAULT NULL,
   `index_space` varchar(255) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL COMMENT 'jdbc url',
+  `driver` varchar(255) DEFAULT NULL COMMENT '驱动名称',
   `status` varchar(255) DEFAULT NULL,
   `create_time` datetime DEFAULT NULL,
   `creator` varchar(255) DEFAULT NULL,
@@ -238,7 +240,7 @@ CREATE TABLE `basic_datasource` (
   `modify_time` datetime DEFAULT NULL,
   `version` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -247,7 +249,7 @@ CREATE TABLE `basic_datasource` (
 
 LOCK TABLES `basic_datasource` WRITE;
 /*!40000 ALTER TABLE `basic_datasource` DISABLE KEYS */;
-INSERT INTO `basic_datasource` VALUES (1,'本地数据库nxin_etl_2024_001_mybatis','mysql',11,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"userSSL\",\"value\":\"true\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'nxin_etl_2024_001_mybatis','127.0.0.1',3306,NULL,NULL,'1',NULL,'jesse.18@163.com','jesse.18@163.com','2024-01-26 00:59:21',5),(2,'world','mysql',1,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'world','127.0.0.1',3306,NULL,NULL,'1','2024-02-19 11:36:09','jesse.18@163.com','jesse.18@163.com','2024-02-19 11:36:09',0);
+INSERT INTO `basic_datasource` VALUES (1,'本地数据库nxin_etl_2024_001_mybatis','mysql',11,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"userSSL\",\"value\":\"true\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'nxin_etl_2024_001_mybatis','127.0.0.1',3306,NULL,NULL,NULL,NULL,'1',NULL,'jesse.18@163.com','jesse.18@163.com','2024-01-26 00:59:21',5),(2,'world','mysql',1,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'world','127.0.0.1',3306,NULL,NULL,NULL,NULL,'1','2024-02-19 11:36:09','jesse.18@163.com','jesse.18@163.com','2024-02-19 11:36:09',0),(3,'mysql jdbc','jdbc',1,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'jdbc:mysql://localhost:3306/nxin_etl_2024_001_mybatis?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&autoReconnect=true&failOverReadOnly=false&maxReconnects=10','com.mysql.cj.jdbc.Driver','1','2024-04-10 23:31:35','jesse.18@163.com','jesse.18@163.com','2024-04-10 23:36:59',1);
 /*!40000 ALTER TABLE `basic_datasource` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -270,7 +272,7 @@ CREATE TABLE `basic_project` (
   `modify_time` datetime DEFAULT NULL,
   `version` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -295,7 +297,7 @@ CREATE TABLE `basic_project_user` (
   `project_id` bigint NOT NULL,
   `user_id` bigint NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -334,7 +336,7 @@ CREATE TABLE `kettle_running_process` (
   PRIMARY KEY (`id`),
   KEY `idx_shell_id` (`shell_id`),
   KEY `idx_shell_publish_id` (`shell_publish_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1645 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -372,7 +374,7 @@ CREATE TABLE `kettle_shell` (
   `md5_xml` varchar(255) DEFAULT NULL COMMENT '脚本文件md5值',
   PRIMARY KEY (`id`),
   UNIQUE KEY `unq_name_parent_id` (`name`,`parent_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -413,7 +415,7 @@ CREATE TABLE `kettle_shell_publish` (
   `md5_xml` varchar(255) DEFAULT NULL COMMENT '脚本md5值',
   PRIMARY KEY (`id`),
   KEY `idx_shell_id` (`shell_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
