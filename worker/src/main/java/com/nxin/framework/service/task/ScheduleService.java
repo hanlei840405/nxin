@@ -1,21 +1,18 @@
 package com.nxin.framework.service.task;
 
 import com.alibaba.fastjson2.JSON;
-import com.nxin.framework.dto.CronTriggerDto;
-import com.nxin.framework.dto.ResponseDto;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.interfaces.ScheduleService;
+import com.nxin.framework.request.TaskReq;
+import com.nxin.framework.response.CronTriggerRes;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.dubbo.config.annotation.DubboService;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LoggingObjectType;
 import org.pentaho.di.core.logging.SimpleLoggingObject;
-import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
@@ -24,14 +21,15 @@ import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
-@DubboService
-public class ScheduleServiceImpl implements ScheduleService {
+@Service
+public class ScheduleService {
     @Autowired
     private Scheduler scheduler;
     @Autowired
@@ -43,30 +41,27 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Value("${production.dir}")
     private String productionDir;
 
-    @Override
-    public ResponseDto createBatch(String group, String id, String description, String cron, Integer misfire, String data) {
-        CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
-        if (misfire == -1) {
+    public Date createJob(TaskReq taskReq) throws SchedulerException {
+        CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(taskReq.getCron());
+        if (taskReq.getMisfire() == -1) {
             cronScheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
-        } else if (misfire == 1) {
+        } else if (taskReq.hashCode() == 1) {
             cronScheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
         } else {
             cronScheduleBuilder.withMisfireHandlingInstructionDoNothing();
         }
-        CronTrigger kettleTrigger = TriggerBuilder.newTrigger().withIdentity(id, group).withDescription(description).withSchedule(cronScheduleBuilder).build();
-        JobDetail jobDetail = JobBuilder.newJob(EtlTaskComp.class).withIdentity(id, group).withDescription(description).setJobData(new JobDataMap(JSON.parseObject(data))).build();
+        CronTrigger kettleTrigger = TriggerBuilder.newTrigger().withIdentity(taskReq.getId(), taskReq.getGroup()).withDescription(taskReq.getDescription()).withSchedule(cronScheduleBuilder).build();
+        JobDetail jobDetail = JobBuilder.newJob(EtlTaskComp.class).withIdentity(taskReq.getId(), taskReq.getGroup()).withDescription(taskReq.getDescription()).setJobData(new JobDataMap(JSON.parseObject(taskReq.getData()))).build();
         try {
-            scheduler.scheduleJob(jobDetail, kettleTrigger);
-            return ResponseDto.builder().success(true).build();
+            return scheduler.scheduleJob(jobDetail, kettleTrigger);
         } catch (SchedulerException e) {
             log.error(e.getMessage(), e);
-            return ResponseDto.builder().success(false).message(e.getMessage()).build();
+            throw e;
         }
     }
 
-    @Override
-    public ResponseDto<List<CronTriggerDto>> findAllCronTrigger(List<String> groupList) {
-        List<CronTriggerDto> cronTriggerDtoList = new ArrayList<>();
+    public List<CronTriggerRes> findAllCronTrigger(List<String> groupList) {
+        List<CronTriggerRes> cronTriggerResList = new ArrayList<>();
         for (String group : groupList) {
             GroupMatcher<JobKey> jobKeyGroupMatcher = GroupMatcher.jobGroupEquals(group);
             try {
@@ -76,94 +71,88 @@ public class ScheduleServiceImpl implements ScheduleService {
                     List<CronTrigger> triggers = (List<CronTrigger>) scheduler.getTriggersOfJob(jobKey);
                     if (!triggers.isEmpty()) {
                         String state = scheduler.getTriggerState(triggers.get(0).getKey()).name();
-                        CronTriggerDto cronTriggerDto = new CronTriggerDto();
-                        cronTriggerDto.setTriggerKey(triggers.get(0).getKey().toString());
-                        cronTriggerDto.setCron(triggers.get(0).getCronExpression());
-                        cronTriggerDto.setDescription(triggers.get(0).getDescription());
-                        cronTriggerDto.setMisfire(triggers.get(0).getMisfireInstruction());
-                        cronTriggerDto.setName(triggers.get(0).getDescription());
-                        cronTriggerDto.setState(state);
-                        cronTriggerDto.setNextFireTime(triggers.get(0).getNextFireTime());
-                        cronTriggerDto.setPreviousFireTime(triggers.get(0).getPreviousFireTime());
-                        cronTriggerDto.setStartTime(triggers.get(0).getStartTime());
-                        cronTriggerDto.setShellId(Long.valueOf(shellId));
-                        cronTriggerDtoList.add(cronTriggerDto);
+                        CronTriggerRes cronTriggerRes = new CronTriggerRes();
+                        cronTriggerRes.setTriggerKey(triggers.get(0).getKey().toString());
+                        cronTriggerRes.setCron(triggers.get(0).getCronExpression());
+                        cronTriggerRes.setDescription(triggers.get(0).getDescription());
+                        cronTriggerRes.setMisfire(triggers.get(0).getMisfireInstruction());
+                        cronTriggerRes.setName(triggers.get(0).getDescription());
+                        cronTriggerRes.setState(state);
+                        cronTriggerRes.setNextFireTime(triggers.get(0).getNextFireTime());
+                        cronTriggerRes.setPreviousFireTime(triggers.get(0).getPreviousFireTime());
+                        cronTriggerRes.setStartTime(triggers.get(0).getStartTime());
+                        cronTriggerRes.setShellId(Long.valueOf(shellId));
+                        cronTriggerResList.add(cronTriggerRes);
                     }
                 }
             } catch (SchedulerException e) {
                 log.error(e.getMessage(), e);
-                return ResponseDto.<List<CronTriggerDto>>builder().success(false).message(e.getMessage()).build();
+                return Collections.emptyList();
             }
         }
-        return ResponseDto.<List<CronTriggerDto>>builder().success(true).data(cronTriggerDtoList).build();
+        return cronTriggerResList;
     }
 
-    @Override
-    public ResponseDto pause(String group, String id) {
+    public boolean pause(TaskReq taskReq) {
         try {
-            scheduler.pauseJob(JobKey.jobKey(id, group));
-            scheduler.pauseTrigger(TriggerKey.triggerKey(id, group));
-            return ResponseDto.builder().success(true).build();
+            scheduler.pauseJob(JobKey.jobKey(taskReq.getId(), taskReq.getGroup()));
+            scheduler.pauseTrigger(TriggerKey.triggerKey(taskReq.getId(), taskReq.getGroup()));
+            return true;
         } catch (SchedulerException e) {
             log.error(e.getMessage(), e);
-            return ResponseDto.builder().success(false).message(e.getMessage()).build();
+            return false;
         }
     }
 
-    @Override
-    public ResponseDto resume(String group, String id) {
+    public boolean resume(TaskReq taskReq) {
         try {
-            scheduler.resumeJob(JobKey.jobKey(id, group));
-            scheduler.resumeTrigger(TriggerKey.triggerKey(id, group));
-            return ResponseDto.builder().success(true).build();
+            scheduler.resumeJob(JobKey.jobKey(taskReq.getId(), taskReq.getGroup()));
+            scheduler.resumeTrigger(TriggerKey.triggerKey(taskReq.getId(), taskReq.getGroup()));
+            return true;
         } catch (SchedulerException e) {
             log.error(e.getMessage(), e);
-            return ResponseDto.builder().success(false).message(e.getMessage()).build();
+            return false;
         }
     }
 
-    @Override
-    public ResponseDto stop(String group, String id) {
+    public boolean stop(TaskReq taskReq) {
         try {
-            if (scheduler.checkExists(TriggerKey.triggerKey(id, group))) {
-                TriggerKey triggerKey = TriggerKey.triggerKey(id, group);
+            if (scheduler.checkExists(TriggerKey.triggerKey(taskReq.getId(), taskReq.getGroup()))) {
+                TriggerKey triggerKey = TriggerKey.triggerKey(taskReq.getId(), taskReq.getGroup());
                 scheduler.pauseTrigger(triggerKey);
                 scheduler.unscheduleJob(triggerKey);
-                if (scheduler.checkExists(JobKey.jobKey(id, group))) {
-                    scheduler.deleteJob(JobKey.jobKey(id, group));
+                if (scheduler.checkExists(JobKey.jobKey(taskReq.getId(), taskReq.getGroup()))) {
+                    scheduler.deleteJob(JobKey.jobKey(taskReq.getId(), taskReq.getGroup()));
                 }
             }
-            return ResponseDto.builder().success(true).build();
+            return true;
         } catch (SchedulerException e) {
             log.error(e.getMessage(), e);
-            return ResponseDto.builder().success(false).message(e.getMessage()).build();
+            return false;
         }
     }
 
-    @Override
-    public ResponseDto modify(String group, String id, String cron, Integer misfire) {
+    public Date modify(TaskReq taskReq) throws SchedulerException {
         try {
-            TriggerKey triggerKey = TriggerKey.triggerKey(id, group);
+            TriggerKey triggerKey = TriggerKey.triggerKey(taskReq.getId(), taskReq.getGroup());
             CronTrigger cronTrigger = (CronTrigger) scheduler.getTrigger(triggerKey);
-            CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cron);
-            if (misfire == -1) {
+            CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(taskReq.getCron());
+            if (taskReq.getMisfire() == -1) {
                 cronScheduleBuilder.withMisfireHandlingInstructionIgnoreMisfires();
-            } else if (misfire == 1) {
+            } else if (taskReq.getMisfire() == 1) {
                 cronScheduleBuilder.withMisfireHandlingInstructionFireAndProceed();
             } else {
                 cronScheduleBuilder.withMisfireHandlingInstructionDoNothing();
             }
             cronTrigger = cronTrigger.getTriggerBuilder().withIdentity(triggerKey).withDescription(cronTrigger.getDescription()).withSchedule(cronScheduleBuilder).build();
-            scheduler.rescheduleJob(triggerKey, cronTrigger);
-            return ResponseDto.builder().success(true).build();
+            return scheduler.rescheduleJob(triggerKey, cronTrigger);
         } catch (SchedulerException e) {
             log.error(e.getMessage(), e);
-            return ResponseDto.builder().success(false).message(e.getMessage()).build();
+            throw e;
         }
     }
 
-    @Override
-    public ResponseDto createStreaming(String shellPathMap) {
+    public boolean createStreaming(String shellPathMap) {
         Map<String, Object> jobDataMap = JSON.parseObject(shellPathMap);
         Number id = (Number) jobDataMap.get("id");
         Number shellId = (Number) jobDataMap.get("shellId");
@@ -188,7 +177,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 JobMeta jobMeta = new JobMeta(entryJobPath, null);
                 JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
                 spoonLoggingObject.setLogLevel(jobExecutionConfiguration.getLogLevel());
-                Job job = new Job(null, jobMeta, spoonLoggingObject);
+                org.pentaho.di.job.Job job = new org.pentaho.di.job.Job(null, jobMeta, spoonLoggingObject);
                 job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                 job.setGatheringMetrics(true);
                 job.start();
@@ -213,10 +202,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 taskHistory.setStatus(Constant.ACTIVE);
                 taskHistoryService.save(taskHistory);
             }
-            return ResponseDto.builder().success(true).build();
+            return true;
         } catch (KettleXMLException e) {
             log.error(e.getMessage(), e);
-            return ResponseDto.builder().success(false).build();
+            return false;
         }
     }
 }

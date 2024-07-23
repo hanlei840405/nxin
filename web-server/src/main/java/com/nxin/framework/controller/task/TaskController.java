@@ -1,11 +1,10 @@
 package com.nxin.framework.controller.task;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.task.TaskHistoryConverter;
-import com.nxin.framework.dto.CronTriggerDto;
 import com.nxin.framework.dto.CrudDto;
-import com.nxin.framework.dto.ResponseDto;
 import com.nxin.framework.dto.kettle.ShellPublishDto;
 import com.nxin.framework.dto.task.TaskHistoryDto;
 import com.nxin.framework.entity.auth.User;
@@ -14,7 +13,9 @@ import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.interfaces.ScheduleService;
+import com.nxin.framework.request.QueryReq;
+import com.nxin.framework.request.TaskReq;
+import com.nxin.framework.response.CronTriggerRes;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.service.kettle.LogService;
@@ -26,12 +27,15 @@ import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.task.TaskHistoryVo;
 import com.nxin.framework.vo.task.TaskVo;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -46,8 +50,6 @@ import java.util.stream.Collectors;
 public class TaskController {
     @Autowired
     private UserService userService;
-    @DubboReference
-    private ScheduleService scheduleService;
     @Autowired
     private ShellService shellService;
     @Autowired
@@ -60,6 +62,16 @@ public class TaskController {
     private ProjectService projectService;
     @Autowired
     private RunningProcessService runningProcessService;
+    @Autowired
+    private RestTemplate restTemplate;
+    @Value("${worker.schedule-find-all-cron-trigger-uri}")
+    private String findAllCronTriggerUri;
+    @Value("${worker.schedule-pause-uri}")
+    private String pauseUri;
+    @Value("${worker.schedule-resume-uri}")
+    private String resumeUri;
+    @Value("${worker.schedule-modify-uri}")
+    private String modifyUri;
 
     private BeanConverter<TaskHistoryVo, TaskHistory> taskHistoryConverter = new TaskHistoryConverter();
 
@@ -68,32 +80,30 @@ public class TaskController {
         User user = userService.one(LoginUtils.getUsername());
         List<Project> projects = projectService.search(null, user.getId());
         if (!projects.isEmpty()) {
-            ResponseDto<List<CronTriggerDto>> responseDto = scheduleService.findAllCronTrigger(projects.stream().map(item -> String.valueOf(item.getId())).collect(Collectors.toList()));
+            QueryReq queryReq = new QueryReq();
+            queryReq.setGroupList(projects.stream().map(item -> String.valueOf(item.getId())).collect(Collectors.toList()));
+            HttpEntity<QueryReq> requestEntity = new HttpEntity<>(queryReq);
+            ResponseEntity<String> response = restTemplate.postForEntity(findAllCronTriggerUri, requestEntity, String.class);
             PageVo<TaskVo> taskVoPageVo;
-            if (responseDto.isSuccess()) {
-                if (responseDto.getData().isEmpty()) {
-                    taskVoPageVo = new PageVo<>(0, Collections.EMPTY_LIST);
-                } else {
-                    List<CronTriggerDto> cronTriggerDtoList = responseDto.getData();
-                    Map<Long, CronTriggerDto> shellMap = cronTriggerDtoList.stream().collect(Collectors.toMap(CronTriggerDto::getShellId, item -> item));
-                    IPage<ShellPublish> shellPublishIPage = shellPublishService.online(crudDto.getPayload(), Constant.BATCH, shellMap.keySet(), crudDto.getPageNo(), crudDto.getPageSize());
-                    List<TaskVo> taskVos = shellPublishIPage.getRecords().stream().map(shellPublish -> {
-                        TaskVo taskVo = new TaskVo();
-                        taskVo.setName(shellPublish.getName());
-                        taskVo.setDescription(shellPublish.getDescription());
-                        CronTriggerDto cronTriggerDto = shellMap.get(shellPublish.getId());
-                        taskVo.setCron(cronTriggerDto.getCron());
-                        taskVo.setNextFireTime(cronTriggerDto.getNextFireTime());
-                        taskVo.setPreviousFireTime(cronTriggerDto.getPreviousFireTime());
-                        taskVo.setStartTime(cronTriggerDto.getStartTime());
-                        taskVo.setState(cronTriggerDto.getState());
-                        taskVo.setMisfire(cronTriggerDto.getMisfire());
-                        taskVo.setId(shellPublish.getId());
-                        return taskVo;
-                    }).collect(Collectors.toList());
-                    taskVoPageVo = new PageVo<>(shellPublishIPage.getTotal(), taskVos);
-                }
-                return ResponseEntity.ok(taskVoPageVo);
+            if (response.getStatusCode().equals(HttpStatus.OK)) {
+                List<CronTriggerRes> cronTriggerResList = JSON.parseArray(response.getBody(), CronTriggerRes.class);
+                Map<Long, CronTriggerRes> shellMap = cronTriggerResList.stream().collect(Collectors.toMap(CronTriggerRes::getShellId, item -> item));
+                IPage<ShellPublish> shellPublishIPage = shellPublishService.online(crudDto.getPayload(), Constant.BATCH, shellMap.keySet(), crudDto.getPageNo(), crudDto.getPageSize());
+                List<TaskVo> taskVos = shellPublishIPage.getRecords().stream().map(shellPublish -> {
+                    TaskVo taskVo = new TaskVo();
+                    taskVo.setName(shellPublish.getName());
+                    taskVo.setDescription(shellPublish.getDescription());
+                    CronTriggerRes cronTriggerRes = shellMap.get(shellPublish.getId());
+                    taskVo.setCron(cronTriggerRes.getCron());
+                    taskVo.setNextFireTime(cronTriggerRes.getNextFireTime());
+                    taskVo.setPreviousFireTime(cronTriggerRes.getPreviousFireTime());
+                    taskVo.setStartTime(cronTriggerRes.getStartTime());
+                    taskVo.setState(cronTriggerRes.getState());
+                    taskVo.setMisfire(cronTriggerRes.getMisfire());
+                    taskVo.setId(shellPublish.getId());
+                    return taskVo;
+                }).collect(Collectors.toList());
+                taskVoPageVo = new PageVo<>(shellPublishIPage.getTotal(), taskVos);
             } else {
                 taskVoPageVo = new PageVo<>(0, Collections.EMPTY_LIST);
             }
@@ -150,8 +160,12 @@ public class TaskController {
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-                ResponseDto responseDto = scheduleService.pause(persisted.getProjectId().toString(), persisted.getTaskId());
-                if (responseDto.isSuccess()) {
+                TaskReq taskReq = new TaskReq();
+                taskReq.setGroup(persisted.getProjectId().toString());
+                taskReq.setId(persisted.getTaskId());
+                HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+                ResponseEntity<Boolean> response = restTemplate.postForEntity(pauseUri, requestEntity, Boolean.class);
+                if (response.getStatusCode().equals(HttpStatus.OK)) {
                     return ResponseEntity.ok().build();
                 } else {
                     return ResponseEntity.status(Constant.EXCEPTION_ADD_SCHEDULE).build();
@@ -168,8 +182,12 @@ public class TaskController {
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-                ResponseDto responseDto = scheduleService.resume(persisted.getProjectId().toString(), persisted.getTaskId());
-                if (responseDto.isSuccess()) {
+                TaskReq taskReq = new TaskReq();
+                taskReq.setGroup(persisted.getProjectId().toString());
+                taskReq.setId(persisted.getTaskId());
+                HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+                ResponseEntity<Boolean> response = restTemplate.postForEntity(resumeUri, requestEntity, Boolean.class);
+                if (response.getStatusCode().equals(HttpStatus.OK)) {
                     return ResponseEntity.ok().build();
                 } else {
                     return ResponseEntity.status(Constant.EXCEPTION_ADD_SCHEDULE).build();
@@ -200,8 +218,18 @@ public class TaskController {
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-                scheduleService.modify(persisted.getProjectId().toString(), persisted.getTaskId(), shellPublishDto.getCron(), shellPublishDto.getMisfire());
-                return ResponseEntity.ok().build();
+                TaskReq taskReq = new TaskReq();
+                taskReq.setGroup(persisted.getProjectId().toString());
+                taskReq.setId(persisted.getTaskId());
+                taskReq.setCron(shellPublishDto.getCron());
+                taskReq.setMisfire(shellPublishDto.getMisfire());
+                HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+                ResponseEntity<Date> response = restTemplate.postForEntity(modifyUri, requestEntity, Date.class);
+                if (response.getStatusCode().equals(HttpStatus.OK)) {
+                    return ResponseEntity.ok().build();
+                } else {
+                    return ResponseEntity.status(Constant.EXCEPTION_ADD_SCHEDULE).build();
+                }
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }

@@ -30,6 +30,8 @@ public class BeanConfig {
 
     @Autowired
     private NxinMetaObjectHandler nxinMetaObjectHandler;
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
 
     @Bean
     public Executor taskExecutor() {
@@ -67,10 +69,9 @@ public class BeanConfig {
     }
 
     @Bean
-    RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory, MessageListenerAdapter listenerAdapter) {
-
+    RedisMessageListenerContainer container( MessageListenerAdapter listenerAdapter) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
+        container.setConnectionFactory(redisConnectionFactory);
         container.addMessageListener(listenerAdapter, new PatternTopic(Constant.TOPIC_TASK_SHUTDOWN));
         return container;
     }

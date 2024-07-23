@@ -1,6 +1,5 @@
 package com.nxin.framework;
 
-import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.mybatis.spring.annotation.MapperScan;
 import org.pentaho.big.data.kettle.plugins.kafka.KafkaConsumerInputMeta;
 import org.pentaho.big.data.kettle.plugins.kafka.KafkaProducerOutputMeta;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Collections;
 
-@EnableDubbo
 @EnableTransactionManagement
 @EnableScheduling
 @EnableAspectJAutoProxy(proxyTargetClass = true)
