@@ -1,4 +1,4 @@
-package com.nxin.framework.dto;
+package com.nxin.framework.response;
 
 import lombok.Data;
 
@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Data
-public class CronTriggerDto implements Serializable {
+public class CronTriggerRes implements Serializable {
 
     private String triggerKey;
     private String name;

@@ -113,11 +113,14 @@ springfox:
       enabled: true
 init:
   password: 123456
-ftp:
+vfs:
   lang: zh
   prefix-url: ftp://admin:admin@127.0.0.1:21000/
-dubbo:
-  application:
-    name: web-server
-  registry:
-    address: redis://127.0.0.1:6379
+worker:
+  schedule-create-job-uri: http://127.0.0.1:8001/schedule/create
+  schedule-find-all-cron-trigger-uri: http://127.0.0.1:8001/schedule/findAllCronTrigger
+  schedule-pause-uri: http://127.0.0.1:8001/schedule/pause
+  schedule-stop-uri: http://127.0.0.1:8001/schedule/stop
+  schedule-resume-uri: http://127.0.0.1:8001/schedule/resume
+  schedule-modify-uri: http://127.0.0.1:8001/schedule/modify
+  schedule-create-streaming-uri: http://127.0.0.1:8001/schedule/createStreaming

@@ -25,9 +25,9 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class FileService {
-    @Value("${ftp.lang}")
+    @Value("${vfs.lang}")
     private String lang;
-    @Value("${ftp.prefix-url}")
+    @Value("${vfs.prefix-url}")
     private String prefixUrl;
 
     public void createEnv(String env) {

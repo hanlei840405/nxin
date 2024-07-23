@@ -18,11 +18,8 @@ ftp服务：需连接ftp服务器，用于存放etl运行的脚本，worker执�
 
 docker-compose参见目录中的ftp-docker-compose.yml文件
 
-启动顺序：
-
-1、启动worker
-
-2、启动web-server
+web-server:用于设计转换与任务的服务
+worker:用于执行web-server端发布的Job服务
 
 
 作者<br/>

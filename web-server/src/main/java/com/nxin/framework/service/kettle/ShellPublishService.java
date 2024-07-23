@@ -5,22 +5,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.ImmutableMap;
-import com.nxin.framework.dto.ResponseDto;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.exception.FileNotExistedException;
-import com.nxin.framework.exception.RecordsNotMatchException;
-import com.nxin.framework.exception.UnExecutableException;
-import com.nxin.framework.interfaces.ScheduleService;
+import com.nxin.framework.exception.*;
 import com.nxin.framework.mapper.kettle.ShellPublishMapper;
+import com.nxin.framework.request.StreamingReq;
+import com.nxin.framework.request.TaskReq;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.task.TaskHistoryService;
 import com.nxin.framework.utils.LoginUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.json.simple.JSONObject;
 import org.pentaho.di.base.AbstractMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -34,9 +31,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +52,12 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     private String devDir;
     @Value("${etl.log.send-delay}")
     private Integer sendDelay = 5;
+    @Value("${worker.schedule-create-job-uri}")
+    private String createJobUri;
+    @Value("${worker.schedule-stop-uri}")
+    private String stopUri;
+    @Value("${worker.schedule-create-streaming-uri}")
+    private String createStreamingUri;
     @Autowired
     private ShellPublishMapper shellPublishMapper;
     @Autowired
@@ -66,10 +73,10 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     private FileService fileService;
     @Autowired
     private ShellService shellService;
-    @DubboReference
-    private ScheduleService scheduleService;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private RestTemplate restTemplate;
 
     public ShellPublish one(Long id) {
         return shellPublishMapper.selectById(id);
@@ -203,9 +210,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                 deployedShellPublishes.addAll(this.listByIds(referenceIds));
             }
             if (StringUtils.hasLength(deployedShellPublish.getTaskId())) {
-                ResponseDto responseDto = scheduleService.stop(shellPublish.getProjectId().toString(), deployedShellPublish.getTaskId());
-                if (!responseDto.isSuccess()) {
-                    throw new RuntimeException(responseDto.getMessage());
+                TaskReq taskReq = new TaskReq();
+                taskReq.setGroup(shellPublish.getProjectId().toString());
+                taskReq.setId(deployedShellPublish.getTaskId());
+                HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+                ResponseEntity<Boolean> response = restTemplate.postForEntity(stopUri, requestEntity, Boolean.class);
+                if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                    throw new StopJobException();
                 }
             }
             deployedShellPublishes.add(deployedShellPublish);
@@ -256,7 +267,18 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
             jsonObject.put("shellId", shellPublish.getShellId().toString());
             jsonObject.put("projectId", shellPublish.getProjectId().toString());
-            scheduleService.createBatch(shellPublish.getProjectId().toString(), taskId, shellPublish.getName(), cron, misfire, jsonObject.toJSONString());
+            TaskReq taskReq = new TaskReq();
+            taskReq.setCron(cron);
+            taskReq.setDescription(shellPublish.getName());
+            taskReq.setId(taskId);
+            taskReq.setGroup(shellPublish.getProjectId().toString());
+            taskReq.setMisfire(misfire);
+            taskReq.setData(jsonObject.toJSONString());
+            HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+            ResponseEntity<Date> response = restTemplate.postForEntity(createJobUri, requestEntity, Date.class);
+            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                throw new CreateJobException();
+            }
         }
     }
 
@@ -320,9 +342,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
             jsonObject.put("shellId", shellPublish.getShellId());
             jsonObject.put("projectId", shellPublish.getProjectId());
-            ResponseDto responseDto = scheduleService.createStreaming(jsonObject.toJSONString());
-            if (!responseDto.isSuccess()) {
-                log.info(responseDto.getMessage());
+
+            StreamingReq streamingReq = new StreamingReq();
+            streamingReq.setPayload(jsonObject.toJSONString());
+            HttpEntity<StreamingReq> requestEntity = new HttpEntity<>(streamingReq);
+            ResponseEntity<Boolean> response = restTemplate.postForEntity(createStreamingUri, requestEntity, Boolean.class);
+            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                throw new CreateJobException();
             }
         }
 //        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
@@ -499,9 +525,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     @Transactional
     public void stop(ShellPublish shellPublish) {
         if (Constant.BATCH.equals(shellPublish.getStreaming())) {
-            ResponseDto responseDto = scheduleService.stop(shellPublish.getProjectId().toString(), shellPublish.getTaskId());
-            if (!responseDto.isSuccess()) {
-                throw new RuntimeException(responseDto.getMessage());
+            TaskReq taskReq = new TaskReq();
+            taskReq.setGroup(shellPublish.getProjectId().toString());
+            taskReq.setId(shellPublish.getTaskId());
+            HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+            ResponseEntity<Boolean> response = restTemplate.postForEntity(stopUri, requestEntity, Boolean.class);
+            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                throw new StopJobException();
             }
         } else {
             RunningProcess runningProcess = runningProcessService.instanceId(shellPublish.getTaskId());

@@ -7,6 +7,15 @@ import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInt
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.TopicShutdownListener;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +25,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,6 +40,8 @@ public class BeanConfig {
 
     @Autowired
     private NxinMetaObjectHandler nxinMetaObjectHandler;
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
 
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @Bean
@@ -65,7 +78,35 @@ public class BeanConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        return new RestTemplate(clientHttpRequestFactory());
+    }
+
+    @Bean
+    public ClientHttpRequestFactory clientHttpRequestFactory() {
+        return new HttpComponentsClientHttpRequestFactory(httpClient());
+    }
+
+    @Bean
+    public HttpClient httpClient() {
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", SSLConnectionSocketFactory.getSocketFactory())
+                .build();
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(registry);
+        //设置整个连接池最大连接数
+        connectionManager.setMaxTotal(400);
+
+        //路由是对maxTotal的细分
+        connectionManager.setDefaultMaxPerRoute(100);
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setSocketTimeout(1000 * 60 * 3)  //返回数据的超时时间,单位是毫秒： 这里设置为3分钟
+                .setConnectTimeout(1000 * 60 * 5) //连接上服务器的超时时间 单位是毫秒： 这里设置为5分钟
+                .setConnectionRequestTimeout(1000) //从连接池中获取连接的超时时间
+                .build();
+        return HttpClientBuilder.create()
+                .setDefaultRequestConfig(requestConfig)
+                .setConnectionManager(connectionManager)
+                .build();
     }
 
     @Bean
@@ -84,10 +125,9 @@ public class BeanConfig {
     }
 
     @Bean
-    RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory, MessageListenerAdapter listenerAdapter) {
-
+    RedisMessageListenerContainer container(MessageListenerAdapter listenerAdapter) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
+        container.setConnectionFactory(redisConnectionFactory);
         container.addMessageListener(listenerAdapter, new PatternTopic(Constant.TOPIC_DESIGNER_SHUTDOWN));
         return container;
     }
