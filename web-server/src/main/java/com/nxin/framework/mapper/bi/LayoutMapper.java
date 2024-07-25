@@ -1,7 +1,7 @@
-package com.nxin.framework.mapper.analysis;
+package com.nxin.framework.mapper.bi;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nxin.framework.entity.analysis.Layout;
+import com.nxin.framework.entity.bi.Layout;
 
 /**
  * <p>

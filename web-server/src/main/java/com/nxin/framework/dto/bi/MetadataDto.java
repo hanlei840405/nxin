@@ -1,4 +1,4 @@
-package com.nxin.framework.dto.analysis;
+package com.nxin.framework.dto.bi;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;
@@ -10,7 +10,6 @@ import java.util.Date;
 @Data
 public class MetadataDto extends CrudDto implements Serializable {
 
-    private Long id;
     private String columnCode;
     private String columnName;
     private String columnCategory;
@@ -20,10 +19,4 @@ public class MetadataDto extends CrudDto implements Serializable {
     private boolean notNull;
     private boolean autoIncrement;
     private Long modelId;
-    private String status;
-    private Date createTime;
-    private Date modifyTime;
-    private String creator;
-    private String modifier;
-    private int version;
 }

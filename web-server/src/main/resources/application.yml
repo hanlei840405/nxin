@@ -68,8 +68,10 @@ spring:
     forgotSubject: 新恩数造找回密码
   redis:
     host: 127.0.0.1
-    port: 6379
+    port: 49153
     database: 0
+    username: default
+    password: redispw
   data:
     redis:
       repositories:

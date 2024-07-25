@@ -1,6 +1,6 @@
 package com.nxin.framework.event;
 
-import com.nxin.framework.entity.analysis.Layout;
+import com.nxin.framework.entity.bi.Layout;
 import com.nxin.framework.entity.auth.User;
 import org.springframework.context.ApplicationEvent;
 

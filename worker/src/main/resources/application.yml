@@ -63,6 +63,16 @@ spring:
             threadCount: 10
             threadPriority: 5
             threadsInheritContextClassLoaderOfInitializingThread: true
+  redis:
+    host: 127.0.0.1
+    port: 49153
+    database: 0
+    username: default
+    password: redispw
+  data:
+    redis:
+      repositories:
+        enabled: false
 mybatis-plus:
   mapper-locations: classpath:/mappers/**/*.xml
   configuration:

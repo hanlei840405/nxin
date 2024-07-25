@@ -1,6 +1,6 @@
 package com.nxin.framework.event.listener;
 
-import com.nxin.framework.entity.analysis.Layout;
+import com.nxin.framework.entity.bi.Layout;
 import com.nxin.framework.entity.auth.Privilege;
 import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.enums.Constant;

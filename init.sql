@@ -16,39 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `analysis_layout`
---
-
-DROP TABLE IF EXISTS `analysis_layout`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `analysis_layout` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `code` varchar(255) DEFAULT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `resource_code` varchar(255) DEFAULT '' COMMENT '资源码',
-  `arrange` text,
-  `description` varchar(255) DEFAULT NULL,
-  `creator` varchar(255) DEFAULT NULL,
-  `modifier` varchar(255) DEFAULT NULL,
-  `create_time` datetime DEFAULT NULL,
-  `modify_time` datetime DEFAULT NULL,
-  `status` varchar(255) DEFAULT NULL,
-  `version` int NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `analysis_layout`
---
-
-LOCK TABLES `analysis_layout` WRITE;
-/*!40000 ALTER TABLE `analysis_layout` DISABLE KEYS */;
-/*!40000 ALTER TABLE `analysis_layout` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `auth_privilege`
 --
 
@@ -135,7 +102,7 @@ CREATE TABLE `auth_resource` (
 
 LOCK TABLES `auth_resource` WRITE;
 /*!40000 ALTER TABLE `auth_resource` DISABLE KEYS */;
-INSERT INTO `auth_resource` VALUES (1,'ROOT','ROOT','ROOT','0','1',NULL,NULL,NULL,NULL,1),(2,'HOME','首页','HOME','1','1',NULL,NULL,NULL,NULL,0),(3,'PROJECT','工程管理','BASIC','1','1',NULL,NULL,NULL,NULL,0),(4,'DATASOURCE','数据源管理','BASIC','1','1',NULL,NULL,NULL,NULL,0),(5,'ATTACHMENT','下载中心','BASIC','1','1',NULL,NULL,NULL,NULL,0),(6,'DESIGNER','在线设计','ETL','1','1',NULL,NULL,NULL,NULL,0),(7,'PUBLISH','脚本发布','ETL','1','1',NULL,NULL,NULL,NULL,0),(8,'BATCH','批处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(9,'STREAMING','流处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(10,'PROCESS','进程管理','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(11,'LOG','日志跟踪','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(12,'MODEL','模型设计','REPORT','1','1',NULL,NULL,NULL,NULL,0),(13,'REPORT','统计设置','REPORT','1','1',NULL,NULL,NULL,NULL,0),(14,'LAYOUT','布局设置','REPORT','1','1',NULL,NULL,NULL,NULL,0),(15,'MEMBER','成员管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(16,'USER','用户管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(17,'METRICS','集群性能','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(18,'PRIVILEGE','权限管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(21,'9','[9]第二组','PROJECT','2','0','2024-01-17 00:58:46','jesse.18@163.com','jesse.18@163.com','2024-01-17 00:58:46',1),(22,'10','[10]第三组','PROJECT','2','1','2024-01-17 01:00:12','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:00:12',1),(23,'11','[11]第四组','PROJECT','2','1','2024-01-17 01:03:45','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:03:45',1),(24,'12','[12]第五组','PROJECT','2','1','2024-01-22 20:17:30','jesse.18@163.com','jesse.18@163.com','2024-01-22 20:17:30',1);
+INSERT INTO `auth_resource` VALUES (1,'ROOT','ROOT','ROOT','0','1',NULL,NULL,NULL,NULL,1),(2,'HOME','首页','HOME','1','1',NULL,NULL,NULL,NULL,0),(3,'PROJECT','工程管理','BASIC','1','1',NULL,NULL,NULL,NULL,0),(4,'DATASOURCE','数据源管理','BASIC','1','1',NULL,NULL,NULL,NULL,0),(5,'ATTACHMENT','下载中心','BASIC','1','1',NULL,NULL,NULL,NULL,0),(6,'DESIGNER','在线设计','ETL','1','1',NULL,NULL,NULL,NULL,0),(7,'PUBLISH','脚本发布','ETL','1','1',NULL,NULL,NULL,NULL,0),(8,'BATCH','批处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(9,'STREAMING','流处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(10,'PROCESS','进程管理','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(11,'LOG','日志跟踪','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(12,'MODEL','模型设计','BI','1','1',NULL,NULL,NULL,NULL,0),(13,'REPORT','统计设置','BI','1','1',NULL,NULL,NULL,NULL,0),(14,'LAYOUT','布局设置','BI','1','1',NULL,NULL,NULL,NULL,0),(15,'MEMBER','成员管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(16,'USER','用户管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(17,'METRICS','集群性能','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(18,'PRIVILEGE','权限管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(21,'9','[9]第二组','PROJECT','2','0','2024-01-17 00:58:46','jesse.18@163.com','jesse.18@163.com','2024-01-17 00:58:46',1),(22,'10','[10]第三组','PROJECT','2','1','2024-01-17 01:00:12','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:00:12',1),(23,'11','[11]第四组','PROJECT','2','1','2024-01-17 01:03:45','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:03:45',1),(24,'12','[12]第五组','PROJECT','2','1','2024-01-22 20:17:30','jesse.18@163.com','jesse.18@163.com','2024-01-22 20:17:30',1);
 /*!40000 ALTER TABLE `auth_resource` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -708,3 +675,38 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2024-03-31 14:25:55
+CREATE TABLE `bi_metadata` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `auto_increment` bit(1) DEFAULT NULL,
+  `column_category` varchar(255) DEFAULT NULL,
+  `column_code` varchar(255) DEFAULT NULL,
+  `column_decimal` int DEFAULT NULL,
+  `column_length` int DEFAULT NULL,
+  `column_name` varchar(255) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `creator` varchar(255) DEFAULT NULL,
+  `modifier` varchar(255) DEFAULT NULL,
+  `modify_time` datetime DEFAULT NULL,
+  `not_null` bit(1) DEFAULT NULL,
+  `primary_key` bit(1) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `version` int NOT NULL,
+  `model_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `bi_model` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `datasource_id` bigint DEFAULT NULL,
+  `project_id` bigint DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `creator` varchar(255) DEFAULT NULL,
+  `modifier` varchar(255) DEFAULT NULL,
+  `modify_time` datetime DEFAULT NULL,
+  `version` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

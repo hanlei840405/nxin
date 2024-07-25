@@ -1,4 +1,4 @@
-package com.nxin.framework.entity.analysis;
+package com.nxin.framework.entity.bi;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;

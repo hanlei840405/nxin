@@ -1,4 +1,4 @@
-package com.nxin.framework.dto.analysis;
+package com.nxin.framework.dto.bi;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;

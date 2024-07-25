@@ -1,4 +1,4 @@
-package com.nxin.framework.dto.analysis;
+package com.nxin.framework.vo.bi;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;
@@ -6,7 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class LayoutDto extends CrudDto implements Serializable {
+public class LayoutVo extends CrudDto implements Serializable {
 
     private String code;
     private String name;

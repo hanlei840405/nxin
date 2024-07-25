@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 public class DatasourceConverter extends BeanConverter<DatasourceVo, Datasource> {
 
     @Override
-    public DatasourceVo convert(Datasource shell) {
+    public DatasourceVo convert(Datasource datasource) {
         DatasourceVo datasourceVo = new DatasourceVo();
-        BeanUtils.copyProperties(shell, datasourceVo);
+        BeanUtils.copyProperties(datasource, datasourceVo);
         return datasourceVo;
     }
 
