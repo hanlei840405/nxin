@@ -29,6 +29,7 @@ public class JobConvertFactory extends ConvertFactory {
         JobConvertChain jobHopChain = new JobHopChain();
         JobConvertChain endChain = new EndChain();
         jobEntryTransChain.setShellService(shellService);
+        jobEntryJobChain.setShellService(shellService);
         jobEntryFTPPutChain.setShellService(shellService);
         jobEntryFTPPutChain.getJobVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
         beginChain.setNext(jobEntrySpecialChain);

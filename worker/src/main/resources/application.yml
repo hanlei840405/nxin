@@ -111,7 +111,7 @@ springfox:
       enabled: true
 init:
   password: 123456
-ftp:
+vfs:
   lang: zh
   prefix-url: ftp://admin:admin@127.0.0.1:21000/
 dubbo:
