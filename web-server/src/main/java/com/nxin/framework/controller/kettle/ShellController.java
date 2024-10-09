@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -130,19 +131,22 @@ public class ShellController {
 
     @PostMapping("/moveShells/{parentId}")
     public ResponseEntity save(@PathVariable Long parentId, @RequestBody List<ShellDto> shellDtoList) {
-        Shell parent = shellService.one(parentId);
-        List<User> parentMembers = userService.findByResource(parent.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (parentMembers.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        Shell parent = null;
+        if (parentId > 0) {
+            parent = shellService.one(parentId);
+            List<User> parentMembers = userService.findByResource(parent.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+            if (parentMembers.stream().noneMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            }
         }
         List<Shell> shells = shellService.listByIds(shellDtoList.stream().map(ShellDto::getId).collect(Collectors.toList()));
         List<Long> idList = new ArrayList<>();
         for (Shell shell : shells) {
-            if (shell.getProjectId() != parent.getProjectId()) {
+            if (parent != null && !Objects.equals(shell.getProjectId(), parent.getProjectId())) {
                 return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
             List<User> members = userService.findByResource(shell.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-            if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
+            if (members.stream().noneMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
                 return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
             idList.add(shell.getId());

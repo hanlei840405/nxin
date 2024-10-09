@@ -162,7 +162,7 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
         UpdateWrapper<Shell> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq(Shell.STATUS_COLUMN, Constant.ACTIVE);
         updateWrapper.in(Shell.ID_COLUMN, idList);
-        updateWrapper.set(Shell.PARENT_ID_COLUMN, parentId);
+        updateWrapper.set(Shell.PARENT_ID_COLUMN, parentId > 0 ? parentId : null);
         shellMapper.update(updateWrapper);
     }
 
