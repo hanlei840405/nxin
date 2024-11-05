@@ -1,6 +1,7 @@
 package com.nxin.framework.converter.kettle.transform;
 
 import com.nxin.framework.converter.kettle.ConvertFactory;
+import com.nxin.framework.converter.kettle.transform.connect.MergeJoinChain;
 import com.nxin.framework.converter.kettle.transform.convert.*;
 import com.nxin.framework.converter.kettle.transform.input.*;
 import com.nxin.framework.converter.kettle.transform.lookup.DatabaseJoinChain;
@@ -84,6 +85,8 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertChain restChain = new RestChain();
         TransformConvertChain multiMergeJoinChain = new MultiMergeJoinChain();
         TransformConvertChain sortRowsChain = new SortRowsChain();
+        TransformConvertChain mergeJoinChain = new MergeJoinChain();
+        TransformConvertChain filterRowsChain = new FilterRowsChain();
         TransformConvertChain endChain = new EndChain();
         tableInputChain.setDatasourceService(datasourceService);
         tableOutputChain.setDatasourceService(datasourceService);
@@ -146,7 +149,9 @@ public class TransformConvertFactory extends ConvertFactory {
         restChain.setNext(multiMergeJoinChain);
         multiMergeJoinChain.setNext(sortRowsChain);
         sortRowsChain.setNext(transHopChain);
-        transHopChain.setNext(endChain);
+        transHopChain.setNext(mergeJoinChain);
+        mergeJoinChain.setNext(filterRowsChain);
+        filterRowsChain.setNext(endChain);
         TransformConvertFactory.beginChain = beginChain;
     }
 
