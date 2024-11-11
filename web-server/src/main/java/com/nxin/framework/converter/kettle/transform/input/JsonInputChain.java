@@ -108,6 +108,10 @@ public class JsonInputChain extends TransformConvertChain {
             jsonInputMeta.setInputFields(jsonInputFields.toArray(new JsonInputField[0]));
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             StepMeta stepMeta = new StepMeta(stepName, jsonInputMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);

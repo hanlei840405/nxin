@@ -42,6 +42,10 @@ public class RandomValueChain extends TransformConvertChain {
             randomValueMeta.setFieldName(fieldList.toArray(new String[0]));
             randomValueMeta.setFieldType(categoryList.stream().mapToInt(Integer::valueOf).toArray());
             StepMeta stepMeta = new StepMeta(stepName, randomValueMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);

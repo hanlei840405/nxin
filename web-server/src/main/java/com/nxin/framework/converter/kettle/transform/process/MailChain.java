@@ -81,6 +81,10 @@ public class MailChain extends TransformConvertChain {
             StepMeta stepMeta = new StepMeta(stepName, mailMeta);
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             stepMeta.setDraw(true);
             stepMeta.setCopies(parallel);
             return new ResponseMeta(cell.getId(), stepMeta, null);

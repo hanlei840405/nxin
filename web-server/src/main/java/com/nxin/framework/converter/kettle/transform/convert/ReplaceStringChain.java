@@ -6,6 +6,7 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
+import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.utils.BooleanUtils;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
@@ -84,6 +85,11 @@ public class ReplaceStringChain extends TransformConvertChain {
             replaceStringMeta.setIsUnicode(unicodeList.stream().collect(BooleanUtils.TO_BOOLEAN_ARRAY));
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             StepMeta stepMeta = new StepMeta(stepName, replaceStringMeta);
+            TransformConvertFactory.getTransformConvertChains().add(this);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             stepMeta.setCopies(parallel);
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());

@@ -57,6 +57,10 @@ public class RowsFromResultChain extends TransformConvertChain {
             rowsFromResultMeta.setLength(lengthValueList.stream().mapToInt(Integer::valueOf).toArray());
             rowsFromResultMeta.setPrecision(accuracyList.stream().mapToInt(Integer::valueOf).toArray());
             StepMeta stepMeta = new StepMeta(stepName, rowsFromResultMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);

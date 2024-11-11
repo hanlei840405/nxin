@@ -100,6 +100,10 @@ public class FieldSplitterChain extends TransformConvertChain {
             fieldSplitterMeta.setFieldTrimType(removeBlankList.stream().mapToInt(Integer::valueOf).toArray());
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             StepMeta stepMeta = new StepMeta(stepName, fieldSplitterMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             stepMeta.setCopies(parallel);
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());

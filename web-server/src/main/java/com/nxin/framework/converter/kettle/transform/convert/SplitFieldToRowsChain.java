@@ -42,6 +42,10 @@ public class SplitFieldToRowsChain extends TransformConvertChain {
             splitFieldToRowsMeta.setRowNumberField(lineName);
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             StepMeta stepMeta = new StepMeta(stepName, splitFieldToRowsMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             stepMeta.setCopies(parallel);
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());

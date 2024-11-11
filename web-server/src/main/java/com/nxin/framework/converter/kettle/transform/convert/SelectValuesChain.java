@@ -98,6 +98,10 @@ public class SelectValuesChain extends TransformConvertChain {
             selectValuesMeta.setMeta(selectMetadataChangeList.toArray(new SelectMetadataChange[0]));
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             StepMeta stepMeta = new StepMeta(stepName, selectValuesMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             stepMeta.setCopies(parallel);
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());

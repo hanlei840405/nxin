@@ -53,6 +53,10 @@ public class RecordsFromStreamChain extends TransformConvertChain {
             recordsFromStreamMeta.setType(categoryList.stream().mapToInt(Integer::valueOf).toArray());
             recordsFromStreamMeta.setPrecision(accuracyList.stream().mapToInt(Integer::valueOf).toArray());
             StepMeta stepMeta = new StepMeta(stepName, recordsFromStreamMeta);
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);

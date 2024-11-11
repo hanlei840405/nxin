@@ -97,6 +97,10 @@ public class KafkaConsumerInputChain extends TransformConvertChain {
             StepMeta stepMeta = new StepMeta(stepName, kafkaConsumerInputMeta);
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
+            if (formAttributes.containsKey("distribute")) {
+                boolean distribute = (boolean) formAttributes.get("distribute");
+                stepMeta.setDistributes(distribute);
+            }
             stepMeta.setDraw(true);
             Set<Long> references = new HashSet<>(0);
             if (StringUtils.hasLength(transformShell.getReference())) {

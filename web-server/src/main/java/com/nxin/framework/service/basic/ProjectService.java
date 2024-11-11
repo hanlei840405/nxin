@@ -100,25 +100,22 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
             Privilege privilegeR = new Privilege();
             privilegeR.setName(resource.getName());
             privilegeR.setResourceId(resource.getId());
-            privilegeR.setCategory(Constant.PRIVILEGE_READ_WRITE);
+            privilegeR.setCategory(Constant.PRIVILEGE_READ);
             privilegeR.setStatus(Constant.ACTIVE);
             privilegeR.setVersion(1);
-            privilegeService.save(privilegeR);
             Privilege privilegeRw = new Privilege();
             privilegeRw.setName(resource.getName());
             privilegeRw.setResourceId(resource.getId());
             privilegeRw.setCategory(Constant.PRIVILEGE_READ_WRITE);
             privilegeRw.setStatus(Constant.ACTIVE);
             privilegeRw.setVersion(1);
-            privilegeService.save(privilegeRw);
-            // 为创建者分配默认权限,分配R+W级别权限
+            privilegeService.saveBatch(Arrays.asList(privilegeR, privilegeRw));
+            // 为创建者分配R+W级别权限
             if (user != null) {
                 privilegeService.grant(Collections.singletonList(privilegeRw.getId()), user.getId(), false);
             }
         }
-        Arrays.stream(Constant.ENV_BUCKET).forEach(env -> {
-            fileService.createFolder(env, project.getId() + File.separator);
-        });
+        Arrays.stream(Constant.ENV_BUCKET).forEach(env -> fileService.createFolder(env, project.getId() + File.separator));
         return upsert > 0;
     }
 
