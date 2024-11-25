@@ -23,94 +23,94 @@
         <dependency>
             <groupId>pentaho-kettle</groupId>
             <artifactId>kettle-core</artifactId>
-            <version>9.2.0.0-288</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/kettle-core-9.2.0.0-288.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/kettle-core-9.4.0.0-343.jar</systemPath>
         </dependency>
         <!-- https://mvnrepository.com/artifact/pentaho-kettle/kettle-engine -->
         <dependency>
             <groupId>pentaho-kettle</groupId>
             <artifactId>kettle-engine</artifactId>
-            <version>9.2.0.0-288</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/kettle-engine-9.2.0.0-288.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/kettle-engine-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.pentaho</groupId>
             <artifactId>pentaho-encryption-support</artifactId>
-            <version>9.2.0.0-288</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pentaho-encryption-support-9.2.0.0-288.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pentaho-encryption-support-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>pentaho-kettle</groupId>
             <artifactId>metastore</artifactId>
-            <version>9.2.0.0-288</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/metastore-9.2.0.0-288.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/metastore-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.pentaho.di.plugins</groupId>
             <artifactId>kettle-json-plugin-core</artifactId>
-            <version>9.2.0.0-159</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/kettle-json-plugin-core-9.2.0.0-159.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/kettle-json-plugin-core-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.pentaho.di.plugins</groupId>
             <artifactId>elasticsearch-bulk-insert-core</artifactId>
-            <version>9.2.0.0-159</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/elasticsearch-bulk-insert-core-9.2.0.0-159.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/elasticsearch-bulk-insert-core-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.pentaho.di.plugins</groupId>
             <artifactId>pdi-core</artifactId>
-            <version>pdi-core-plugins-impl-9.3.0.0-SNAPSHOT.jar</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pdi-core-plugins-impl-9.3.0.0-SNAPSHOT.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pdi-core-plugins-impl-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>pentaho</groupId>
             <artifactId>pentaho-big-data-kettle-plugins-kafka</artifactId>
-            <version>9.3.0.0-SNAPSHOT</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pentaho-big-data-kettle-plugins-kafka-9.3.0.0-SNAPSHOT.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pentaho-big-data-kettle-plugins-kafka-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.pentaho</groupId>
             <artifactId>shim-api</artifactId>
-            <version>9.3.0.0-SNAPSHOT</version>
+            <version>9.4.0.0-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/shim-api-9.3.0.0-SNAPSHOT.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/shim-api-9.4.0.0-20240405.134336-1.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>pentaho</groupId>
             <artifactId>pentaho-metastore-locator-api</artifactId>
-            <version>9.3.0.0-SNAPSHOT</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pentaho-metastore-locator-api-9.3.0.0-SNAPSHOT.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pentaho-metastore-locator-api-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.pentaho.di.plugins</groupId>
             <artifactId>pentaho-streaming-jms-plugin</artifactId>
-            <version>9.3.0.0-SNAPSHOT</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pentaho-streaming-jms-plugin-9.3.0.0-SNAPSHOT.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pentaho-streaming-jms-plugin-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>pentaho</groupId>
             <artifactId>pentaho-mongodb-plugin</artifactId>
-            <version>9.3.0.0-SNAPSHOT</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pentaho-mongodb-plugin.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pentaho-mongodb-plugin-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>pentaho</groupId>
             <artifactId>pentaho-mongo-utils</artifactId>
-            <version>9.3.0.0-SNAPSHOT</version>
+            <version>9.4.0.0-343</version>
             <scope>system</scope>
-            <systemPath>${basedir}/ext-lib/pentaho-mongo-utils-9.3.0.0-20210715.063514-71.jar</systemPath>
+            <systemPath>${basedir}/ext-lib/pentaho-mongo-utils-9.4.0.0-343.jar</systemPath>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-vfs2 -->
         <dependency>

@@ -10,14 +10,21 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.Selectors;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
+import org.apache.commons.vfs2.provider.UriParser;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.yaml.snakeyaml.util.UriEncoder;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
@@ -27,13 +34,37 @@ import java.util.UUID;
 public class FileService {
     @Value("${vfs.lang}")
     private String lang;
-    @Value("${vfs.prefix-url}")
-    private String prefixUrl;
+    @Value("${vfs.host}")
+    private String host;
+    @Value("${vfs.path}")
+    private String path;
+    @Value("${vfs.schema}")
+    private String schema;
+    @Value("${vfs.username}")
+    private String username;
+    @Value("${vfs.password}")
+    private String password;
+    private String baseUrl;
+
+    @PostConstruct
+    public void init() {
+//        try {
+//            baseUrl = new URI(schema, username.concat(":").concat(password), prefixUrl, null, null).toString();
+//        } catch (URISyntaxException e) {
+//            throw new RuntimeException(e);
+//        }
+        try {
+            baseUrl = String.format("%s://%s:%s@%s%s", schema, username, URLEncoder.encode(password, "utf-8"), host,path);
+//            baseUrl = schema.concat(username).concat(":").concat(URLEncoder.encode(password, "utf-8")).concat("@").concat(prefixUrl);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public void createEnv(String env) {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
-            FileObject dir = fileSystemManager.resolveFile(prefixUrl + env, getOptions());
+            FileObject dir = fileSystemManager.resolveFile(baseUrl + env, getOptions());
             if (!dir.exists()) {
                 dir.createFolder();
             }
@@ -50,7 +81,7 @@ public class FileService {
             File tempFile = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
             Files.write(text.getBytes(StandardCharsets.UTF_8), tempFile);
             FileObject source = fileSystemManager.resolveFile(tempFile.getAbsolutePath());
-            FileObject target = fileSystemManager.resolveFile(prefixUrl + env + File.separator + path, getOptions());
+            FileObject target = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
             target.copyFrom(source, Selectors.SELECT_SELF);
             tempFile.delete();
             return DigestUtils.md5DigestAsHex(text.getBytes(StandardCharsets.UTF_8));
@@ -70,8 +101,8 @@ public class FileService {
     public String createFolder(String env, String path) {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
-            String remotePath = prefixUrl + env + File.separator + path;
-            FileObject dir = fileSystemManager.resolveFile(prefixUrl + env + File.separator + path, getOptions());
+            String remotePath = baseUrl + env + File.separator + path;
+            FileObject dir = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
             if (!dir.exists()) {
                 dir.createFolder();
             }
@@ -86,7 +117,7 @@ public class FileService {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
             // 这里替换成你的文件路径
-            FileObject file = fileSystemManager.resolveFile(prefixUrl + env + File.separator + path, getOptions());
+            FileObject file = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
             return file.getContent().getInputStream();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -98,7 +129,7 @@ public class FileService {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
             // 这里替换成你的文件路径
-            FileObject file = fileSystemManager.resolveFile(prefixUrl + env + File.separator + path, getOptions());
+            FileObject file = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
             if (file.exists()) {
                 // 打开文件输入流
                 try (InputStream is = file.getContent().getInputStream()) {
@@ -116,8 +147,8 @@ public class FileService {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
             // 这里替换成你的文件路径
-            FileObject source = fileSystemManager.resolveFile(prefixUrl + sourceEnv + File.separator + sourcePath, getOptions());
-            FileObject target = fileSystemManager.resolveFile(prefixUrl + targetEnv + File.separator + targetPath, getOptions());
+            FileObject source = fileSystemManager.resolveFile(baseUrl + sourceEnv + File.separator + sourcePath, getOptions());
+            FileObject target = fileSystemManager.resolveFile(baseUrl + targetEnv + File.separator + targetPath, getOptions());
             // 打开文件输入流
             target.copyFrom(source, Selectors.SELECT_SELF);
             try (InputStream is = target.getContent().getInputStream()) {

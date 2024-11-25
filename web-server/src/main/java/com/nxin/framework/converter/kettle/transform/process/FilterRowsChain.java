@@ -9,11 +9,13 @@ import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.Condition;
-import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.ValueMetaAndData;
+import org.pentaho.di.core.row.value.ValueMetaBase;
+import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.filterrows.FilterRowsMeta;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -33,30 +35,10 @@ public class FilterRowsChain extends TransformConvertChain {
             String send_false_to = (String) formAttributes.get("send_false_to");
             List<Map<String, Object>> fieldMappingData = (List<Map<String, Object>>) formAttributes.get("fieldMappingData");
             Condition condition = new Condition();
-            for (Map<String, Object> fieldMapping : fieldMappingData) {
-                String negate = fieldMapping.get("negate").toString();
-                Condition condition1 = new Condition();
-                if (!condition.getChildren().isEmpty()) {
-                    String operates = fieldMapping.get("operates").toString();
-                    condition1.setOperator(Condition.getOperator(operates));
-                }
-                String leftValuename = fieldMapping.get("leftValuename").toString();
-                String function = fieldMapping.get("function").toString();
-                String rightValuename = fieldMapping.get("rightValuename").toString();
-                String values = fieldMapping.get("value").toString();
-                String type = fieldMapping.get("type").toString();
-                condition1.setNegated(negate.equals("Y"));
-                condition1.setLeftValuename(leftValuename);
-                condition1.setFunction(condition.getFunction(function));
-                condition1.setRightValuename(rightValuename);
-                try {
-                    condition1.setRightExact(new ValueMetaAndData(String.valueOf(values), type));
-                } catch (KettleValueException e) {
-                    throw new RuntimeException(e);
-                }
-                condition.addCondition(condition1);
+            for (int i = 0; i < fieldMappingData.size(); i++) {
+                Map<String, Object> mapping = fieldMappingData.get(i);
+                condition.addCondition(this.build(new Condition(), mapping));
             }
-
             filterRowsMeta.setCondition(condition);
             filterRowsMeta.setTrueStepname(send_true_to);
             filterRowsMeta.setFalseStepname(send_false_to);
@@ -79,5 +61,31 @@ public class FilterRowsChain extends TransformConvertChain {
     @Override
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
 
+    }
+
+    private Condition build(Condition condition, Map<String, Object> fieldMapping) {
+        String negate = fieldMapping.get("negate").toString();
+        if (!condition.getChildren().isEmpty()) {
+            String operates = fieldMapping.get("operates").toString();
+            condition.setOperator(Condition.getOperator(operates));
+        }
+        String leftValuename = fieldMapping.get("leftValuename").toString();
+        String function = fieldMapping.get("function").toString();
+        String rightValuename = fieldMapping.get("rightValuename").toString();
+        String text = fieldMapping.get("value").toString();
+        String type = fieldMapping.get("type").toString();
+        condition.setNegated(negate.equals("Y"));
+        condition.setLeftValuename(leftValuename);
+        condition.setFunction(Condition.getFunction(function));
+        condition.setRightValuename(rightValuename);
+        if (StringUtils.hasLength(text)) {
+            int id = ValueMetaFactory.getIdForValueMeta(type);
+            // todo length,precision暂时为默认值-1与0，后面迭代
+            ValueMetaBase valueMetaBase = new ValueMetaBase("constant", id, -1, 0, null);
+            ValueMetaAndData valueMetaAndData = new ValueMetaAndData(valueMetaBase, text);
+
+            condition.setRightExact(valueMetaAndData);
+        }
+        return condition;
     }
 }
