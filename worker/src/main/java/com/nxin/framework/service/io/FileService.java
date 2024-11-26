@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -29,14 +31,32 @@ import java.util.UUID;
 public class FileService {
     @Value("${vfs.lang}")
     private String lang;
-    @Value("${vfs.prefix-url}")
-    private String prefixUrl;
+    @Value("${vfs.host}")
+    private String host;
+    @Value("${vfs.path}")
+    private String path;
+    @Value("${vfs.schema}")
+    private String schema;
+    @Value("${vfs.username}")
+    private String username;
+    @Value("${vfs.password}")
+    private String password;
+    private String baseUrl;
+
+    @PostConstruct
+    public void init() {
+        try {
+            baseUrl = String.format("%s://%s:%s@%s%s", schema, username, URLEncoder.encode(password, "utf-8"), host,path);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public InputStream inputStream(String env, String path) {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
             // 这里替换成你的文件路径
-            FileObject file = fileSystemManager.resolveFile(prefixUrl + env + File.separator + path, getOptions());
+            FileObject file = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
             return file.getContent().getInputStream();
         } catch (Exception e) {
             log.error(e.getMessage(), e);

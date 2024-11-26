@@ -68,10 +68,10 @@ spring:
     forgotSubject: 新恩数造找回密码
   redis:
     host: 127.0.0.1
-    port: 49153
+    port: 6379
     database: 0
-    username: default
-    password: redispw
+    username:
+    password:
   data:
     redis:
       repositories:
@@ -117,7 +117,11 @@ init:
   password: 123456
 vfs:
   lang: zh
-  prefix-url: ftp://admin:admin@127.0.0.1:21000/
+  host: 127.0.0.1:22
+  path: /Documents/
+  schema: sftp
+  username: nxin
+  password: 1qaz@WSX
 worker:
   schedule-create-job-uri: http://127.0.0.1:8001/schedule/create
   schedule-find-all-cron-trigger-uri: http://127.0.0.1:8001/schedule/findAllCronTrigger
