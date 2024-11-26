@@ -65,10 +65,10 @@ spring:
             threadsInheritContextClassLoaderOfInitializingThread: true
   redis:
     host: 127.0.0.1
-    port: 49153
+    port: 6379
     database: 0
-    username: default
-    password: redispw
+    username:
+    password:
   data:
     redis:
       repositories:
@@ -113,7 +113,11 @@ init:
   password: 123456
 vfs:
   lang: zh
-  prefix-url: ftp://admin:admin@127.0.0.1:21000/
+  host: 127.0.0.1:22
+  path: /Documents/
+  schema: sftp
+  username: nxin
+  password: 1qaz@WSX
 dubbo:
   application:
     name: worker

@@ -48,14 +48,8 @@ public class FileService {
 
     @PostConstruct
     public void init() {
-//        try {
-//            baseUrl = new URI(schema, username.concat(":").concat(password), prefixUrl, null, null).toString();
-//        } catch (URISyntaxException e) {
-//            throw new RuntimeException(e);
-//        }
         try {
             baseUrl = String.format("%s://%s:%s@%s%s", schema, username, URLEncoder.encode(password, "utf-8"), host,path);
-//            baseUrl = schema.concat(username).concat(":").concat(URLEncoder.encode(password, "utf-8")).concat("@").concat(prefixUrl);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
