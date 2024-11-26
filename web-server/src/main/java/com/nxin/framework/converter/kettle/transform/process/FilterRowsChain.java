@@ -6,6 +6,7 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
+import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.Condition;
@@ -17,11 +18,14 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.filterrows.FilterRowsMeta;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class FilterRowsChain extends TransformConvertChain {
+    private static final ThreadLocal<FilterRowsMeta> threadLocal = new ThreadLocal<>();
+
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
         if (cell.isVertex() && "FilterRowsMeta".equalsIgnoreCase(cell.getStyle())) {
@@ -42,8 +46,8 @@ public class FilterRowsChain extends TransformConvertChain {
             filterRowsMeta.setCondition(condition);
             filterRowsMeta.setTrueStepname(send_true_to);
             filterRowsMeta.setFalseStepname(send_false_to);
-
 //            filterRowsMeta.setStepIOMeta();
+            threadLocal.set(filterRowsMeta);
             StepMeta stepMeta = new StepMeta(stepName, filterRowsMeta);
             if (formAttributes.containsKey("distribute")) {
                 boolean distribute = (boolean) formAttributes.get("distribute");
@@ -52,6 +56,7 @@ public class FilterRowsChain extends TransformConvertChain {
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);
+            TransformConvertFactory.getTransformConvertChains().add(this);
             return new ResponseMeta(cell.getId(), stepMeta, null);
         } else {
             return next.parse(cell, transMeta);
@@ -60,7 +65,12 @@ public class FilterRowsChain extends TransformConvertChain {
 
     @Override
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
-
+        try {
+            FilterRowsMeta filterRowsMeta = threadLocal.get();
+            filterRowsMeta.searchInfoAndTargetSteps(Arrays.asList(transMeta.findStep(filterRowsMeta.getTrueStepname()), transMeta.findStep(filterRowsMeta.getFalseStepname())));
+        } finally {
+            threadLocal.remove();
+        }
     }
 
     private Condition build(Condition condition, Map<String, Object> fieldMapping) {
