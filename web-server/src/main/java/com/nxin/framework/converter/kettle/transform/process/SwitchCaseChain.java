@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.trans.steps.mergejoin.MergeJoinMeta;
 import org.pentaho.di.trans.steps.switchcase.SwitchCaseMeta;
 import org.pentaho.di.trans.steps.switchcase.SwitchCaseTarget;
 
@@ -23,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class SwitchCaseChain extends TransformConvertChain {
-    private static final Map<String, Object> callbackMap = new ConcurrentHashMap<>(0);
 
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
@@ -78,13 +78,15 @@ public class SwitchCaseChain extends TransformConvertChain {
     @Override
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
         for (Map.Entry<String, Object> entry : callbackMap.entrySet()) {
-            SwitchCaseMeta switchCaseMeta = (SwitchCaseMeta) entry.getValue();
-            switchCaseMeta.setDefaultTargetStepname(idNameMapping.get(switchCaseMeta.getDefaultTargetStepname()));
-            switchCaseMeta.getCaseTargets().forEach(target -> {
-                target.caseTargetStepname = idNameMapping.get(target.caseTargetStepname);
-            });
-            switchCaseMeta.searchInfoAndTargetSteps(transMeta.getSteps());
-            callbackMap.remove(entry.getKey());
+            if (entry.getValue() instanceof SwitchCaseMeta) {
+                SwitchCaseMeta switchCaseMeta = (SwitchCaseMeta) entry.getValue();
+                switchCaseMeta.setDefaultTargetStepname(idNameMapping.get(switchCaseMeta.getDefaultTargetStepname()));
+                switchCaseMeta.getCaseTargets().forEach(target -> {
+                    target.caseTargetStepname = idNameMapping.get(target.caseTargetStepname);
+                });
+                switchCaseMeta.searchInfoAndTargetSteps(transMeta.getSteps());
+                callbackMap.remove(entry.getKey());
+            }
         }
     }
 }

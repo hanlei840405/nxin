@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class MergeJoinChain extends TransformConvertChain {
 
-    private static final Map<String, Object> callbackMap = new ConcurrentHashMap<>(0);
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
         if (cell.isVertex() && "MergeJoinMeta".equalsIgnoreCase(cell.getStyle())) {
@@ -84,26 +83,26 @@ public class MergeJoinChain extends TransformConvertChain {
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
         for (Map.Entry<String, Object> entry : callbackMap.entrySet()) {
             Map<String, Object> mergeJointMetaMap = (Map<String, Object>) entry.getValue();
-            MergeJoinMeta mergeJoinMeta = (MergeJoinMeta) mergeJointMetaMap.get("stepMetaInterface");
-            String step1 = (String) mergeJointMetaMap.get("step1");
-            String step2 = (String) mergeJointMetaMap.get("step2");
+            if (mergeJointMetaMap.get("stepMetaInterface") instanceof MergeJoinMeta) {
+                MergeJoinMeta mergeJoinMeta = (MergeJoinMeta) mergeJointMetaMap.get("stepMetaInterface");
+                String step1Name = idNameMapping.get((String) mergeJointMetaMap.get("step1"));
+                String step2Name = idNameMapping.get((String) mergeJointMetaMap.get("step2"));
 
-            StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
-            List<StreamInterface> infoStreams = mergeJoinMeta.getStepIOMeta().getInfoStreams();
-            StepMeta stepMeta1 = transMeta.findStep(step1);
-            StepMeta stepMeta2 = transMeta.findStep(step2);
-            infoStreams.get(0).setStepMeta(stepMeta1);
-            infoStreams.get(0).setSubject(stepMeta1.getName());
-            infoStreams.get(1).setStepMeta(stepMeta2);
-            infoStreams.get(1).setSubject(stepMeta2.getName());
-            for ( StreamInterface stream : infoStreams ) {
-                stream.setStepMeta( StepMeta.findStep( transMeta.getSteps(), (String) stream.getSubject() ) );
+                StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
+                List<StreamInterface> infoStreams = mergeJoinMeta.getStepIOMeta().getInfoStreams();
+                StepMeta stepMeta1 = transMeta.findStep(step1Name);
+                StepMeta stepMeta2 = transMeta.findStep(step2Name);
+                infoStreams.get(0).setSubject(stepMeta1.getName());
+                infoStreams.get(1).setSubject(stepMeta2.getName());
+                for ( StreamInterface stream : infoStreams ) {
+                    stream.setStepMeta( StepMeta.findStep( transMeta.getSteps(), (String) stream.getSubject() ) );
+                }
+                for ( StreamInterface infoStream : infoStreams ) {
+                    stepIOMeta.addStream( new Stream( infoStream ) );
+                }
+                mergeJoinMeta.setStepIOMeta(stepIOMeta);
+                callbackMap.remove(entry.getKey());
             }
-            for ( StreamInterface infoStream : infoStreams ) {
-                stepIOMeta.addStream( new Stream( infoStream ) );
-            }
-            mergeJoinMeta.setStepIOMeta(stepIOMeta);
-            callbackMap.remove(entry.getKey());
         }
     }
 }

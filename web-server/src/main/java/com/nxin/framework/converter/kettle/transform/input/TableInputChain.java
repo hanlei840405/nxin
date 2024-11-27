@@ -16,7 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.encryption.Encr;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.StepIOMeta;
+import org.pentaho.di.trans.step.StepIOMetaInterface;
 import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.trans.step.errorhandling.Stream;
+import org.pentaho.di.trans.step.errorhandling.StreamInterface;
 import org.pentaho.di.trans.steps.tableinput.TableInputMeta;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -29,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class TableInputChain extends TransformConvertChain {
-    private static final Map<String, Object> callbackMap = new ConcurrentHashMap<>(0);
 
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
@@ -122,10 +125,21 @@ public class TableInputChain extends TransformConvertChain {
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
         for (Map.Entry<String, Object> entry : callbackMap.entrySet()) {
             Map<String, Object> tableInputMetaMap = (Map<String, Object>) entry.getValue();
-            TableInputMeta tableInputMeta = (TableInputMeta) tableInputMetaMap.get("stepMetaInterface");
-            String previousStep = (String) tableInputMetaMap.get("previousStep");
-            tableInputMeta.setLookupFromStep(transMeta.findStep(idNameMapping.get(previousStep)));
-            callbackMap.remove(entry.getKey());
+            if (tableInputMetaMap.get("stepMetaInterface") instanceof TableInputMeta) {
+                TableInputMeta tableInputMeta = (TableInputMeta) tableInputMetaMap.get("stepMetaInterface");
+                String previousStep = idNameMapping.get((String) tableInputMetaMap.get("previousStep"));
+                StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
+                List<StreamInterface> infoStreams = tableInputMeta.getStepIOMeta().getInfoStreams();
+                infoStreams.get(0).setSubject(previousStep);
+                for ( StreamInterface stream : infoStreams ) {
+                    stream.setStepMeta( StepMeta.findStep( transMeta.getSteps(), (String) stream.getSubject() ) );
+                }
+                for ( StreamInterface infoStream : infoStreams ) {
+                    stepIOMeta.addStream( new Stream( infoStream ) );
+                }
+                tableInputMeta.setStepIOMeta(stepIOMeta);
+                callbackMap.remove(entry.getKey());
+            }
         }
     }
 }

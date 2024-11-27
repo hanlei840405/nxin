@@ -8,8 +8,10 @@ import com.nxin.framework.service.kettle.ShellService;
 import org.pentaho.di.trans.TransMeta;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class TransformConvertChain {
+    public final Map<String, Object> callbackMap = new ConcurrentHashMap<>(0);
 
     protected ObjectMapper objectMapper = new ObjectMapper();
 

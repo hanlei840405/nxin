@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.trans.steps.switchcase.SwitchCaseMeta;
 import org.pentaho.di.trans.steps.userdefinedjavaclass.InfoStepDefinition;
 import org.pentaho.di.trans.steps.userdefinedjavaclass.TargetStepDefinition;
 import org.pentaho.di.trans.steps.userdefinedjavaclass.UserDefinedJavaClassDef;
@@ -23,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class UserDefinedJavaClassChain extends TransformConvertChain {
-    private static final Map<String, Object> callbackMap = new ConcurrentHashMap<>(0);
 
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
@@ -94,16 +94,18 @@ public class UserDefinedJavaClassChain extends TransformConvertChain {
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
         for (Map.Entry<String, Object> entry : callbackMap.entrySet()) {
             Map<String, Object> tableInputMetaMap = (Map<String, Object>) entry.getValue();
-            UserDefinedJavaClassMeta userDefinedJavaClassMeta = (UserDefinedJavaClassMeta) tableInputMetaMap.get("stepMetaInterface");
-            Map<String, String> previousStep = (Map<String, String>) tableInputMetaMap.get("previousStep");
-            Map<String, String> nextStep = (Map<String, String>) tableInputMetaMap.get("nextStep");
-            for (InfoStepDefinition infoStepDefinition : userDefinedJavaClassMeta.getInfoStepDefinitions()) {
-                infoStepDefinition.stepMeta = transMeta.findStep(idNameMapping.get(previousStep.get(infoStepDefinition.tag)));
+            if (tableInputMetaMap.get("stepMetaInterface") instanceof UserDefinedJavaClassMeta) {
+                UserDefinedJavaClassMeta userDefinedJavaClassMeta = (UserDefinedJavaClassMeta) tableInputMetaMap.get("stepMetaInterface");
+                Map<String, String> previousStep = (Map<String, String>) tableInputMetaMap.get("previousStep");
+                Map<String, String> nextStep = (Map<String, String>) tableInputMetaMap.get("nextStep");
+                for (InfoStepDefinition infoStepDefinition : userDefinedJavaClassMeta.getInfoStepDefinitions()) {
+                    infoStepDefinition.stepMeta = transMeta.findStep(idNameMapping.get(previousStep.get(infoStepDefinition.tag)));
+                }
+                for (TargetStepDefinition targetStepDefinition : userDefinedJavaClassMeta.getTargetStepDefinitions()) {
+                    targetStepDefinition.stepMeta = transMeta.findStep(idNameMapping.get(nextStep.get(targetStepDefinition.tag)));
+                }
+                callbackMap.remove(entry.getKey());
             }
-            for (TargetStepDefinition targetStepDefinition : userDefinedJavaClassMeta.getTargetStepDefinitions()) {
-                targetStepDefinition.stepMeta = transMeta.findStep(idNameMapping.get(nextStep.get(targetStepDefinition.tag)));
-            }
-            callbackMap.remove(entry.getKey());
         }
     }
 }

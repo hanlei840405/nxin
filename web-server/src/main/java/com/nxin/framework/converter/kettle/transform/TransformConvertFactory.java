@@ -17,14 +17,16 @@ import com.nxin.framework.service.kettle.ShellService;
 import org.pentaho.di.core.exception.KettleException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TransformConvertFactory extends ConvertFactory {
-    private static ThreadLocal<List<TransformConvertChain>> transformConvertChains = ThreadLocal.withInitial(() -> new ArrayList<>(0));
+    private static ThreadLocal<Set<TransformConvertChain>> transformConvertChains = ThreadLocal.withInitial(() -> new HashSet<>(0));
 
     private static TransformConvertChain beginChain;
 
-    public static List<TransformConvertChain> getTransformConvertChains() {
+    public static Set<TransformConvertChain> getTransformConvertChains() {
         return transformConvertChains.get();
     }
 
