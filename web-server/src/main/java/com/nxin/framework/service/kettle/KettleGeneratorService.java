@@ -233,7 +233,6 @@ public class KettleGeneratorService {
                 List<Shell> shells = shellService.listByIds(referenceIds);
                 shells.forEach(item -> {
                     String suffix = item.getCategory().equals(Constant.JOB) ? Constant.JOB_SUFFIX : Constant.TRANS_SUFFIX;
-                    InputStream inputStream = fileService.inputStream(Constant.ENV_DEV, item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix);
                     File folder = new File(dir + item.getProjectId() + File.separator + item.getParentId());
                     if (!folder.exists()) {
                         folder.mkdirs();
@@ -254,15 +253,10 @@ public class KettleGeneratorService {
                     }
                     if (download) {
                         try {
-                            FileUtils.copyInputStreamToFile(inputStream, file);
+                            String text = fileService.content(Constant.ENV_DEV, item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix);
+                            FileUtils.write(file, text, Charset.defaultCharset());
                         } catch (IOException e) {
                             log.error(e.getMessage(), e);
-                        } finally {
-                            try {
-                                inputStream.close();
-                            } catch (IOException e) {
-                                log.error(e.getMessage(), e);
-                            }
                         }
                     }
                 });
