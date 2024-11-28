@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -17,26 +18,14 @@ public class ZipUtils {
      * @return
      */
     public static String compress(String str) {
-        if (str == null || str.isEmpty()) {
-            return str;
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        GZIPOutputStream gzip = null;
-        try {
-            gzip = new GZIPOutputStream(out);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzip = new GZIPOutputStream(outputStream)) {
             gzip.write(str.getBytes());
         } catch (IOException e) {
             log.error(e.getMessage(), e);
-        } finally {
-            if (gzip != null) {
-                try {
-                    gzip.close();
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
+            throw new RuntimeException(e);
         }
-        return new sun.misc.BASE64Encoder().encode(out.toByteArray());
+        return Base64.getEncoder().encodeToString(outputStream.toByteArray());
     }
 
     /**
@@ -50,44 +39,19 @@ public class ZipUtils {
             return null;
         }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayInputStream in = null;
-        GZIPInputStream ginzip = null;
-        byte[] compressed;
-        String decompressed = null;
-        try {
-            compressed = new sun.misc.BASE64Decoder().decodeBuffer(compressedStr);
-            in = new ByteArrayInputStream(compressed);
-            ginzip = new GZIPInputStream(in);
+        byte[] compressedBytes = Base64.getDecoder().decode(compressedStr);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(compressedBytes);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream)) {
             byte[] buffer = new byte[1024];
-            int offset;
-            while ((offset = ginzip.read(buffer)) != -1) {
-                out.write(buffer, 0, offset);
+            int len;
+            while ((len = gzipInputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, len);
             }
-            decompressed = out.toString();
         } catch (IOException e) {
             log.error(e.getMessage(), e);
-        } finally {
-            if (ginzip != null) {
-                try {
-                    ginzip.close();
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-            try {
-                out.close();
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
+            throw new RuntimeException(e);
         }
-        return decompressed;
+        return outputStream.toString();
     }
 }

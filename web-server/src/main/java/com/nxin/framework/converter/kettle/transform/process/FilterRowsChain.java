@@ -14,17 +14,22 @@ import org.pentaho.di.core.row.ValueMetaAndData;
 import org.pentaho.di.core.row.value.ValueMetaBase;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.StepIOMeta;
+import org.pentaho.di.trans.step.StepIOMetaInterface;
 import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.trans.step.errorhandling.Stream;
+import org.pentaho.di.trans.step.errorhandling.StreamInterface;
 import org.pentaho.di.trans.steps.filterrows.FilterRowsMeta;
+import org.pentaho.di.trans.steps.tableinput.TableInputMeta;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class FilterRowsChain extends TransformConvertChain {
-    private static final ThreadLocal<FilterRowsMeta> threadLocal = new ThreadLocal<>();
 
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
@@ -35,8 +40,8 @@ public class FilterRowsChain extends TransformConvertChain {
             Map<String, Object> formAttributes = objectMapper.readValue(value.getAttribute("form"), new TypeReference<Map<String, Object>>() {
             });
             String stepName = (String) formAttributes.get("name");
-            String send_true_to = (String) formAttributes.get("send_true_to");
-            String send_false_to = (String) formAttributes.get("send_false_to");
+            String sendTrueTo = (String) formAttributes.get("sendTrueTo");
+            String sendFalseTo = (String) formAttributes.get("sendFalseTo");
             List<Map<String, Object>> fieldMappingData = (List<Map<String, Object>>) formAttributes.get("fieldMappingData");
             Condition condition = new Condition();
             for (int i = 0; i < fieldMappingData.size(); i++) {
@@ -44,10 +49,11 @@ public class FilterRowsChain extends TransformConvertChain {
                 condition.addCondition(this.build(new Condition(), mapping));
             }
             filterRowsMeta.setCondition(condition);
-            filterRowsMeta.setTrueStepname(send_true_to);
-            filterRowsMeta.setFalseStepname(send_false_to);
-//            filterRowsMeta.setStepIOMeta();
-            threadLocal.set(filterRowsMeta);
+            Map<String, Object> filterRowsMetaMap = new HashMap<>(0);
+            filterRowsMetaMap.put("sendTrueTo", sendTrueTo);
+            filterRowsMetaMap.put("sendFalseTo", sendFalseTo);
+            filterRowsMetaMap.put("stepMetaInterface", filterRowsMeta);
+            callbackMap.put(stepName, filterRowsMetaMap);
             StepMeta stepMeta = new StepMeta(stepName, filterRowsMeta);
             if (formAttributes.containsKey("distribute")) {
                 boolean distribute = (boolean) formAttributes.get("distribute");
@@ -65,11 +71,23 @@ public class FilterRowsChain extends TransformConvertChain {
 
     @Override
     public void callback(TransMeta transMeta, Map<String, String> idNameMapping) {
-        try {
-            FilterRowsMeta filterRowsMeta = threadLocal.get();
-            filterRowsMeta.searchInfoAndTargetSteps(Arrays.asList(transMeta.findStep(filterRowsMeta.getTrueStepname()), transMeta.findStep(filterRowsMeta.getFalseStepname())));
-        } finally {
-            threadLocal.remove();
+        for (Map.Entry<String, Object> entry : callbackMap.entrySet()) {
+            Map<String, Object> filterRowsMetaMap = (Map<String, Object>) entry.getValue();
+            if (filterRowsMetaMap.get("stepMetaInterface") instanceof FilterRowsMeta) {
+                FilterRowsMeta filterRowsMeta = (FilterRowsMeta) filterRowsMetaMap.get("stepMetaInterface");
+                String trueStepName = idNameMapping.get((String) filterRowsMetaMap.get("sendTrueTo"));
+                String falseStepName = idNameMapping.get((String) filterRowsMetaMap.get("sendFalseTo"));
+                StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
+                List<StreamInterface> infoStreams = filterRowsMeta.getStepIOMeta().getTargetStreams();
+                infoStreams.get(0).setSubject(trueStepName);
+                infoStreams.get(1).setSubject(falseStepName);
+                for ( StreamInterface infoStream : infoStreams ) {
+                    stepIOMeta.addStream( new Stream( infoStream ) );
+                }
+                filterRowsMeta.setStepIOMeta(stepIOMeta);
+                filterRowsMeta.searchInfoAndTargetSteps(transMeta.getSteps());
+                callbackMap.remove(entry.getKey());
+            }
         }
     }
 
