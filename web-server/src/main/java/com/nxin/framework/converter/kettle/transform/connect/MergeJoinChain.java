@@ -90,17 +90,13 @@ public class MergeJoinChain extends TransformConvertChain {
 
                 StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
                 List<StreamInterface> infoStreams = mergeJoinMeta.getStepIOMeta().getInfoStreams();
-                StepMeta stepMeta1 = transMeta.findStep(step1Name);
-                StepMeta stepMeta2 = transMeta.findStep(step2Name);
-                infoStreams.get(0).setSubject(stepMeta1.getName());
-                infoStreams.get(1).setSubject(stepMeta2.getName());
-                for ( StreamInterface stream : infoStreams ) {
-                    stream.setStepMeta( StepMeta.findStep( transMeta.getSteps(), (String) stream.getSubject() ) );
-                }
+                infoStreams.get(0).setSubject(step1Name);
+                infoStreams.get(1).setSubject(step2Name);
                 for ( StreamInterface infoStream : infoStreams ) {
                     stepIOMeta.addStream( new Stream( infoStream ) );
                 }
                 mergeJoinMeta.setStepIOMeta(stepIOMeta);
+                mergeJoinMeta.searchInfoAndTargetSteps(transMeta.getSteps());
                 callbackMap.remove(entry.getKey());
             }
         }

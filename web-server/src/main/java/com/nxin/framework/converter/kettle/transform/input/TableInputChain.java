@@ -131,13 +131,9 @@ public class TableInputChain extends TransformConvertChain {
                 StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
                 List<StreamInterface> infoStreams = tableInputMeta.getStepIOMeta().getInfoStreams();
                 infoStreams.get(0).setSubject(previousStep);
-                for ( StreamInterface stream : infoStreams ) {
-                    stream.setStepMeta( StepMeta.findStep( transMeta.getSteps(), (String) stream.getSubject() ) );
-                }
-                for ( StreamInterface infoStream : infoStreams ) {
-                    stepIOMeta.addStream( new Stream( infoStream ) );
-                }
+                stepIOMeta.addStream(new Stream(infoStreams.get(0)));
                 tableInputMeta.setStepIOMeta(stepIOMeta);
+                tableInputMeta.searchInfoAndTargetSteps(transMeta.getSteps());
                 callbackMap.remove(entry.getKey());
             }
         }

@@ -81,13 +81,11 @@ public class FilterRowsChain extends TransformConvertChain {
                 List<StreamInterface> infoStreams = filterRowsMeta.getStepIOMeta().getTargetStreams();
                 infoStreams.get(0).setSubject(trueStepName);
                 infoStreams.get(1).setSubject(falseStepName);
-                for ( StreamInterface stream : infoStreams ) {
-                    stream.setStepMeta( StepMeta.findStep( transMeta.getSteps(), (String) stream.getSubject() ) );
-                }
                 for ( StreamInterface infoStream : infoStreams ) {
                     stepIOMeta.addStream( new Stream( infoStream ) );
                 }
                 filterRowsMeta.setStepIOMeta(stepIOMeta);
+                filterRowsMeta.searchInfoAndTargetSteps(transMeta.getSteps());
                 callbackMap.remove(entry.getKey());
             }
         }
