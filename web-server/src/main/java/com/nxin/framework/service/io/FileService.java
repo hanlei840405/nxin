@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
@@ -107,18 +108,6 @@ public class FileService {
         }
     }
 
-    public InputStream inputStream(String env, String path) {
-        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
-            fileSystemManager.init();
-            // 这里替换成你的文件路径
-            FileObject file = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
-            return file.getContent().getInputStream();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
     public String content(String env, String path) {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
@@ -166,19 +155,12 @@ public class FileService {
             String productionPath = localRootPath + nativePath + entry.getKey();
             File entryFile = new File(productionPath);
             if (!entryFile.exists()) {
-                InputStream inputStream = inputStream(env, ossPath + entry.getKey());
                 try {
-                    FileUtils.copyInputStreamToFile(inputStream, entryFile);
+                    String text = content(env, ossPath + entry.getKey());
+                    FileUtils.write(entryFile, text, Charset.defaultCharset());
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
-                } finally {
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        log.error(e.getMessage(), e);
-                    }
                 }
-//                modifyFileContent(productionPath, localRootPath);
             }
             return productionPath;
         }

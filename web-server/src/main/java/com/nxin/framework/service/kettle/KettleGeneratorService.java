@@ -161,17 +161,11 @@ public class KettleGeneratorService {
                         }
                     }
                     if (download) {
-                        InputStream inputStream = fileService.inputStream(Constant.ENV_DEV, item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix);
                         try {
-                            FileUtils.copyInputStreamToFile(inputStream, file);
+                            String text = fileService.content(Constant.ENV_DEV, item.getProjectId() + File.separator + item.getParentId() + File.separator + item.getId() + Constant.DOT + suffix);
+                            FileUtils.write(file, text, Charset.defaultCharset());
                         } catch (IOException e) {
                             log.error(e.getMessage(), e);
-                        } finally {
-                            try {
-                                inputStream.close();
-                            } catch (IOException e) {
-                                log.error(e.getMessage(), e);
-                            }
                         }
                     }
                 });
