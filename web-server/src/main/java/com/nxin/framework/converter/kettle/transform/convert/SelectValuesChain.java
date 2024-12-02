@@ -61,6 +61,7 @@ public class SelectValuesChain extends TransformConvertChain {
             for (Map<String, Object> fieldMapping : metaDataList) {
                 SelectMetadataChange selectMetadataChange = new SelectMetadataChange(selectValuesMeta);
                 selectMetadataChange.setName((String) fieldMapping.get("source"));
+                selectMetadataChange.setRename((String) fieldMapping.get("target"));
                 selectMetadataChange.setType(ValueMetaFactory.getIdForValueMeta((String) fieldMapping.get("category")));
                 if (!ObjectUtils.isEmpty(fieldMapping.get("lengthValue"))) {
                     selectMetadataChange.setLength((int) fieldMapping.get("lengthValue"));
