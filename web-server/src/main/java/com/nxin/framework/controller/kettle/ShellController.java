@@ -7,13 +7,15 @@ import com.nxin.framework.dto.kettle.ShellDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.exception.ConvertException;
 import com.nxin.framework.exception.FileNotExistedException;
 import com.nxin.framework.exception.RecordsNotMatchException;
+import com.nxin.framework.exception.XmlParseException;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.ProjectService;
+import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.ShellPublishService;
 import com.nxin.framework.service.kettle.ShellService;
-import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.kettle.ShellVo;
 import org.springframework.beans.BeanUtils;
@@ -114,7 +116,7 @@ public class ShellController {
     }
 
     @PostMapping("/shell")
-    public ResponseEntity save(@RequestBody ShellDto shellDto) {
+    public ResponseEntity<?> save(@RequestBody ShellDto shellDto) {
         List<User> members = userService.findByResource(shellDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
             Shell shell = new Shell();
@@ -124,13 +126,17 @@ public class ShellController {
                 return ResponseEntity.ok().build();
             } catch (DuplicateKeyException e) {
                 return ResponseEntity.status(Constant.EXCEPTION_DUPLICATED).build();
+            } catch (XmlParseException e) {
+                return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+            } catch (ConvertException e) {
+                return ResponseEntity.status(Constant.EXCEPTION_PLUGIN_CONVERT).body(e.getMessage());
             }
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
     @PostMapping("/moveShells/{parentId}")
-    public ResponseEntity save(@PathVariable Long parentId, @RequestBody List<ShellDto> shellDtoList) {
+    public ResponseEntity<?> save(@PathVariable Long parentId, @RequestBody List<ShellDto> shellDtoList) {
         Shell parent = null;
         if (parentId > 0) {
             parent = shellService.one(parentId);
@@ -156,13 +162,19 @@ public class ShellController {
     }
 
     @PostMapping("/shell/content")
-    public ResponseEntity<ShellVo> content(@RequestBody ShellDto shellDto) {
+    public ResponseEntity<?> content(@RequestBody ShellDto shellDto) {
         if (shellDto.getId() != null) {
             Shell persisted = shellService.one(shellDto.getId());
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
                 persisted.setContent(shellDto.getContent());
-                shellService.save(persisted);
+                try {
+                    shellService.save(persisted);
+                } catch (XmlParseException e) {
+                    return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+                } catch (ConvertException e) {
+                    return ResponseEntity.status(Constant.EXCEPTION_PLUGIN_CONVERT).body(e.getMessage());
+                }
                 return ResponseEntity.ok(shellConverter.convert(persisted));
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
@@ -171,7 +183,7 @@ public class ShellController {
     }
 
     @DeleteMapping("/shell/{id}")
-    public ResponseEntity delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         Shell persisted = shellService.one(id);
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);

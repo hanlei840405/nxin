@@ -7,9 +7,7 @@ import com.nxin.framework.converter.kettle.job.shell.JobEntryEvalChain;
 import com.nxin.framework.converter.kettle.job.transfer.JobEntryFTPPutChain;
 import com.nxin.framework.converter.kettle.job.transfer.JobEntryMailChain;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
-import org.pentaho.di.core.exception.KettleException;
 
 public class JobConvertFactory extends ConvertFactory {
     private static JobConvertChain beginChain;
@@ -48,7 +46,7 @@ public class JobConvertFactory extends ConvertFactory {
     }
 
 
-    public static JobConvertChain getInstance() throws KettleException {
+    public static JobConvertChain getInstance() {
         return beginChain;
     }
 }

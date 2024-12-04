@@ -1,6 +1,5 @@
 package com.nxin.framework.controller.kettle;
 
-import com.google.common.io.Files;
 import com.nxin.framework.dto.CrudDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.kettle.RunningProcess;
@@ -8,6 +7,8 @@ import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.event.JobExecuteEvent;
 import com.nxin.framework.event.TransformExecuteEvent;
+import com.nxin.framework.exception.ConvertException;
+import com.nxin.framework.exception.XmlParseException;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.kettle.KettleGeneratorService;
 import com.nxin.framework.service.kettle.LogService;
@@ -28,8 +29,6 @@ import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransConfiguration;
 import org.pentaho.di.trans.TransExecutionConfiguration;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.www.CarteObjectEntry;
-import org.pentaho.di.www.CarteSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -39,11 +38,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -99,7 +94,14 @@ public class DesignController {
                 if (Constant.TRANSFORM.equals(existed.getCategory())) {
                     TransExecutionConfiguration transExecutionConfiguration = new TransExecutionConfiguration();
                     transExecutionConfiguration.setLogLevel(LogLevel.BASIC);
-                    Map<String, Object> transMap = kettleGeneratorService.getTransMeta(existed, false);
+                    Map<String, Object> transMap;
+                    try {
+                        transMap = kettleGeneratorService.getTransMeta(existed, false);
+                    } catch (XmlParseException e) {
+                        return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+                    } catch (ConvertException e) {
+                        return ResponseEntity.status(Constant.EXCEPTION_PLUGIN_CONVERT).body(e.getMessage());
+                    }
                     TransMeta transMeta = (TransMeta) transMap.get("transMeta");
                     TransConfiguration transConfiguration = new TransConfiguration(transMeta, transExecutionConfiguration);
                     spoonLoggingObject.setLogLevel(transExecutionConfiguration.getLogLevel());
@@ -117,7 +119,14 @@ public class DesignController {
                 } else if (Constant.JOB.equals(existed.getCategory())) {
                     JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
                     jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
-                    Map<String, Object> jobMap = kettleGeneratorService.getJobMeta(existed, false);
+                    Map<String, Object> jobMap;
+                    try {
+                        jobMap = kettleGeneratorService.getJobMeta(existed, false);
+                    } catch (XmlParseException e) {
+                        return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+                    } catch (ConvertException e) {
+                        return ResponseEntity.status(Constant.EXCEPTION_PLUGIN_CONVERT).body(e.getMessage());
+                    }
                     JobMeta jobMeta = (JobMeta) jobMap.get("jobMeta");
                     JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
                     spoonLoggingObject.setContainerObjectId(id);
