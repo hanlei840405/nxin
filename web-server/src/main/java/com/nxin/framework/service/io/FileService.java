@@ -122,47 +122,6 @@ public class FileService {
         }
     }
 
-    public String copyFile(String sourceEnv, String sourcePath, String targetEnv, String targetPath) throws FileNotExistedException {
-        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
-            fileSystemManager.init();
-            // 这里替换成你的文件路径
-            FileObject source = fileSystemManager.resolveFile(baseUrl + sourceEnv + File.separator + sourcePath, getOptions());
-            FileObject target = fileSystemManager.resolveFile(baseUrl + targetEnv + File.separator + targetPath, getOptions());
-            // 打开文件输入流
-            target.copyFrom(source, Selectors.SELECT_SELF);
-            try (InputStream is = target.getContent().getInputStream()) {
-                return DigestUtils.md5DigestAsHex(IOUtils.toString(is).getBytes(StandardCharsets.UTF_8));
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new FileNotExistedException();
-        }
-    }
-
-    public String downloadFile(String env, String localRootPath, Map<String, String> pathMap) {
-        for (Map.Entry<String, String> entry : pathMap.entrySet()) {
-            String[] array = entry.getValue().split(",");
-            String ossPath = array[0];
-            String nativePath = array[1];
-            File entryFolder = new File(localRootPath + nativePath);
-            if (!entryFolder.exists()) {
-                entryFolder.mkdirs();
-            }
-            String productionPath = localRootPath + nativePath + entry.getKey();
-            File entryFile = new File(productionPath);
-            if (!entryFile.exists()) {
-                try {
-                    String text = content(env, ossPath + entry.getKey());
-                    FileUtils.write(entryFile, text, Charset.defaultCharset());
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-            return productionPath;
-        }
-        return null;
-    }
-
     private FileSystemOptions getOptions() {
         FtpFileSystemConfigBuilder builder = FtpFileSystemConfigBuilder.getInstance();
         FileSystemOptions options = new FileSystemOptions();

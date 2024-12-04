@@ -7,12 +7,15 @@ import com.nxin.framework.entity.auth.Privilege;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.exception.ConvertException;
+import com.nxin.framework.exception.XmlParseException;
 import com.nxin.framework.mapper.kettle.ShellMapper;
 import com.nxin.framework.service.auth.PrivilegeService;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.utils.LoginUtils;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
@@ -75,73 +78,55 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
         if (StringUtils.hasLength(shell.getContent())) {
             shell.setStreaming(Constant.BATCH);
             if (Constant.TRANSFORM.equals(shell.getCategory())) {
-                try {
-                    Map<String, Object> transResult = kettleGeneratorService.getTransMeta(shell, false);
-                    TransMeta transMeta = (TransMeta) transResult.get("transMeta");
-                    StepMeta[] stepMetas = transMeta.getStepsArray();
-                    for (StepMeta stepMeta : stepMetas) {
-                        if (Constant.STREAMING_STEP.contains(stepMeta.getTypeId())) {
-                            shell.setStreaming(Constant.STREAMING);
-                            break;
-                        }
+                Map<String, Object> transResult = kettleGeneratorService.getTransMeta(shell, false);
+                TransMeta transMeta = (TransMeta) transResult.get("transMeta");
+                StepMeta[] stepMetas = transMeta.getStepsArray();
+                for (StepMeta stepMeta : stepMetas) {
+                    if (Constant.STREAMING_STEP.contains(stepMeta.getTypeId())) {
+                        shell.setStreaming(Constant.STREAMING);
+                        break;
                     }
-                    String md5 = DigestUtils.md5DigestAsHex(shell.getContent().getBytes(StandardCharsets.UTF_8));
-                    if (!md5.equals(shell.getMd5Graph())) {
+                }
+                String md5 = DigestUtils.md5DigestAsHex(shell.getContent().getBytes(StandardCharsets.UTF_8));
+                if (!md5.equals(shell.getMd5Graph())) {
+                    try {
                         md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.TRANS_SUFFIX, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + transMeta.getXML());
-                        shell.setMd5Xml(md5);
-                        md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX, shell.getContent());
-                        shell.setMd5Graph(md5);
+                    } catch (KettleException e) {
+                        throw new XmlParseException();
                     }
-//                    String xml = transMeta.getXML();
-//                    String path = devDir + File.separator + shell.getProjectId() + File.separator + shell.getParentId();
-//                    File folder = new File(path);
-//                    if (!folder.exists()) {
-//                        folder.mkdirs();
-//                    }
-//
-//                    File transFile = new File(path + File.separator + shell.getName() + ".ktr");
-//                    Files.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + xml).getBytes(StandardCharsets.UTF_8), transFile);
-//                    shell.setXml(transFile.getCanonicalPath());
-                    shell.setReference((String) transResult.get("referenceIds"));
-                    shell.setExecutable(true);
-                } catch (Exception e) {
-                    shell.setExecutable(false);
+                    shell.setMd5Xml(md5);
+                    md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX, shell.getContent());
+                    shell.setMd5Graph(md5);
                 }
+                shell.setReference((String) transResult.get("referenceIds"));
+                shell.setExecutable(true);
             } else if (Constant.JOB.equals(shell.getCategory())) {
+                Map<String, Object> jobResult;
                 try {
-                    Map<String, Object> jobResult = kettleGeneratorService.getJobMeta(shell, false);
-                    JobMeta jobMeta = (JobMeta) jobResult.get("jobMeta");
-                    String reference = (String) jobResult.get("referenceIds");
-                    if (StringUtils.hasLength(reference)) {
-                        String[] references = reference.split(",");
-                        for (String referenceId : references) {
-                            Shell referenceShell = one(Long.parseLong(referenceId));
-                            if (Constant.STREAMING.equals(referenceShell.getStreaming())) {
-                                shell.setStreaming(Constant.STREAMING);
-                            }
+                    jobResult = kettleGeneratorService.getJobMeta(shell, false);
+                } catch (Exception e) {
+                    throw new ConvertException(e.getMessage());
+                }
+                JobMeta jobMeta = (JobMeta) jobResult.get("jobMeta");
+                String reference = (String) jobResult.get("referenceIds");
+                if (StringUtils.hasLength(reference)) {
+                    String[] references = reference.split(",");
+                    for (String referenceId : references) {
+                        Shell referenceShell = one(Long.parseLong(referenceId));
+                        if (Constant.STREAMING.equals(referenceShell.getStreaming())) {
+                            shell.setStreaming(Constant.STREAMING);
                         }
                     }
-                    String md5 = DigestUtils.md5DigestAsHex(shell.getContent().getBytes(StandardCharsets.UTF_8));
-                    if (!md5.equals(shell.getMd5Graph())) {
-                        md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.JOB_SUFFIX, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + jobMeta.getXML());
-                        shell.setMd5Xml(md5);
-                        md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX, shell.getContent());
-                        shell.setMd5Graph(md5);
-                    }
-//                    String xml = jobMeta.getXML();
-//                    String path = devDir + File.separator + shell.getProjectId() + File.separator + shell.getParentId();
-//                    File folder = new File(path);
-//                    if (!folder.exists()) {
-//                        folder.mkdirs();
-//                    }
-//                    File jobFile = new File(path + File.separator + shell.getName() + ".kjb");
-//                    Files.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + xml).getBytes(StandardCharsets.UTF_8), jobFile);
-//                    shell.setXml(jobFile.getCanonicalPath());
-                    shell.setReference((String) jobResult.get("referenceIds"));
-                    shell.setExecutable(true);
-                } catch (Exception e) {
-                    shell.setExecutable(false);
                 }
+                String md5 = DigestUtils.md5DigestAsHex(shell.getContent().getBytes(StandardCharsets.UTF_8));
+                if (!md5.equals(shell.getMd5Graph())) {
+                    md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.JOB_SUFFIX, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + jobMeta.getXML());
+                    shell.setMd5Xml(md5);
+                    md5 = fileService.createFile(Constant.ENV_DEV, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + Constant.DOT + Constant.GRAPH_SUFFIX, shell.getContent());
+                    shell.setMd5Graph(md5);
+                }
+                shell.setReference((String) jobResult.get("referenceIds"));
+                shell.setExecutable(true);
             }
         }
         int upsert;

@@ -6,7 +6,7 @@ import com.nxin.framework.converter.kettle.transform.convert.*;
 import com.nxin.framework.converter.kettle.transform.input.*;
 import com.nxin.framework.converter.kettle.transform.lookup.DatabaseJoinChain;
 import com.nxin.framework.converter.kettle.transform.lookup.DatabaseLookupChain;
-import com.nxin.framework.converter.kettle.transform.lookup.MultiMergeJoinChain;
+import com.nxin.framework.converter.kettle.transform.connect.MultiMergeJoinChain;
 import com.nxin.framework.converter.kettle.transform.lookup.RestChain;
 import com.nxin.framework.converter.kettle.transform.output.*;
 import com.nxin.framework.converter.kettle.transform.process.*;
@@ -14,11 +14,8 @@ import com.nxin.framework.converter.kettle.transform.shell.*;
 import com.nxin.framework.converter.kettle.transform.streaming.*;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
-import org.pentaho.di.core.exception.KettleException;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class TransformConvertFactory extends ConvertFactory {
@@ -157,7 +154,7 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertFactory.beginChain = beginChain;
     }
 
-    public static TransformConvertChain getInstance() throws KettleException {
+    public static TransformConvertChain getInstance() {
         return beginChain;
     }
 }
