@@ -156,6 +156,7 @@ public class ScheduleService {
         Map<String, Object> jobDataMap = JSON.parseObject(shellPathMap);
         Number id = (Number) jobDataMap.get("id");
         Number shellId = (Number) jobDataMap.get("shellId");
+        Number jobName = (Number) jobDataMap.get("jobName");
         Number projectId = (Number) jobDataMap.get("projectId");
         String rootPath = (String) jobDataMap.get("rootPath");
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
@@ -169,7 +170,7 @@ public class ScheduleService {
             String entryJobPath = null;
             for (Map<String, String> referencePathMap : referencePathList) {
                 String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
-                if (referencePathMap.containsKey(shellId + Constant.DOT + Constant.JOB_SUFFIX)) {
+                if (referencePathMap.containsKey(jobName + Constant.DOT + Constant.JOB_SUFFIX)) {
                     entryJobPath = path;
                 }
             }

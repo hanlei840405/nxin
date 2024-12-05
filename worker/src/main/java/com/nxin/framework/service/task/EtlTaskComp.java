@@ -54,6 +54,7 @@ public class EtlTaskComp extends QuartzJobBean {
         JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
         String id = jobDataMap.getString("id");
         String shellId = jobDataMap.getString("shellId");
+        String jobName = jobDataMap.getString("jobName");
         String projectId = jobDataMap.getString("projectId");
         String rootPath = jobDataMap.getString("rootPath");
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
@@ -69,7 +70,7 @@ public class EtlTaskComp extends QuartzJobBean {
             String entryJobPath = null;
             for (Map<String, String> referencePathMap : referencePathList) {
                 String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
-                if (referencePathMap.containsKey(shellId + Constant.DOT + Constant.JOB_SUFFIX)) {
+                if (referencePathMap.containsKey(jobName + Constant.DOT + Constant.JOB_SUFFIX)) {
                     entryJobPath = path;
                 }
             }
