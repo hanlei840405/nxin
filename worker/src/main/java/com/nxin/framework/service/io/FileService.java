@@ -74,9 +74,9 @@ public class FileService {
             }
             String productionPath = localRootPath + nativePath + entry.getKey();
             File entryFile = new File(productionPath);
-            if (!entryFile.exists()) {
+            if (!entryFile.exists() || entryFile.length() == 0) {
                 try {
-                    String text = content(env, ossPath + entry.getKey());
+                    String text = content(env, ossPath);
                     FileUtils.write(entryFile, text, Charset.defaultCharset());
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
