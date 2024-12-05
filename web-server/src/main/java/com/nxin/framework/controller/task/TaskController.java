@@ -88,22 +88,26 @@ public class TaskController {
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 List<CronTriggerRes> cronTriggerResList = JSON.parseArray(response.getBody(), CronTriggerRes.class);
                 Map<Long, CronTriggerRes> shellMap = cronTriggerResList.stream().collect(Collectors.toMap(CronTriggerRes::getShellId, item -> item));
-                IPage<ShellPublish> shellPublishIPage = shellPublishService.online(crudDto.getPayload(), Constant.BATCH, shellMap.keySet(), crudDto.getPageNo(), crudDto.getPageSize());
-                List<TaskVo> taskVos = shellPublishIPage.getRecords().stream().map(shellPublish -> {
-                    TaskVo taskVo = new TaskVo();
-                    taskVo.setName(shellPublish.getName());
-                    taskVo.setDescription(shellPublish.getDescription());
-                    CronTriggerRes cronTriggerRes = shellMap.get(shellPublish.getId());
-                    taskVo.setCron(cronTriggerRes.getCron());
-                    taskVo.setNextFireTime(cronTriggerRes.getNextFireTime());
-                    taskVo.setPreviousFireTime(cronTriggerRes.getPreviousFireTime());
-                    taskVo.setStartTime(cronTriggerRes.getStartTime());
-                    taskVo.setState(cronTriggerRes.getState());
-                    taskVo.setMisfire(cronTriggerRes.getMisfire());
-                    taskVo.setId(shellPublish.getId());
-                    return taskVo;
-                }).collect(Collectors.toList());
-                taskVoPageVo = new PageVo<>(shellPublishIPage.getTotal(), taskVos);
+                if (shellMap.isEmpty()) {
+                    taskVoPageVo = new PageVo<>(0, Collections.EMPTY_LIST);
+                } else {
+                    IPage<ShellPublish> shellPublishIPage = shellPublishService.online(crudDto.getPayload(), Constant.BATCH, shellMap.keySet(), crudDto.getPageNo(), crudDto.getPageSize());
+                    List<TaskVo> taskVos = shellPublishIPage.getRecords().stream().map(shellPublish -> {
+                        TaskVo taskVo = new TaskVo();
+                        taskVo.setName(shellPublish.getName());
+                        taskVo.setDescription(shellPublish.getDescription());
+                        CronTriggerRes cronTriggerRes = shellMap.get(shellPublish.getId());
+                        taskVo.setCron(cronTriggerRes.getCron());
+                        taskVo.setNextFireTime(cronTriggerRes.getNextFireTime());
+                        taskVo.setPreviousFireTime(cronTriggerRes.getPreviousFireTime());
+                        taskVo.setStartTime(cronTriggerRes.getStartTime());
+                        taskVo.setState(cronTriggerRes.getState());
+                        taskVo.setMisfire(cronTriggerRes.getMisfire());
+                        taskVo.setId(shellPublish.getId());
+                        return taskVo;
+                    }).collect(Collectors.toList());
+                    taskVoPageVo = new PageVo<>(shellPublishIPage.getTotal(), taskVos);
+                }
             } else {
                 taskVoPageVo = new PageVo<>(0, Collections.EMPTY_LIST);
             }
