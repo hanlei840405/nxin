@@ -3,7 +3,7 @@
 <mapper namespace="com.nxin.framework.mapper.auth.UserMapper">
 
     <select id="findByResource" resultType="com.nxin.framework.entity.auth.User">
-        SELECT auth_user.id,
+        SELECT DISTINCT auth_user.id,
         auth_user.name,
         auth_user.gender,
         auth_user.password,
@@ -29,7 +29,7 @@
     </select>
 
     <select id="findByPrivilege" resultType="com.nxin.framework.entity.auth.User">
-        SELECT auth_user.id,
+        SELECT DISTINCT auth_user.id,
         auth_user.name,
         auth_user.gender,
         auth_user.password,
