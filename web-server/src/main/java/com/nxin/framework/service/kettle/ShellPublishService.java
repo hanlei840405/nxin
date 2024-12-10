@@ -255,19 +255,17 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                 }
                 String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
                 String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
-                String name = shell.getName() + Constant.DOT + suffix;
+                String name = shell.getId() + Constant.DOT + suffix;
                 referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
                 item.setProd(Constant.ACTIVE);
                 item.setTaskId(taskId);
             });
             this.updateBatchById(toExecuteList);
-            Shell shell = shellService.one(shellPublish.getShellId());
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", shellPublish.getId().toString());
             jsonObject.put("referencePathList", referencePathList);
             jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
             jsonObject.put("shellId", shellPublish.getShellId().toString());
-            jsonObject.put("jobName", shell.getName());
             jsonObject.put("projectId", shellPublish.getProjectId().toString());
             TaskReq taskReq = new TaskReq();
             taskReq.setCron(cron);
@@ -332,19 +330,17 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                 }
                 String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
                 String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
-                String name = shell.getName() + Constant.DOT + suffix;
+                String name = shell.getId() + Constant.DOT + suffix;
                 referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
                 item.setProd(Constant.ACTIVE);
                 item.setTaskId(taskId);
             });
             this.updateBatchById(toExecuteList);
-            Shell shell = shellService.one(shellPublish.getShellId());
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", shellPublish.getId());
             jsonObject.put("referencePathList", referencePathList);
             jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
             jsonObject.put("shellId", shellPublish.getShellId());
-            jsonObject.put("jobName", shell.getName());
             jsonObject.put("projectId", shellPublish.getProjectId());
 
             StreamingReq streamingReq = new StreamingReq();

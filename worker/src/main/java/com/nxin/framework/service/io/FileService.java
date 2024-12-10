@@ -1,22 +1,27 @@
 package com.nxin.framework.service.io;
 
+import com.nxin.framework.enums.Constant;
 import com.qcloud.cos.utils.IOUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -81,6 +86,7 @@ public class FileService {
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
                 }
+                modifyFileContent(productionPath, localRootPath);
             }
             return productionPath;
         }
@@ -99,5 +105,53 @@ public class FileService {
         //设置 被动模式，防止 由于防火墙导致连接不上
         builder.setPassiveMode(options, true);
         return options;
+    }
+
+    private void modifyFileContent(String file, String target) {
+        target = target.substring(0, target.lastIndexOf(File.separator));
+        try {
+            SAXReader reader = new SAXReader();
+            Document document = reader.read(new File(file));
+            Element rootElement = document.getRootElement();
+            if (file.endsWith(Constant.DOT + Constant.JOB_SUFFIX)) {
+                List<Element> entries = rootElement.element("entries").elements();
+                for (Element entry : entries) {
+                    Element filenameElement = entry.element("filename");
+                    if (filenameElement != null) {
+                        Element nameElement = entry.element("name");
+                        if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
+                            String value = filenameElement.getTextTrim();
+                            if (StringUtils.hasLength(value)) {
+//                                    String[] path = value.split(File.separator);
+                                filenameElement.setText(target + value);
+                            }
+                        }
+                    }
+                }
+            } else {
+                List<Element> steps = rootElement.element("step").elements();
+                for (Element step : steps) {
+                    if ("transformationPath".equals(step.getName())) {
+                        if (StringUtils.hasLength(step.getText())) {
+                            String value = step.getTextTrim();
+                            if (StringUtils.hasLength(value)) {
+//                                    String[] path = value.split(File.separator);
+                                step.setText(target + value);
+                            }
+                        }
+                    }
+                }
+            }
+            //格式化为缩进格式
+            OutputFormat format = OutputFormat.createPrettyPrint();
+            //设置编码格式
+            format.setEncoding("UTF-8");
+            XMLWriter writer = new XMLWriter(new FileWriter(file), format);
+            //写入数据
+            writer.write(document);
+            writer.close();
+        } catch (Exception e) {
+            log.error(e.toString());
+        }
     }
 }
