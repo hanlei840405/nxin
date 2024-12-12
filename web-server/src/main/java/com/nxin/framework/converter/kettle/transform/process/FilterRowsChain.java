@@ -10,9 +10,8 @@ import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.Condition;
+import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.ValueMetaAndData;
-import org.pentaho.di.core.row.value.ValueMetaBase;
-import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepIOMeta;
 import org.pentaho.di.trans.step.StepIOMetaInterface;
@@ -20,10 +19,7 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.errorhandling.Stream;
 import org.pentaho.di.trans.step.errorhandling.StreamInterface;
 import org.pentaho.di.trans.steps.filterrows.FilterRowsMeta;
-import org.pentaho.di.trans.steps.tableinput.TableInputMeta;
-import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,12 +73,12 @@ public class FilterRowsChain extends TransformConvertChain {
                 FilterRowsMeta filterRowsMeta = (FilterRowsMeta) filterRowsMetaMap.get("stepMetaInterface");
                 String trueStepName = idNameMapping.get((String) filterRowsMetaMap.get("sendTrueTo"));
                 String falseStepName = idNameMapping.get((String) filterRowsMetaMap.get("sendFalseTo"));
-                StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
+                StepIOMetaInterface stepIOMeta = new StepIOMeta(true, true, false, false, false, false);
                 List<StreamInterface> infoStreams = filterRowsMeta.getStepIOMeta().getTargetStreams();
                 infoStreams.get(0).setSubject(trueStepName);
                 infoStreams.get(1).setSubject(falseStepName);
-                for ( StreamInterface infoStream : infoStreams ) {
-                    stepIOMeta.addStream( new Stream( infoStream ) );
+                for (StreamInterface infoStream : infoStreams) {
+                    stepIOMeta.addStream(new Stream(infoStream));
                 }
                 filterRowsMeta.setStepIOMeta(stepIOMeta);
                 filterRowsMeta.searchInfoAndTargetSteps(transMeta.getSteps());
@@ -100,19 +96,24 @@ public class FilterRowsChain extends TransformConvertChain {
         String leftValuename = fieldMapping.get("leftValuename").toString();
         String function = fieldMapping.get("function").toString();
         String rightValuename = fieldMapping.get("rightValuename").toString();
-        String text = fieldMapping.get("value").toString();
+        Object value = fieldMapping.get("value");
         String type = fieldMapping.get("type").toString();
         condition.setNegated(negate.equals("Y"));
         condition.setLeftValuename(leftValuename);
         condition.setFunction(Condition.getFunction(function));
         condition.setRightValuename(rightValuename);
-        if (StringUtils.hasLength(text)) {
-            int id = ValueMetaFactory.getIdForValueMeta(type);
-            // todo length,precision暂时为默认值-1与0，后面迭代
-            ValueMetaBase valueMetaBase = new ValueMetaBase("constant", id, -1, 0, null);
-            ValueMetaAndData valueMetaAndData = new ValueMetaAndData(valueMetaBase, text);
-
-            condition.setRightExact(valueMetaAndData);
+        if (value != null) {
+//            int id = ValueMetaFactory.getIdForValueMeta(type);
+//            // todo length,precision暂时为默认值-1与0，后面迭代
+//            ValueMetaBase valueMetaBase = new ValueMetaBase("constant", id, -1, 0, null);
+//            ValueMetaAndData valueMetaAndData = new ValueMetaAndData(valueMetaBase, value);
+//            condition.setRightExact(valueMetaAndData);
+            try {
+                ValueMetaAndData valueMetaAndData = new ValueMetaAndData(type, value);
+                condition.setRightExact(valueMetaAndData);
+            } catch (KettleValueException e) {
+                throw new RuntimeException(e);
+            }
         }
         return condition;
     }
