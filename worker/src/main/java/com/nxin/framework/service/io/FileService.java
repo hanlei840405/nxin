@@ -1,26 +1,28 @@
 package com.nxin.framework.service.io;
 
 import com.nxin.framework.enums.Constant;
-import com.qcloud.cos.utils.IOUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.FileFilterSelector;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSelector;
+import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.filter.NameFileFilter;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.dom4j.Document;
 import org.dom4j.Element;
-import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -50,47 +52,36 @@ public class FileService {
         }
     }
 
-    public String content(String env, String path) {
+    public synchronized String downloadFile(String env, String localRootPath, Map<String, String> pathMap) {
         try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
             fileSystemManager.init();
-            // 这里替换成你的文件路径
-            FileObject file = fileSystemManager.resolveFile(baseUrl + env + File.separator + path, getOptions());
-            if (file.exists()) {
-                // 打开文件输入流
-                try (InputStream is = file.getContent().getInputStream()) {
-                    return IOUtils.toString(is);
+            for (Map.Entry<String, String> entry : pathMap.entrySet()) {
+                String[] array = entry.getValue().split(",");
+                String ossPath = array[0];
+                String nativePath = array[1];
+                String directory = localRootPath + nativePath;
+                String rename = directory + entry.getKey();
+                FileObject renameFileObject = fileSystemManager.resolveFile(rename, getOptions());
+                if (!renameFileObject.exists()) {
+                    FileObject localDirectory = fileSystemManager.resolveFile(directory, getOptions());
+                    FileObject fileToCopy = fileSystemManager.resolveFile(baseUrl + env + File.separator + ossPath, getOptions());
+                    NameFileFilter nameFileFilter = new NameFileFilter(Collections.singletonList(fileToCopy.getName().getBaseName()));
+                    FileSelector fileSelector = new FileFilterSelector(nameFileFilter);
+                    localDirectory.copyFrom(fileToCopy.getParent(), fileSelector);
+                    String oldName = directory + fileToCopy.getName().getBaseName();
+                    FileObject oldFileObject = fileSystemManager.resolveFile(oldName, getOptions());
+                    if (oldFileObject.canRenameTo(renameFileObject)) {
+                        oldFileObject.moveTo(renameFileObject);
+                        modifyFileContent(rename, localRootPath);
+                    }
                 }
+                return rename;
             }
             return null;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
-    }
-
-    public String downloadFile(String env, String localRootPath, Map<String, String> pathMap) {
-        for (Map.Entry<String, String> entry : pathMap.entrySet()) {
-            String[] array = entry.getValue().split(",");
-            String ossPath = array[0];
-            String nativePath = array[1];
-            File entryFolder = new File(localRootPath + nativePath);
-            if (!entryFolder.exists()) {
-                entryFolder.mkdirs();
-            }
-            String productionPath = localRootPath + nativePath + entry.getKey();
-            File entryFile = new File(productionPath);
-            if (!entryFile.exists() || entryFile.length() == 0) {
-                try {
-                    String text = content(env, ossPath);
-                    FileUtils.write(entryFile, text, Charset.defaultCharset());
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-                modifyFileContent(productionPath, localRootPath);
-            }
-            return productionPath;
-        }
-        return null;
     }
 
     private FileSystemOptions getOptions() {
@@ -122,7 +113,6 @@ public class FileService {
                         if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
                             String value = filenameElement.getTextTrim();
                             if (StringUtils.hasLength(value)) {
-//                                    String[] path = value.split(File.separator);
                                 filenameElement.setText(target + value);
                             }
                         }
@@ -135,18 +125,13 @@ public class FileService {
                         if (StringUtils.hasLength(step.getText())) {
                             String value = step.getTextTrim();
                             if (StringUtils.hasLength(value)) {
-//                                    String[] path = value.split(File.separator);
                                 step.setText(target + value);
                             }
                         }
                     }
                 }
             }
-            //格式化为缩进格式
-            OutputFormat format = OutputFormat.createPrettyPrint();
-            //设置编码格式
-            format.setEncoding("UTF-8");
-            XMLWriter writer = new XMLWriter(new FileWriter(file), format);
+            XMLWriter writer = new XMLWriter(new FileWriter(file));
             //写入数据
             writer.write(document);
             writer.close();
