@@ -8,9 +8,9 @@ SqlServer、DB2等关系型数据库在内的多种数据库。
 
 系统运行强制依赖：
 
-redis： 1、缓存找回密码的动态验证码
+redis： 1、缓存找回密码的动态验证码,2、为web-server与worker通信提供管道服务
 
-ftp服务：需连接ftp服务器，用于存放etl运行的脚本，worker执行脚本时，会从ftp服务器拉取最新文件，本地开发时可使用docker启动ftp服务器，数据迁移时，需将ftp内目录完整迁移至其他环境
+ftp服务：需连接ftp服务器，用于存放etl运行的脚本，worker执行脚本时，会从ftp服务器拉取最新文件
 windows开启ftp/sftp功能：安装openSSH工具，下载地址：https://github.com/powershell/win32-openssh/releases 或https://pan.baidu.com/s/12TCh9a3YevUOpVLVrx2VWg?pwd=65xh
 macos开启ftp/sftp功能：https://blog.csdn.net/King_zj/article/details/125991856
 
