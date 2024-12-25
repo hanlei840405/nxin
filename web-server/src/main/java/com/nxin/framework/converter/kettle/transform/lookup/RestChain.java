@@ -31,7 +31,6 @@ public class RestChain extends TransformConvertChain {
             RestMeta restMeta = new RestMeta();
             String stepName = (String) formAttributes.get("name");
             String url = (String) formAttributes.get("url");
-            boolean urlInStream = (boolean) formAttributes.get("urlInStream");
             String urlField = (String) formAttributes.get("urlField");
             String method = (String) formAttributes.get("method");
             boolean methodInStream = (boolean) formAttributes.get("methodInStream");
@@ -47,8 +46,8 @@ public class RestChain extends TransformConvertChain {
             boolean preemptive = (boolean) formAttributes.get("preemptive");
             String proxyHost = (String) formAttributes.get("proxyHost");
             String proxyPort = (String) formAttributes.get("proxyPort");
+            restMeta.setUrlInField(true);
             restMeta.setUrl(url);
-            restMeta.setUrlInField(urlInStream);
             restMeta.setUrlField(urlField);
             restMeta.setMethod(method);
             restMeta.setDynamicMethod(methodInStream);
