@@ -7,6 +7,7 @@ import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
+import com.nxin.framework.exception.ConvertException;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.Condition;
@@ -19,7 +20,12 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.errorhandling.Stream;
 import org.pentaho.di.trans.step.errorhandling.StreamInterface;
 import org.pentaho.di.trans.steps.filterrows.FilterRowsMeta;
+import org.springframework.util.StringUtils;
 
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,12 +44,10 @@ public class FilterRowsChain extends TransformConvertChain {
             String stepName = (String) formAttributes.get("name");
             String sendTrueTo = (String) formAttributes.get("sendTrueTo");
             String sendFalseTo = (String) formAttributes.get("sendFalseTo");
-            List<Map<String, Object>> fieldMappingData = (List<Map<String, Object>>) formAttributes.get("fieldMappingData");
+            List<Map<String, Object>> conditions = (List<Map<String, Object>>) formAttributes.get("conditions");
+            Map<String, Object> root = conditions.get(0); // 根节点，无逻辑意义
             Condition condition = new Condition();
-            for (int i = 0; i < fieldMappingData.size(); i++) {
-                Map<String, Object> mapping = fieldMappingData.get(i);
-                condition.addCondition(this.build(new Condition(), mapping));
-            }
+            deepLoop(condition, root);
             filterRowsMeta.setCondition(condition);
             Map<String, Object> filterRowsMetaMap = new HashMap<>(0);
             filterRowsMetaMap.put("sendTrueTo", sendTrueTo);
@@ -87,34 +91,111 @@ public class FilterRowsChain extends TransformConvertChain {
         }
     }
 
-    private Condition build(Condition condition, Map<String, Object> fieldMapping) {
-        String negate = fieldMapping.get("negate").toString();
-        if (!condition.getChildren().isEmpty()) {
-            String operates = fieldMapping.get("operates").toString();
-            condition.setOperator(Condition.getOperator(operates));
+    private void deepLoop(Condition condition, Map<String, Object> node) {
+        List<Map<String, Object>> children = (List<Map<String, Object>>) node.get("children");
+        if (children.size() == 0) {
+            return;
         }
-        String leftValuename = fieldMapping.get("leftValuename").toString();
-        String function = fieldMapping.get("function").toString();
-        String rightValuename = fieldMapping.get("rightValuename").toString();
-        Object value = fieldMapping.get("value");
-        String type = fieldMapping.get("type").toString();
+        Condition groupCondition = null;
+        if (children.size() > 1) {
+            groupCondition = new Condition();
+            groupCondition.setOperator(Condition.OPERATOR_AND);
+        }
+        for (int i = 0; i < children.size(); i++) {
+            Map<String, Object> child = children.get(i);
+            Condition childCondition = new Condition();
+            if (i > 0) {
+                childCondition.setOperator(Condition.OPERATOR_OR);
+            } else if (groupCondition != null && groupCondition.getChildren().size() > 0) {
+                childCondition.setOperator(Condition.OPERATOR_AND);
+            } else if (groupCondition == null && condition.getChildren().size() > 0) {
+                childCondition.setOperator(Condition.OPERATOR_AND);
+            }
+            build(childCondition, child);
+            if (groupCondition != null) {
+                groupCondition.addCondition(childCondition);
+                deepLoop(groupCondition, child);
+            } else {
+                condition.getChildren().add(childCondition);
+                deepLoop(condition, child);
+            }
+        }
+        if (groupCondition != null) {
+            condition.getChildren().add(groupCondition);
+        }
+    }
+
+    private void build(Condition condition, Map<String, Object> child) {
+        Map<String, Object> config = (Map<String, Object>) child.get("config");
+        if (config == null) {
+            return;
+        }
+        String negate = (String) config.get("negate");
+        String leftValuename = (String) config.get("leftValuename");
+        String function = (String) config.get("function");
+        String rightValuename = (String) config.get("rightValuename");
+        Object value = config.get("value");
+        String type = (String) config.get("category");
+        int length = (int) config.get("lengthValue");
+        int accuracy = (int) config.get("accuracy");
+        String format = (String) config.get("format");
         condition.setNegated(negate.equals("Y"));
         condition.setLeftValuename(leftValuename);
         condition.setFunction(Condition.getFunction(function));
         condition.setRightValuename(rightValuename);
         if (value != null) {
 //            int id = ValueMetaFactory.getIdForValueMeta(type);
-//            // todo length,precision暂时为默认值-1与0，后面迭代
-//            ValueMetaBase valueMetaBase = new ValueMetaBase("constant", id, -1, 0, null);
+//            ValueMetaBase valueMetaBase = new ValueMetaBase("constant", id, length, accuracy);
+            try {
+                if ("Number".equals(type)) {
+                    DecimalFormat decimalFormat;
+                    if (StringUtils.hasLength(format)) {
+                        decimalFormat = new DecimalFormat(format);
+                    } else {
+                        decimalFormat = new DecimalFormat();
+                    }
+                    value = decimalFormat.parse((String) value).doubleValue();
+                } else if ("Integer".equals(type)) {
+                    DecimalFormat decimalFormat;
+                    if (StringUtils.hasLength(format)) {
+                        decimalFormat = new DecimalFormat(format);
+                    } else {
+                        decimalFormat = new DecimalFormat();
+                    }
+                    value = decimalFormat.parse((String) value).longValue();
+                } else if ("Date".equals(type)) {
+                    SimpleDateFormat sdf = new SimpleDateFormat(format);
+                    value = sdf.parse((String) value);
+                } else if ("Timestamp".equals(type)) {
+                    value = Timestamp.valueOf((String) value);
+                } else if ("BigNumber".equals(type)) {
+                    DecimalFormat decimalFormat;
+                    if (StringUtils.hasLength(format)) {
+                        decimalFormat = new DecimalFormat(format);
+                    } else {
+                        decimalFormat = new DecimalFormat();
+                    }
+                    decimalFormat.setParseBigDecimal(true);
+                    value = decimalFormat.parse((String) value);
+                } else if ("Boolean".equals(type)) {
+                    value = new Boolean((String) value);
+                }
+                ValueMetaAndData valueMetaAndData = new ValueMetaAndData("constant", value);
+
+                valueMetaAndData.getValueMeta().setLength(length);
+                valueMetaAndData.getValueMeta().setPrecision(accuracy);
+                if (StringUtils.hasLength(format)) {
+                    valueMetaAndData.getValueMeta().setConversionMask(format);
+                }
+                condition.setRightExact(valueMetaAndData);
+            } catch (ParseException | KettleValueException e) {
+                throw new ConvertException(e.getMessage());
+            }
+//            valueMetaBase.setConversionMask(format);
 //            ValueMetaAndData valueMetaAndData = new ValueMetaAndData(valueMetaBase, value);
 //            condition.setRightExact(valueMetaAndData);
-            try {
-                ValueMetaAndData valueMetaAndData = new ValueMetaAndData(type, value);
-                condition.setRightExact(valueMetaAndData);
-            } catch (KettleValueException e) {
-                throw new RuntimeException(e);
-            }
+        } else {
+
         }
-        return condition;
     }
 }
