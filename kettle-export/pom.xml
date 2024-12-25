@@ -78,6 +78,13 @@
             <systemPath>${basedir}/ext-lib/pentaho-big-data-kettle-plugins-kafka-9.4.0.0-343.jar</systemPath>
         </dependency>
         <dependency>
+            <groupId>pentaho</groupId>
+            <artifactId>pentaho-big-data-legacy-core</artifactId>
+            <version>9.4.0.0-343</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/ext-lib/pentaho-big-data-legacy-core-9.4.0.0-343.jar</systemPath>
+        </dependency>
+        <dependency>
             <groupId>org.pentaho</groupId>
             <artifactId>shim-api</artifactId>
             <version>9.4.0.0-SNAPSHOT</version>

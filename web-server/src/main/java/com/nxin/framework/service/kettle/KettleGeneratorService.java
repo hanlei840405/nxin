@@ -13,7 +13,6 @@ import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.enums.KettlePluginEnum;
 import com.nxin.framework.exception.ConvertException;
 import com.nxin.framework.exception.FileNotExistedException;
 import com.nxin.framework.exception.XmlParseException;
