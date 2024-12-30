@@ -41,7 +41,6 @@ public class JobExecuteListener {
             CarteSingleton.getInstance().getJobMap().addJob(jobExecuteEvent.getJob().getName(), jobExecuteEvent.getInstanceId(), jobExecuteEvent.getJob(), jobExecuteEvent.getJobConfiguration());
             // 空参调用
             jobExecuteEvent.getJob().setLogLevel(LogLevel.BASIC);
-            jobExecuteEvent.getJob().start();
             KettleLoggingEventListener kettleLoggingEventListener = kettleLoggingEvent -> {
                 LogMessageInterface logMessageInterface = (LogMessageInterface) kettleLoggingEvent.getMessage();
                 List<String> childrenLogChannelIds = loggingRegistry.getLogChannelChildren(jobExecuteEvent.getJob().getLogChannelId());
@@ -59,6 +58,7 @@ public class JobExecuteListener {
                 }
             };
             KettleLogStore.getAppender().addLoggingEventListener(kettleLoggingEventListener);
+            jobExecuteEvent.getJob().start();
             jobExecuteEvent.getJob().waitUntilFinished();
             KettleLogStore.getAppender().removeLoggingEventListener(kettleLoggingEventListener);
             CarteSingleton.getInstance().getJobMap().removeJob(new CarteObjectEntry(jobExecuteEvent.getJob().getName(), jobExecuteEvent.getInstanceId()));

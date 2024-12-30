@@ -42,7 +42,6 @@ public class TransformExecuteListener {
             CarteSingleton.getInstance().getTransformationMap().addTransformation(transformExecuteEvent.getTrans().getName(), transformExecuteEvent.getInstanceId(), transformExecuteEvent.getTrans(), transformExecuteEvent.getTransConfiguration());
             // 空参调用
             transformExecuteEvent.getTrans().setLogLevel(LogLevel.BASIC);
-            transformExecuteEvent.getTrans().execute(new String[]{});
             KettleLoggingEventListener kettleLoggingEventListener = kettleLoggingEvent -> {
                 LogMessageInterface logMessageInterface = (LogMessageInterface) kettleLoggingEvent.getMessage();
                 List<String> childrenLogChannelIds = loggingRegistry.getLogChannelChildren(transformExecuteEvent.getTrans().getLogChannelId());
@@ -60,6 +59,7 @@ public class TransformExecuteListener {
                 }
             };
             KettleLogStore.getAppender().addLoggingEventListener(kettleLoggingEventListener);
+            transformExecuteEvent.getTrans().execute(new String[]{});
             transformExecuteEvent.getTrans().waitUntilFinished();
             KettleLogStore.getAppender().removeLoggingEventListener(kettleLoggingEventListener);
             CarteSingleton.getInstance().getTransformationMap().removeTransformation(new CarteObjectEntry(transformExecuteEvent.getTrans().getName(), transformExecuteEvent.getInstanceId()));

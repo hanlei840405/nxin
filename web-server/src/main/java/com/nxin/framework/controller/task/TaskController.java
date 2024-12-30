@@ -1,6 +1,7 @@
 package com.nxin.framework.controller.task;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.util.DateUtils;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.task.TaskHistoryConverter;
@@ -27,6 +28,7 @@ import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.task.TaskHistoryVo;
 import com.nxin.framework.vo.task.TaskVo;
+import com.qcloud.cos.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -37,6 +39,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -72,6 +78,8 @@ public class TaskController {
     private String resumeUri;
     @Value("${worker.schedule-modify-uri}")
     private String modifyUri;
+    @Value("${log.dir}")
+    private String logDir;
 
     private BeanConverter<TaskHistoryVo, TaskHistory> taskHistoryConverter = new TaskHistoryConverter();
 
@@ -247,7 +255,11 @@ public class TaskController {
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-                return ResponseEntity.ok(logService.jobLog(taskHistory.getLogChannelId()));
+                try {
+                    return ResponseEntity.ok(IOUtils.toString(Files.newInputStream(Paths.get(logDir + DateUtils.format(taskHistory.getBeginTime(), "yyyy-MM-dd") + File.separator + taskHistory.getLogChannelId() + ".out"))));
+                } catch (IOException e) {
+                    return ResponseEntity.status(Constant.EXCEPTION_FILE_NOT_EXIST).build();
+                }
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }

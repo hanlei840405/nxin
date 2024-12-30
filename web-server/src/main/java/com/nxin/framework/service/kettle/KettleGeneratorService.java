@@ -108,6 +108,7 @@ public class KettleGeneratorService {
         ChannelLogTable channelLogTable = transMeta.getChannelLogTable();
         transLogTable.setConnectionName(etlLogDatasourceName);
         transLogTable.setTableName("log_etl_transform");
+        transLogTable.setLogFieldUsed(false);
         stepLogTable.setConnectionName(etlLogDatasourceName);
         stepLogTable.setTableName("log_etl_transform_step");
         channelLogTable.setConnectionName(etlLogDatasourceName);
@@ -205,6 +206,7 @@ public class KettleGeneratorService {
         ChannelLogTable channelLogTable = jobMeta.getChannelLogTable();
         jobLogTable.setConnectionName(etlLogDatasourceName);
         jobLogTable.setTableName("log_etl_job");
+        jobLogTable.setLogFieldUsed(false);
         jobEntryLogTable.setConnectionName(etlLogDatasourceName);
         jobEntryLogTable.setTableName("log_etl_job_entry");
         channelLogTable.setConnectionName(etlLogDatasourceName);
