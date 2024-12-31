@@ -63,19 +63,19 @@ public class DatabaseJoinChain extends TransformConvertChain {
                     databaseMeta.setMaximumPoolSize(datasource.getPoolMaxSize());
                 }
                 if (datasource.getPoolInitial() != null) {
-                    properties.put("initialSize", "" + datasource.getPoolInitial());
+                    properties.put("initialSize", datasource.getPoolInitial());
                 }
                 if (datasource.getPoolMaxActive() != null) {
-                    properties.put("maxActive", "" + datasource.getPoolMaxActive());
+                    properties.put("maxActive", datasource.getPoolMaxActive());
                 }
                 if (datasource.getPoolMaxIdle() != null) {
-                    properties.put("maxIdle", "" + datasource.getPoolMaxIdle());
+                    properties.put("maxIdle", datasource.getPoolMaxIdle());
                 }
                 if (datasource.getPoolMinIdle() != null) {
-                    properties.put("minIdle", "" + datasource.getPoolMinIdle());
+                    properties.put("minIdle", datasource.getPoolMinIdle());
                 }
                 if (datasource.getPoolMaxWait() != null) {
-                    properties.put("maxWait", "" + datasource.getPoolMaxWait());
+                    properties.put("maxWait", datasource.getPoolMaxWait());
                 }
             }
             String parameters = datasource.getParameter();
