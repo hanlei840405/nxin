@@ -19,6 +19,8 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     private String productionDir;
     @Value("${attachment.dir}")
     private String attachmentDir;
+    @Value("${log.dir}")
+    private String logDir;
     @Autowired
     private Scheduler scheduler;
 
@@ -31,6 +33,10 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
         File attachment = new File(attachmentDir);
         if (!attachment.exists()) {
             attachment.mkdirs();
+        }
+        File log = new File(logDir);
+        if (!log.exists()) {
+            log.mkdirs();
         }
         try {
             scheduler.getListenerManager().addJobListener(new JobListener());

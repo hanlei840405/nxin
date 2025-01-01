@@ -1,11 +1,9 @@
 package com.nxin.framework.service.io;
 
+import com.google.common.io.Files;
 import com.nxin.framework.enums.Constant;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.vfs2.FileFilterSelector;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSelector;
-import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.filter.NameFileFilter;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
@@ -15,16 +13,20 @@ import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -45,9 +47,27 @@ public class FileService {
 
     @PostConstruct
     public void init() {
-        try {
+        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
+            fileSystemManager.init();
             baseUrl = String.format("%s://%s:%s@%s%s", schema, username, URLEncoder.encode(password, "utf-8"), host, path);
-        } catch (UnsupportedEncodingException e) {
+            FileObject dir = fileSystemManager.resolveFile(baseUrl + "log/", getOptions());
+            if (!dir.exists()) {
+                dir.createFolder();
+            }
+        } catch (UnsupportedEncodingException | FileSystemException e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void createFile(String path, FileObject source) {
+        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
+            fileSystemManager.init();
+            FileObject target = fileSystemManager.resolveFile(baseUrl + path, getOptions());
+            target.copyFrom(source, Selectors.SELECT_SELF);
+            source.delete();
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
@@ -138,5 +158,9 @@ public class FileService {
         } catch (Exception e) {
             log.error(e.toString());
         }
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
     }
 }

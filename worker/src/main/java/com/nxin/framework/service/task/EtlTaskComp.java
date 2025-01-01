@@ -85,11 +85,9 @@ public class EtlTaskComp extends QuartzJobBean {
                 carteObjectEntry = new CarteObjectEntry(job.getName(), uuid);
                 job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                 job.setGatheringMetrics(true);
-                File folder = new File(logDir + DateUtils.format(new Date(), "yyyy-MM-dd"));
-                if (!folder.exists()) {
-                    folder.mkdirs();
-                }
-                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(folder.getAbsolutePath() + File.separator + job.getLogChannelId() + ".out", true);
+                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(logDir + job.getLogChannelId() + ".out", true);
+//                String logFilePath = fileService.getBaseUrl().concat("log/").concat(job.getLogChannelId()).concat(".out");
+//                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(logFilePath, true);
                 KettleLogStore.getAppender().addLoggingEventListener(fileLoggingEventListener);
                 CarteSingleton.getInstance().getJobMap().addJob(job.getName(), uuid, job, jobConfiguration);
                 job.start();
@@ -107,6 +105,7 @@ public class EtlTaskComp extends QuartzJobBean {
                 taskHistory.setLogChannelId(job.getLogChannelId());
                 taskHistory.setRunningProcessId(runningProcess.getId());
                 job.waitUntilFinished();
+                fileService.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd")  + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
                 KettleLogStore.getAppender().removeLoggingEventListener(fileLoggingEventListener);
                 runningProcessService.delete(runningProcess);
                 if (job.getErrors() > 0) {

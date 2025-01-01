@@ -19,6 +19,7 @@ import com.nxin.framework.request.TaskReq;
 import com.nxin.framework.response.CronTriggerRes;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.ProjectService;
+import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellPublishService;
@@ -70,6 +71,8 @@ public class TaskController {
     private RunningProcessService runningProcessService;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private FileService fileService;
     @Value("${worker.schedule-find-all-cron-trigger-uri}")
     private String findAllCronTriggerUri;
     @Value("${worker.schedule-pause-uri}")
@@ -78,8 +81,6 @@ public class TaskController {
     private String resumeUri;
     @Value("${worker.schedule-modify-uri}")
     private String modifyUri;
-    @Value("${log.dir}")
-    private String logDir;
 
     private BeanConverter<TaskHistoryVo, TaskHistory> taskHistoryConverter = new TaskHistoryConverter();
 
@@ -256,8 +257,9 @@ public class TaskController {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
                 try {
-                    return ResponseEntity.ok(IOUtils.toString(Files.newInputStream(Paths.get(logDir + DateUtils.format(taskHistory.getBeginTime(), "yyyy-MM-dd") + File.separator + taskHistory.getLogChannelId() + ".out"))));
-                } catch (IOException e) {
+//                    return ResponseEntity.ok(IOUtils.toString(Files.newInputStream(Paths.get(logDir + DateUtils.format(taskHistory.getBeginTime(), "yyyy-MM-dd") + File.separator + taskHistory.getLogChannelId() + ".out"))));
+                    return ResponseEntity.ok(fileService.content("log", DateUtils.format(taskHistory.getBeginTime(), "yyyy-MM-dd") + File.separator + taskHistory.getLogChannelId() + ".out"));
+                } catch (RuntimeException e) {
                     return ResponseEntity.status(Constant.EXCEPTION_FILE_NOT_EXIST).build();
                 }
             }
