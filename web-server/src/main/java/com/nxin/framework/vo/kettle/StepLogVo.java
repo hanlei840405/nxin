@@ -3,7 +3,9 @@ package com.nxin.framework.vo.kettle;
 import com.nxin.framework.vo.BaseVo;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @Data
 public class StepLogVo extends BaseVo {

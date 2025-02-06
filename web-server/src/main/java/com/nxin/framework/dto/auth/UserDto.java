@@ -2,9 +2,11 @@ package com.nxin.framework.dto.auth;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class UserDto extends CrudDto {
 

@@ -2,11 +2,12 @@ package com.nxin.framework.dto.bi;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
 
-
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class MetadataDto extends CrudDto implements Serializable {
 

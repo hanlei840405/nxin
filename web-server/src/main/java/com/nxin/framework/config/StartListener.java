@@ -4,6 +4,7 @@ import com.nxin.framework.converter.kettle.job.JobConvertFactory;
 import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.DatasourceService;
+import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.ShellService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,11 +42,13 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     private MetricsEndpoint metricsEndpoint;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private FtpService ftpService;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         TransformConvertFactory.init(datasourceService, shellService);
-        JobConvertFactory.init(shellService, attachmentDir);
+        JobConvertFactory.init(shellService, ftpService, attachmentDir);
         File dev = new File(devDir);
         if (!dev.exists()) {
             dev.mkdirs();

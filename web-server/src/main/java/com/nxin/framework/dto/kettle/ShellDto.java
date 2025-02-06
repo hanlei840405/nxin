@@ -2,7 +2,9 @@ package com.nxin.framework.dto.kettle;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class ShellDto extends CrudDto {
     private String name;

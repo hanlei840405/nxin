@@ -3,9 +3,11 @@ package com.nxin.framework.vo.kettle;
 import com.nxin.framework.vo.BaseVo;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @Data
 public class TransformLogVo extends BaseVo {

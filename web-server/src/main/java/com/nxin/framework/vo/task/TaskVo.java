@@ -2,9 +2,11 @@ package com.nxin.framework.vo.task;
 
 import com.nxin.framework.vo.BaseVo;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class TaskVo extends BaseVo {
 

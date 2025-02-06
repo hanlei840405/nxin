@@ -6,6 +6,7 @@ import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.job.JobConvertChain;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
+import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.exception.UnExecutableException;
@@ -15,6 +16,7 @@ import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.job.entries.ftp.JobEntryFTP;
 import org.pentaho.di.job.entries.ftpput.JobEntryFTPPUT;
 import org.pentaho.di.job.entry.JobEntryCopy;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,10 +32,16 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             Map<String, Object> formAttributes = objectMapper.readValue(value.getAttribute("form"), new TypeReference<Map<String, Object>>() {
             });
             String name = (String) formAttributes.get("name");
-            String serverName = (String) formAttributes.get("serverName");
-            String serverPort = (String) formAttributes.get("serverPort");
-            String userName = (String) formAttributes.get("userName");
-            String password = (String) formAttributes.get("password");
+            Number server = (Number) formAttributes.get("server");
+            Ftp ftp = getFtpService().one(server.longValue());
+            String serverName = ftp.getHost();
+            Integer serverPort = ftp.getPort();
+            String userName = ftp.getUsername();
+            String password = ftp.getPassword();
+            String proxyHost = ftp.getProxyHost();
+            Integer proxyPort = ftp.getProxyPort();
+            String proxyUsername = ftp.getProxyUsername();
+            String proxyPassword = ftp.getProxyPassword();
             Number shellId = (Number) formAttributes.get("shellId");
             // 需要上传的文件目录，{环境目录}/工程ID/根目录ID/文件ID
             Shell transformShell = getShellService().one(shellId.longValue());
@@ -54,9 +62,18 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             JobEntryFTPPUT jobEntryFTPPUT = new JobEntryFTPPUT();
             jobEntryFTPPUT.setName(name);
             jobEntryFTPPUT.setServerName(serverName);
-            jobEntryFTPPUT.setServerPort(serverPort);
+            jobEntryFTPPUT.setServerPort(serverPort.toString());
             jobEntryFTPPUT.setUserName(userName);
             jobEntryFTPPUT.setPassword(password);
+
+            // proxy
+            if (StringUtils.hasLength(proxyHost)) {
+                jobEntryFTPPUT.setProxyHost(proxyHost);
+                jobEntryFTPPUT.setProxyPort(proxyPort.toString());
+                jobEntryFTPPUT.setProxyUsername(proxyUsername);
+                jobEntryFTPPUT.setProxyPassword(proxyPassword);
+            }
+
             jobEntryFTPPUT.setLocalDirectory(localDirectory);
             jobEntryFTPPUT.setWildcard(wildcard);
             jobEntryFTPPUT.setRemoteDirectory(remoteDirectory);

@@ -55,11 +55,11 @@ public class DatasourceController {
     }
 
     @PostMapping("/datasourceList")
-    public ResponseEntity<List<DatasourceVo>> list(@RequestBody CrudDto crudDto) {
+    public ResponseEntity<List<DatasourceVo>> list(@RequestBody DatasourceDto datasourceDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(crudDto.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        List<User> members = userService.findByResource(datasourceDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         if (members.contains(loginUser)) {
-            return ResponseEntity.ok(datasourceConverter.convert(datasourceService.all(crudDto.getId())));
+            return ResponseEntity.ok(datasourceConverter.convert(datasourceService.all(datasourceDto.getProjectId())));
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }

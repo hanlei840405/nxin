@@ -3,9 +3,11 @@ package com.nxin.framework.vo.basic;
 import com.nxin.framework.vo.BaseVo;
 import com.nxin.framework.vo.basic.ProjectVo;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class DatasourceVo extends BaseVo {
     private String name;

@@ -2,10 +2,12 @@ package com.nxin.framework.dto.auth;
 
 import com.nxin.framework.dto.CrudDto;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class AuthDto extends CrudDto {
     private String username;
