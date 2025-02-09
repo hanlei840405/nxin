@@ -30,6 +30,7 @@ public interface Constant {
     String ENV_DEV = "dev";
     String[] ENV_BUCKET = new String[]{"production", "publish", "dev"};
     String VAR_ATTACHMENT_DIR = "attachmentDir"; // 步骤中有使用上传的文件的存放位置
+    String VAR_DOWNLOAD_DIR = "downloadDir"; // 步骤中有使用下载的文件的存放位置
     String VAR_REFERENCES = "references"; // 记录脚本依赖的其他脚本的ID
     String RESOURCE_CATEGORY_ROOT = "ROOT";
     String RESOURCE_CATEGORY_HOME = "HOME";

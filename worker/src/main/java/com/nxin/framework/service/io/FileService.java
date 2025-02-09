@@ -159,8 +159,4 @@ public class FileService {
             log.error(e.toString());
         }
     }
-
-    public String getBaseUrl() {
-        return baseUrl;
-    }
 }

@@ -45,6 +45,10 @@ public class EtlTaskComp extends QuartzJobBean {
     private TransactionTemplate transactionTemplate;
     @Value("${production.dir}")
     private String productionDir;
+    @Value("${attachment.dir}")
+    private String attachmentDir;
+    @Value("${download.dir}")
+    private String downloadDir;
     @Value("${log.dir}")
     private String logDir;
 
@@ -56,10 +60,22 @@ public class EtlTaskComp extends QuartzJobBean {
         JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
         String id = jobDataMap.getString("id");
         String shellId = jobDataMap.getString("shellId");
+        String parentId = jobDataMap.getString("parentId");
         String projectId = jobDataMap.getString("projectId");
+
+        String attachmentPath = String.format("%s/%s/%s/%s/", attachmentDir, projectId, parentId, shellId);
+        File attachment = new File(attachmentPath);
+        if (!attachment.exists()) {
+            attachment.mkdirs();
+        }
+        String downloadPath = String.format("%s/%s/%s/%s/", downloadDir, projectId, parentId, shellId);
+        File download = new File(downloadPath);
+        if (!download.exists()) {
+            download.mkdirs();
+        }
+
         String rootPath = jobDataMap.getString("rootPath");
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
-        LoggingRegistry loggingRegistry = LoggingRegistry.getInstance();
         SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
         String uuid = UUID.randomUUID().toString();
         spoonLoggingObject.setContainerObjectId(uuid);

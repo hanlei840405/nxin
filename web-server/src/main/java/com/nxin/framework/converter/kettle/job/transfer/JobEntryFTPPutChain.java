@@ -25,6 +25,8 @@ import java.util.Map;
 @Slf4j
 public class JobEntryFTPPutChain extends JobConvertChain {
 
+    private static final String PROXY_CATEGORY_SOCKS5 = "SOCKS5";
+
     @Override
     public ResponseMeta parse(mxCell cell, JobMeta jobMeta) throws IOException {
         if (cell.isVertex() && "JobEntryFTPPUT".equalsIgnoreCase(cell.getStyle())) {
@@ -35,13 +37,14 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             Number server = (Number) formAttributes.get("server");
             Ftp ftp = getFtpService().one(server.longValue());
             String serverName = ftp.getHost();
-            Integer serverPort = ftp.getPort();
+            String serverPort = String.valueOf(ftp.getPort());
             String userName = ftp.getUsername();
             String password = ftp.getPassword();
             String proxyHost = ftp.getProxyHost();
-            Integer proxyPort = ftp.getProxyPort();
+            String proxyPort = String.valueOf(ftp.getProxyPort());
             String proxyUsername = ftp.getProxyUsername();
             String proxyPassword = ftp.getProxyPassword();
+            String proxyCategory = ftp.getProxyCategory();
             Number shellId = (Number) formAttributes.get("shellId");
             // 需要上传的文件目录，{环境目录}/工程ID/根目录ID/文件ID
             Shell transformShell = getShellService().one(shellId.longValue());
@@ -56,22 +59,29 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             boolean binaryMode = (boolean) formAttributes.get("binaryMode");
             boolean remove = (boolean) formAttributes.get("remove");
             boolean onlyPuttingNewFiles = (boolean) formAttributes.get("onlyPuttingNewFiles");
-            boolean activeConnection = (boolean) formAttributes.get("activeConnection");
+//            boolean activeConnection = (boolean) formAttributes.get("activeConnection");
             String controlEncoding = (String) formAttributes.get("controlEncoding");
             int timeout = (int) formAttributes.get("timeout");
             JobEntryFTPPUT jobEntryFTPPUT = new JobEntryFTPPUT();
             jobEntryFTPPUT.setName(name);
             jobEntryFTPPUT.setServerName(serverName);
-            jobEntryFTPPUT.setServerPort(serverPort.toString());
+            jobEntryFTPPUT.setServerPort(serverPort);
             jobEntryFTPPUT.setUserName(userName);
             jobEntryFTPPUT.setPassword(password);
 
             // proxy
             if (StringUtils.hasLength(proxyHost)) {
-                jobEntryFTPPUT.setProxyHost(proxyHost);
-                jobEntryFTPPUT.setProxyPort(proxyPort.toString());
-                jobEntryFTPPUT.setProxyUsername(proxyUsername);
-                jobEntryFTPPUT.setProxyPassword(proxyPassword);
+                if (PROXY_CATEGORY_SOCKS5.equals(proxyCategory)) {
+                    jobEntryFTPPUT.setSocksProxyHost(proxyHost);
+                    jobEntryFTPPUT.setSocksProxyPort(proxyPort);
+                    jobEntryFTPPUT.setSocksProxyUsername(proxyUsername);
+                    jobEntryFTPPUT.setSocksProxyPassword(proxyPassword);
+                } else {
+                    jobEntryFTPPUT.setProxyHost(proxyHost);
+                    jobEntryFTPPUT.setProxyPort(proxyPort);
+                    jobEntryFTPPUT.setProxyUsername(proxyUsername);
+                    jobEntryFTPPUT.setProxyPassword(proxyPassword);
+                }
             }
 
             jobEntryFTPPUT.setLocalDirectory(localDirectory);
@@ -80,7 +90,8 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             jobEntryFTPPUT.setBinaryMode(binaryMode);
             jobEntryFTPPUT.setRemove(remove);
             jobEntryFTPPUT.setOnlyPuttingNewFiles(onlyPuttingNewFiles);
-            jobEntryFTPPUT.setActiveConnection(activeConnection);
+            // 默认false
+            jobEntryFTPPUT.setActiveConnection(false);
             jobEntryFTPPUT.setControlEncoding(controlEncoding);
             jobEntryFTPPUT.setTimeout(timeout);
             JobEntryCopy jobEntryCopy = new JobEntryCopy(jobEntryFTPPUT);

@@ -36,6 +36,8 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     private String devDir;
     @Value("${attachment.dir}")
     private String attachmentDir;
+    @Value("${download.dir}")
+    private String downloadDir;
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
     @Autowired
@@ -48,7 +50,7 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         TransformConvertFactory.init(datasourceService, shellService);
-        JobConvertFactory.init(shellService, ftpService, attachmentDir);
+        JobConvertFactory.init(shellService, ftpService, attachmentDir, downloadDir);
         File dev = new File(devDir);
         if (!dev.exists()) {
             dev.mkdirs();
@@ -56,6 +58,10 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
         File attachment = new File(attachmentDir);
         if (!attachment.exists()) {
             attachment.mkdirs();
+        }
+        File download = new File(downloadDir);
+        if (!download.exists()) {
+            download.mkdirs();
         }
         fileService.createEnv(Constant.ENV_PUBLISH);
         fileService.createEnv(Constant.ENV_DEV);
