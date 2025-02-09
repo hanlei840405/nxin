@@ -88,6 +88,8 @@ production:
   dir: ${user.home}/.etl-designer/production/
 log:
   dir: ${user.home}/.etl-designer/log/
+download:
+  dir: ${user.home}/.etl-designer/download/
 setting:
   trans:
     records-size: 10000
