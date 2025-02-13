@@ -2,11 +2,11 @@ package com.nxin.framework.converter.kettle.transform;
 
 import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.connect.MergeJoinChain;
+import com.nxin.framework.converter.kettle.transform.connect.MultiMergeJoinChain;
 import com.nxin.framework.converter.kettle.transform.convert.*;
 import com.nxin.framework.converter.kettle.transform.input.*;
 import com.nxin.framework.converter.kettle.transform.lookup.DatabaseJoinChain;
 import com.nxin.framework.converter.kettle.transform.lookup.DatabaseLookupChain;
-import com.nxin.framework.converter.kettle.transform.connect.MultiMergeJoinChain;
 import com.nxin.framework.converter.kettle.transform.lookup.RestChain;
 import com.nxin.framework.converter.kettle.transform.output.*;
 import com.nxin.framework.converter.kettle.transform.process.*;
@@ -97,6 +97,9 @@ public class TransformConvertFactory extends ConvertFactory {
         execSqlChain.setDatasourceService(datasourceService);
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
+        excelWriterChain.setShellService(shellService);
+        jsonInputChain.setShellService(shellService);
+        jsonOutputChain.setShellService(shellService);
         beginChain.setNext(tableInputChain);
         tableInputChain.setNext(tableOutputChain);
         tableOutputChain.setNext(tableInsertUpdateChain);

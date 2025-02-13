@@ -7,6 +7,7 @@ import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
+import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.pentaho.di.trans.steps.jsoninput.JsonInputField;
 import org.pentaho.di.trans.steps.jsoninput.JsonInputMeta;
 import org.springframework.util.ObjectUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +62,10 @@ public class JsonInputChain extends TransformConvertChain {
             List<String> excludeFileMaskList = new ArrayList<>(0);
             List<String> fileRequiredList = new ArrayList<>(0);
             List<String> includeSubFoldersList = new ArrayList<>(0);
-            String folder = (String) ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR);
+            Number shellId = (Number) formAttributes.get("shellId");
+            // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
+            Shell shell = getShellService().one(shellId.longValue());
+            String folder = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             for (Map<String, String> sourceFile : sourceFiles) {
                 fileNameList.add(folder + sourceFile.get("path"));
                 fileMaskList.add(sourceFile.get("wildcard"));

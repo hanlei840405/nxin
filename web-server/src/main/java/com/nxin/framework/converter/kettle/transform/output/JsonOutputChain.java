@@ -7,6 +7,7 @@ import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
+import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.pentaho.di.trans.steps.jsonoutput.JsonOutputMeta;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +61,10 @@ public class JsonOutputChain extends TransformConvertChain {
             }
             jsonOutputMeta.setCompatibilityMode(compatibleMode);
             jsonOutputMeta.setEncoding(Constant.ENCODING_UTF_8);
-            String folder = (String) ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR);
+            Number shellId = (Number) formAttributes.get("shellId");
+            // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
+            Shell shell = getShellService().one(shellId.longValue());
+            String folder = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             jsonOutputMeta.setFileName(folder + filename);
             jsonOutputMeta.setExtension(suffix);
             jsonOutputMeta.setFileAppended(append);

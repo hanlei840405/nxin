@@ -7,6 +7,7 @@ import com.mxgraph.model.mxGeometry;
 import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
+import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,11 @@ public class ExcelWriterChain extends TransformConvertChain {
             excelWriterStepMeta.setAppendLines(append);
             excelWriterStepMeta.setAppendOmitHeader(deleteHeader);
             excelWriterStepMeta.setMakeSheetActive(asActiveSheet);
-            String attachmentDir = (String) ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR);
+
+            Number shellId = (Number) formAttributes.get("shellId");
+            // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
+            Shell shell = getShellService().one(shellId.longValue());
+            String attachmentDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             File folder = new File(attachmentDir);
             if (!folder.exists()) {
                 folder.mkdirs();

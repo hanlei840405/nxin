@@ -82,9 +82,7 @@ public class KettleGeneratorService {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         mxGraph graph = new mxGraph();
         try {
-            StringBuilder builder = new StringBuilder(attachmentDir);
-            builder.append(shell.getProjectId()).append(File.separator).append(shell.getParentId()).append(File.separator).append(shell.getId()).append(File.separator); // 转换中如果有需要存储上传文件的目录 todo 是否需要考虑上传文件
-            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, builder.toString());
+            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
             Document document = XMLHandler.loadXMLString(content);
             mxCodec codec = new mxCodec();
             codec.decode(document.getDocumentElement(), graph.getModel());
@@ -185,8 +183,7 @@ public class KettleGeneratorService {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         mxGraph graph = new mxGraph();
         try {
-            StringBuilder builder = new StringBuilder(attachmentDir);
-            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, builder.toString());
+            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
             Document document = XMLHandler.loadXMLString(content);
             mxCodec codec = new mxCodec();
             codec.decode(document.getDocumentElement(), graph.getModel());

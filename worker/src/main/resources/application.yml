@@ -122,8 +122,3 @@ vfs:
   schema: sftp
   username: nxin
   password: 1qaz@WSX
-dubbo:
-  application:
-    name: worker
-  registry:
-    address: redis://127.0.0.1:6379
