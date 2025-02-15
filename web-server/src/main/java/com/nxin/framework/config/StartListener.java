@@ -1,5 +1,6 @@
 package com.nxin.framework.config;
 
+import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.job.JobConvertFactory;
 import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.nxin.framework.enums.Constant;
@@ -51,6 +52,7 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         TransformConvertFactory.init(datasourceService, shellService);
         JobConvertFactory.init(shellService, ftpService, attachmentDir, downloadDir);
+        ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
         File dev = new File(devDir);
         if (!dev.exists()) {
             dev.mkdirs();

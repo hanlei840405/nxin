@@ -1,5 +1,6 @@
 package com.nxin.framework.converter.kettle.transform.input;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
@@ -62,12 +63,15 @@ public class JsonInputChain extends TransformConvertChain {
             List<String> excludeFileMaskList = new ArrayList<>(0);
             List<String> fileRequiredList = new ArrayList<>(0);
             List<String> includeSubFoldersList = new ArrayList<>(0);
-            Number shellId = (Number) formAttributes.get("shellId");
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
-            Shell shell = getShellService().one(shellId.longValue());
+            Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String folder = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             for (Map<String, String> sourceFile : sourceFiles) {
-                fileNameList.add(folder + sourceFile.get("path"));
+                String path = sourceFile.get("path");
+                if (!path.startsWith(Constant.FILE_SEPARATOR)) {
+                    path = Constant.FILE_SEPARATOR + path;
+                }
+                fileNameList.add(folder + path);
                 fileMaskList.add(sourceFile.get("wildcard"));
                 excludeFileMaskList.add(sourceFile.get("excludeWildcard"));
                 fileRequiredList.add(sourceFile.get("required"));

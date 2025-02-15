@@ -29,6 +29,7 @@ public interface Constant {
     String ENV_PUBLISH = "publish";
     String ENV_DEV = "dev";
     String[] ENV_BUCKET = new String[]{"production", "publish", "dev"};
+    String SHELL_STORAGE_DIR = "shellStorageDir"; // 脚本文件在FTP服务器上的存放位置
     String VAR_ATTACHMENT_DIR = "attachmentDir"; // 步骤中有使用上传的文件的存放位置
     String VAR_DOWNLOAD_DIR = "downloadDir"; // 步骤中有使用下载的文件的存放位置
     String VAR_REFERENCES = "references"; // 记录脚本依赖的其他脚本的ID
@@ -79,4 +80,6 @@ public interface Constant {
     String POSTGRESQL = "POSTGRESQL";
     String ORACLE = "ORACLE";
     String EXCEPTION_PLUGIN_CONVERT_NAME = "EXCEPTION_PLUGIN_CONVERT_NAME";
+    String SHELL_INFO = "shellInfo";
+    String FILE_SEPARATOR = "/";
 }

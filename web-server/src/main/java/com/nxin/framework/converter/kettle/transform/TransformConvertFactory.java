@@ -97,9 +97,6 @@ public class TransformConvertFactory extends ConvertFactory {
         execSqlChain.setDatasourceService(datasourceService);
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
-        excelWriterChain.setShellService(shellService);
-        jsonInputChain.setShellService(shellService);
-        jsonOutputChain.setShellService(shellService);
         beginChain.setNext(tableInputChain);
         tableInputChain.setNext(tableOutputChain);
         tableOutputChain.setNext(tableInsertUpdateChain);

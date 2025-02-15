@@ -1,5 +1,6 @@
 package com.nxin.framework.converter.kettle.transform.output;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
@@ -87,13 +88,15 @@ public class ExcelWriterChain extends TransformConvertChain {
             excelWriterStepMeta.setAppendOmitHeader(deleteHeader);
             excelWriterStepMeta.setMakeSheetActive(asActiveSheet);
 
-            Number shellId = (Number) formAttributes.get("shellId");
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
-            Shell shell = getShellService().one(shellId.longValue());
+            Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String attachmentDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             File folder = new File(attachmentDir);
             if (!folder.exists()) {
                 folder.mkdirs();
+            }
+            if (!filename.startsWith(Constant.FILE_SEPARATOR)) {
+                filename = Constant.FILE_SEPARATOR + filename;
             }
             excelWriterStepMeta.setFileName(attachmentDir + filename);
             List<Map<String, String>> parameters = (List<Map<String, String>>) formAttributes.get("parameters");

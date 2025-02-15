@@ -1,5 +1,6 @@
 package com.nxin.framework.converter.kettle.transform.output;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
@@ -61,10 +62,13 @@ public class JsonOutputChain extends TransformConvertChain {
             }
             jsonOutputMeta.setCompatibilityMode(compatibleMode);
             jsonOutputMeta.setEncoding(Constant.ENCODING_UTF_8);
-            Number shellId = (Number) formAttributes.get("shellId");
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
-            Shell shell = getShellService().one(shellId.longValue());
+            Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String folder = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
+
+            if (!filename.startsWith(Constant.FILE_SEPARATOR)) {
+                filename = Constant.FILE_SEPARATOR + filename;
+            }
             jsonOutputMeta.setFileName(folder + filename);
             jsonOutputMeta.setExtension(suffix);
             jsonOutputMeta.setFileAppended(append);

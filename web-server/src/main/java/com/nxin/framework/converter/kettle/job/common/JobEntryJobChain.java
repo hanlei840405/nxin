@@ -87,7 +87,7 @@ public class JobEntryJobChain extends JobConvertChain {
             }
             Shell jobShell = getShellService().one(shellId.longValue());
             if (jobShell.getExecutable()) {
-                String dir = (String) ConvertFactory.getVariable().get("dir");
+                String dir = jobMeta.getVariable(Constant.SHELL_STORAGE_DIR);
                 jobEntryJob.setFileName(dir + jobShell.getProjectId() + File.separator + jobShell.getParentId() + File.separator + jobShell.getId() + Constant.DOT + Constant.JOB_SUFFIX);
             }
             jobEntryJob.getXML();

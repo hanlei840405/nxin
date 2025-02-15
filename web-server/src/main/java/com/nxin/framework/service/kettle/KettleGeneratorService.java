@@ -1,5 +1,6 @@
 package com.nxin.framework.service.kettle;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.mxgraph.io.mxCodec;
@@ -71,8 +72,6 @@ public class KettleGeneratorService {
     private String etlLogDatasourcePassword;
     @Value("${dev.dir}")
     private String devDir;
-    @Value("${attachment.dir}")
-    private String attachmentDir;
     @Autowired
     private FileService fileService;
     @Autowired
@@ -82,7 +81,6 @@ public class KettleGeneratorService {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         mxGraph graph = new mxGraph();
         try {
-            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
             Document document = XMLHandler.loadXMLString(content);
             mxCodec codec = new mxCodec();
             codec.decode(document.getDocumentElement(), graph.getModel());
@@ -113,7 +111,8 @@ public class KettleGeneratorService {
         channelLogTable.setTableName("log_etl_transform_channel");
         transMeta.setLogLevel(LogLevel.DETAILED);
         String dir = prod ? File.separator : devDir;
-        ConvertFactory.getVariable().put("dir", dir);
+        transMeta.setVariable(Constant.SHELL_STORAGE_DIR, prod ? File.separator : devDir);
+        transMeta.setVariable(Constant.SHELL_INFO, JSON.toJSONString(shell));
         Set<Long> referenceIds = new HashSet<>(0);
         Map<String, String> idNameMapping = new HashMap<>(0);
         for (Object element : elements) {
@@ -132,6 +131,7 @@ public class KettleGeneratorService {
                     transMeta.addTransHop(responseMeta.getTransHopMeta());
                 }
             } catch (Throwable e) {
+                log.error(e.getMessage(), e);
                 DeferredElementImpl value = (DeferredElementImpl) cell.getValue();
                 Attr attr = value.getAttributeNode("title");
                 throw new ConvertException(attr.getValue());
@@ -174,7 +174,6 @@ public class KettleGeneratorService {
             });
         }
         TransformConvertFactory.destroyTransformConvertChains();
-        TransformConvertFactory.destroyVariable();
         transMeta.setName(name);
         return ImmutableMap.of("transMeta", transMeta, "referenceIds", String.join(",", referenceIds.stream().map(x -> x + "").collect(Collectors.toList())));
     }
@@ -183,7 +182,6 @@ public class KettleGeneratorService {
         String content = ZipUtils.unCompress(shell.getContent()), name = shell.getName();
         mxGraph graph = new mxGraph();
         try {
-            ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
             Document document = XMLHandler.loadXMLString(content);
             mxCodec codec = new mxCodec();
             codec.decode(document.getDocumentElement(), graph.getModel());
@@ -210,7 +208,8 @@ public class KettleGeneratorService {
         channelLogTable.setTableName("log_etl_transform_channel");
         jobMeta.setLogLevel(LogLevel.DETAILED);
         String dir = prod ? File.separator : devDir;
-        ConvertFactory.getVariable().put("dir", dir);
+        jobMeta.setVariable(Constant.SHELL_STORAGE_DIR, prod ? File.separator : devDir);
+        jobMeta.setVariable(Constant.SHELL_INFO, JSON.toJSONString(shell));
 
         Set<Long> referenceIds = new HashSet<>(0);
         for (Object element : elements) {
@@ -264,7 +263,6 @@ public class KettleGeneratorService {
                 }
             });
         }
-        JobConvertFactory.destroyVariable();
         jobMeta.setName(name);
         return ImmutableMap.of("jobMeta", jobMeta, "referenceIds", String.join(",", referenceIds.stream().map(x -> x + "").collect(Collectors.toList())));
     }

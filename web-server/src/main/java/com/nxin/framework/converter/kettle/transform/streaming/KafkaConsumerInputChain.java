@@ -79,7 +79,7 @@ public class KafkaConsumerInputChain extends TransformConvertChain {
             kafkaConsumerInputMeta.setConfig(config);
             Shell transformShell = getShellService().one(shellId.longValue());
             if (transformShell.getExecutable()) {
-                String dir = (String) ConvertFactory.getVariable().get("dir");
+                String dir = transMeta.getVariable(Constant.SHELL_STORAGE_DIR);
 //                kafkaConsumerInputMeta.setFileName(transformShell.getProjectId() + File.separator + transformShell.getParentId() + File.separator + transformShell.getId() + Constant.DOT + Constant.TRANS_SUFFIX);
                 kafkaConsumerInputMeta.setTransformationPath(dir + transformShell.getProjectId() + File.separator + transformShell.getParentId() + File.separator + transformShell.getId() + Constant.DOT + Constant.TRANS_SUFFIX);
             }

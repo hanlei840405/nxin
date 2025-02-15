@@ -1,17 +1,13 @@
 package com.nxin.framework.converter.kettle;
 
+import lombok.Getter;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class ConvertFactory {
-    private static ThreadLocal<Map<String, Object>> variable = ThreadLocal.withInitial(() -> new HashMap<>(0));
+    @Getter
+    private static final Map<String, Object> variable = new HashMap<>();
 
 
-    public static Map<String, Object> getVariable() {
-        return variable.get();
-    }
-
-    public static void destroyVariable() {
-        variable.remove();
-    }
 }
