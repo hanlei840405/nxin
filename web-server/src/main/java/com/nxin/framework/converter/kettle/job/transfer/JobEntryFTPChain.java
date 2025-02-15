@@ -1,5 +1,6 @@
 package com.nxin.framework.converter.kettle.job.transfer;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
@@ -36,9 +37,8 @@ public class JobEntryFTPChain extends JobConvertChain {
             });
             // basic
             String name = (String) formAttributes.get("name");
-            Number shellId = (Number) formAttributes.get("shellId");
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
-            Shell shell = getShellService().one(shellId.longValue());
+            Shell shell = JSON.parseObject(jobMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String localDirectory = getJobVariable().get(Constant.VAR_DOWNLOAD_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             File download = new File(localDirectory);
             if (!download.exists()) {
