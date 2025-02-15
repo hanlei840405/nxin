@@ -1,10 +1,8 @@
 package com.nxin.framework.controller.basic;
 
 import com.enterprisedt.net.ftp.FTPClient;
-import com.enterprisedt.net.ftp.FTPException;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.base.FtpConverter;
-import com.nxin.framework.dto.CrudDto;
 import com.nxin.framework.dto.basic.FtpDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Ftp;
@@ -15,21 +13,24 @@ import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.basic.FtpVo;
 import lombok.extern.slf4j.Slf4j;
-import org.pentaho.di.core.exception.KettleJobException;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.job.entries.sftp.SFTPClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.io.File;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @PreAuthorize("hasAuthority('ROOT') or hasAuthority('FTP')")
@@ -42,6 +43,8 @@ public class FtpController {
     private ProjectService projectService;
     @Autowired
     private UserService userService;
+    @Value("${dev.dir}")
+    private String devDir;
     private final BeanConverter<FtpVo, Ftp> ftpConverter = new FtpConverter();
     private final static String FTP = "FTP";
 
@@ -105,14 +108,35 @@ public class FtpController {
                 ftpClient.login(realUsername, realPassword);
                 ftpClient.pwd();
             } else {
-                SFTPClient sftpclient = new SFTPClient(InetAddress.getByName(ftpDto.getHost()), ftpDto.getPort() != null ? ftpDto.getPort() : 22, ftpDto.getUsername(), ftpDto.getPrivateKey(), ftpDto.getPrivateKeyPassword());
+                if (ftpDto.getUsePrivateKey()) {
+                    String sshFilePath = devDir.concat(File.separator).concat(Constant.SSH_PATH).concat(File.separator).concat(ftpDto.getProjectId().toString());
+                    File sshFileFolder = new File(sshFilePath);
+                    if (!sshFileFolder.exists()) {
+                        sshFileFolder.mkdirs();
+                    }
+                    String uuid = UUID.randomUUID().toString();
+                    File ssh = new File(sshFilePath.concat(File.separator).concat(uuid));
+                    Files.write(ssh.toPath(), ftpDto.getPrivateKey().getBytes(Charset.defaultCharset()));
+                    ftpDto.setPrivateKey(ssh.getPath());
+                }
+                SFTPClient sftpclient;
+                try {
+                    sftpclient = new SFTPClient(InetAddress.getByName(ftpDto.getHost()), ftpDto.getPort() != null ? ftpDto.getPort() : 22, ftpDto.getUsername(), ftpDto.getPrivateKey(), ftpDto.getPrivateKeyPassword());
+                } catch (Throwable e) {
+                    throw new Exception(e);
+                } finally {
+                    if (ftpDto.getUsePrivateKey()) {
+                        File ssh = new File(ftpDto.getPrivateKey());
+                        ssh.delete();
+                    }
+                }
                 if (StringUtils.hasLength(ftpDto.getProxyHost())) {
                     sftpclient.setProxy(ftpDto.getProxyHost(), String.valueOf(ftpDto.getProxyPort()), ftpDto.getProxyUsername(), Utils.resolvePassword(jobMeta, ftpDto.getProxyPassword()), ftpDto.getProxyCategory());
                 }
                 sftpclient.login(Utils.resolvePassword(jobMeta, ftpDto.getPassword()));
             }
             return ResponseEntity.ok(Boolean.TRUE);
-        } catch (KettleJobException | FTPException | IOException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ResponseEntity.ok(Boolean.FALSE);
         }

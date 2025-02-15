@@ -132,10 +132,11 @@
             <artifactId>commons-vfs2</artifactId>
             <version>2.6.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.mwiede/jsch -->
         <dependency>
-            <groupId>com.jcraft</groupId>
+            <groupId>com.github.mwiede</groupId>
             <artifactId>jsch</artifactId>
-            <version>0.1.55</version>
+            <version>0.2.23</version>
         </dependency>
         <dependency>
             <groupId>commons-net</groupId>

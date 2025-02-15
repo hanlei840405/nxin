@@ -82,4 +82,5 @@ public interface Constant {
     String EXCEPTION_PLUGIN_CONVERT_NAME = "EXCEPTION_PLUGIN_CONVERT_NAME";
     String SHELL_INFO = "shellInfo";
     String FILE_SEPARATOR = "/";
+    String SSH_PATH = "ssh";
 }
