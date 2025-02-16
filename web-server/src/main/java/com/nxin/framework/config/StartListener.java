@@ -51,8 +51,9 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         TransformConvertFactory.init(datasourceService, shellService);
-        JobConvertFactory.init(shellService, ftpService, attachmentDir, downloadDir);
+        JobConvertFactory.init(shellService, ftpService);
         ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
+        ConvertFactory.getVariable().put(Constant.VAR_DOWNLOAD_DIR, downloadDir);
         File dev = new File(devDir);
         if (!dev.exists()) {
             dev.mkdirs();

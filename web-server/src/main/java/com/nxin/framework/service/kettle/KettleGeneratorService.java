@@ -225,6 +225,7 @@ public class KettleGeneratorService {
                     jobMeta.addJobHop(responseMeta.getJobHopMeta());
                 }
             } catch (Throwable e) {
+                log.error(e.getMessage(), e);
                 DeferredElementImpl value = (DeferredElementImpl) cell.getValue();
                 Attr attr = value.getAttributeNode("title");
                 throw new ConvertException(attr.getValue());

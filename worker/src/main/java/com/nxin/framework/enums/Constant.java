@@ -70,4 +70,5 @@ public interface Constant {
     int EXCEPTION_CONNECTION_FAILURE = 10013;
     int EXCEPTION_REMOVE_SCHEDULE = 10014;
     int EXCEPTION_FORBIDDEN_REMOVE_SELF = 10015;
+    String SSH_PATH = "ssh";
 }

@@ -7,6 +7,7 @@ import com.nxin.framework.converter.kettle.job.shell.JobEntryEvalChain;
 import com.nxin.framework.converter.kettle.job.transfer.JobEntryFTPChain;
 import com.nxin.framework.converter.kettle.job.transfer.JobEntryFTPPutChain;
 import com.nxin.framework.converter.kettle.job.transfer.JobEntryMailChain;
+import com.nxin.framework.converter.kettle.job.transfer.JobEntrySFTPPutChain;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.kettle.ShellService;
@@ -14,7 +15,7 @@ import com.nxin.framework.service.kettle.ShellService;
 public class JobConvertFactory extends ConvertFactory {
     private static JobConvertChain beginChain;
 
-    public static void init(ShellService shellService, FtpService ftpService, String attachmentDir, String downloadDir) {
+    public static void init(ShellService shellService, FtpService ftpService) {
         JobConvertChain beginChain = new BeginChain();
         JobConvertChain jobEntrySpecialChain = new JobEntrySpecialChain();
         JobConvertChain jobEntryDummyChain = new JobEntryDummyChain();
@@ -26,6 +27,7 @@ public class JobConvertFactory extends ConvertFactory {
         JobConvertChain jobEntrySimpleEvalChain = new JobEntrySimpleEvalChain();
         JobConvertChain jobEntryFTPPutChain = new JobEntryFTPPutChain();
         JobConvertChain jobEntryFTPChain = new JobEntryFTPChain();
+        JobConvertChain jobEntrySFTPPutChain = new JobEntrySFTPPutChain();
         JobConvertChain jobEntryMailChain = new JobEntryMailChain();
         JobConvertChain jobHopChain = new JobHopChain();
         JobConvertChain endChain = new EndChain();
@@ -35,8 +37,8 @@ public class JobConvertFactory extends ConvertFactory {
         jobEntryFTPPutChain.setFtpService(ftpService);
         jobEntryFTPChain.setShellService(shellService);
         jobEntryFTPChain.setFtpService(ftpService);
-        jobEntryFTPPutChain.getJobVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
-        jobEntryFTPChain .getJobVariable().put(Constant.VAR_DOWNLOAD_DIR, downloadDir);
+        jobEntrySFTPPutChain.setShellService(shellService);
+        jobEntrySFTPPutChain.setFtpService(ftpService);
         beginChain.setNext(jobEntrySpecialChain);
         jobEntrySpecialChain.setNext(jobEntryDummyChain);
         jobEntryDummyChain.setNext(jobEntryTransChain);
@@ -47,7 +49,8 @@ public class JobConvertFactory extends ConvertFactory {
         jobEntryEvalChain.setNext(jobEntrySimpleEvalChain);
         jobEntrySimpleEvalChain.setNext(jobEntryFTPPutChain);
         jobEntryFTPPutChain.setNext(jobEntryFTPChain);
-        jobEntryFTPChain.setNext(jobEntryMailChain);
+        jobEntryFTPChain.setNext(jobEntrySFTPPutChain);
+        jobEntrySFTPPutChain.setNext(jobEntryMailChain);
         jobEntryMailChain.setNext(jobHopChain);
         jobHopChain.setNext(endChain);
         JobConvertFactory.beginChain = beginChain;

@@ -1,5 +1,6 @@
 package com.nxin.framework.converter.kettle.job.transfer;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
@@ -13,22 +14,24 @@ import com.nxin.framework.exception.UnExecutableException;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.job.JobMeta;
-import org.pentaho.di.job.entries.ftp.JobEntryFTP;
-import org.pentaho.di.job.entries.ftpput.JobEntryFTPPUT;
 import org.pentaho.di.job.entries.sftp.SFTPClient;
+import org.pentaho.di.job.entries.sftpput.JobEntrySFTPPUT;
 import org.pentaho.di.job.entry.JobEntryCopy;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
-public class JobEntryFTPPutChain extends JobConvertChain {
+public class JobEntrySFTPPutChain extends JobConvertChain {
 
     @Override
     public ResponseMeta parse(mxCell cell, JobMeta jobMeta) throws IOException {
-        if (cell.isVertex() && "JobEntryFTPPUT".equalsIgnoreCase(cell.getStyle())) {
+        if (cell.isVertex() && "JobEntrySFTPPUT".equalsIgnoreCase(cell.getStyle())) {
             DeferredElementImpl value = (DeferredElementImpl) cell.getValue();
             Map<String, Object> formAttributes = objectMapper.readValue(value.getAttribute("form"), new TypeReference<Map<String, Object>>() {
             });
@@ -39,11 +42,18 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             String serverPort = String.valueOf(ftp.getPort());
             String userName = ftp.getUsername();
             String password = ftp.getPassword();
+            Boolean usePrivateKey = ftp.getUsePrivateKey();
+            String privateKeyPassword = ftp.getPrivateKeyPassword();
             String proxyHost = ftp.getProxyHost();
             String proxyPort = String.valueOf(ftp.getProxyPort());
             String proxyUsername = ftp.getProxyUsername();
             String proxyPassword = ftp.getProxyPassword();
             String proxyCategory = ftp.getProxyCategory();
+            String remoteDirectory = (String) formAttributes.get("remoteDirectory");
+            String compression = (String) formAttributes.get("compression");
+            boolean successWhenNoFile = (boolean) formAttributes.get("successWhenNoFile");
+            boolean createRemoteFolder = (boolean) formAttributes.get("createRemoteFolder");
+            String wildcard = (String) formAttributes.get("wildcard");
             Number shellId = (Number) formAttributes.get("shellId");
             // 需要上传的文件目录，{环境目录}/工程ID/根目录ID/文件ID
             Shell transformShell = getShellService().one(shellId.longValue());
@@ -53,47 +63,39 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             } else {
                 throw new UnExecutableException();
             }
-            String wildcard = (String) formAttributes.get("wildcard");
-            String remoteDirectory = (String) formAttributes.get("remoteDirectory");
-            boolean binaryMode = (boolean) formAttributes.get("binaryMode");
-            boolean remove = (boolean) formAttributes.get("remove");
-            boolean onlyPuttingNewFiles = (boolean) formAttributes.get("onlyPuttingNewFiles");
-//            boolean activeConnection = (boolean) formAttributes.get("activeConnection");
-            String controlEncoding = (String) formAttributes.get("controlEncoding");
-            int timeout = (int) formAttributes.get("timeout");
-            JobEntryFTPPUT jobEntryFTPPUT = new JobEntryFTPPUT();
-            jobEntryFTPPUT.setName(name);
-            jobEntryFTPPUT.setServerName(serverName);
-            jobEntryFTPPUT.setServerPort(serverPort);
-            jobEntryFTPPUT.setUserName(userName);
-            jobEntryFTPPUT.setPassword(password);
-
+            JobEntrySFTPPUT jobEntrySFTPPUT = new JobEntrySFTPPUT();
+            jobEntrySFTPPUT.setName(name);
+            jobEntrySFTPPUT.setServerName(serverName);
+            jobEntrySFTPPUT.setServerPort(serverPort);
+            jobEntrySFTPPUT.setUserName(userName);
+            jobEntrySFTPPUT.setPassword(password);
+            if (usePrivateKey) {
+                Shell shell = JSON.parseObject(jobMeta.getVariable(Constant.SHELL_INFO), Shell.class);
+                String privateKeyFile = jobMeta.getVariable(Constant.SHELL_STORAGE_DIR).concat(File.separator).concat(Constant.SSH_PATH).concat(File.separator).concat(shell.getProjectId().toString()).concat(File.separator).concat(ftp.getId().toString());
+                jobEntrySFTPPUT.setKeyFilename(privateKeyFile);
+                jobEntrySFTPPUT.setKeyPassPhrase(privateKeyPassword);
+                jobEntrySFTPPUT.setUseKeyFile(usePrivateKey);
+            }
+            jobEntrySFTPPUT.setCompression(compression);
             // proxy
             if (StringUtils.hasLength(proxyHost)) {
                 if (SFTPClient.PROXY_TYPE_SOCKS5.equals(proxyCategory)) {
-                    jobEntryFTPPUT.setSocksProxyHost(proxyHost);
-                    jobEntryFTPPUT.setSocksProxyPort(proxyPort);
-                    jobEntryFTPPUT.setSocksProxyUsername(proxyUsername);
-                    jobEntryFTPPUT.setSocksProxyPassword(proxyPassword);
+                    jobEntrySFTPPUT.setProxyType(SFTPClient.PROXY_TYPE_SOCKS5);
                 } else {
-                    jobEntryFTPPUT.setProxyHost(proxyHost);
-                    jobEntryFTPPUT.setProxyPort(proxyPort);
-                    jobEntryFTPPUT.setProxyUsername(proxyUsername);
-                    jobEntryFTPPUT.setProxyPassword(proxyPassword);
+                    jobEntrySFTPPUT.setProxyType(SFTPClient.PROXY_TYPE_HTTP);
                 }
+                jobEntrySFTPPUT.setProxyHost(proxyHost);
+                jobEntrySFTPPUT.setProxyPort(proxyPort);
+                jobEntrySFTPPUT.setProxyUsername(proxyUsername);
+                jobEntrySFTPPUT.setProxyPassword(proxyPassword);
             }
-
-            jobEntryFTPPUT.setLocalDirectory(localDirectory);
-            jobEntryFTPPUT.setWildcard(wildcard);
-            jobEntryFTPPUT.setRemoteDirectory(remoteDirectory);
-            jobEntryFTPPUT.setBinaryMode(binaryMode);
-            jobEntryFTPPUT.setRemove(remove);
-            jobEntryFTPPUT.setOnlyPuttingNewFiles(onlyPuttingNewFiles);
-            // 默认false
-            jobEntryFTPPUT.setActiveConnection(false);
-            jobEntryFTPPUT.setControlEncoding(controlEncoding);
-            jobEntryFTPPUT.setTimeout(timeout);
-            JobEntryCopy jobEntryCopy = new JobEntryCopy(jobEntryFTPPUT);
+            jobEntrySFTPPUT.setLocalDirectory(localDirectory);
+            jobEntrySFTPPUT.setWildcard(wildcard);
+            jobEntrySFTPPUT.setSuccessWhenNoFile(successWhenNoFile);
+            jobEntrySFTPPUT.setAfterFTPS(JobEntrySFTPPUT.AFTER_FTPSPUT_DELETE);
+            jobEntrySFTPPUT.setScpDirectory(remoteDirectory);
+            jobEntrySFTPPUT.setCreateRemoteFolder(createRemoteFolder);
+            JobEntryCopy jobEntryCopy = new JobEntryCopy(jobEntrySFTPPUT);
             mxGeometry geometry = cell.getGeometry();
             jobEntryCopy.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             jobEntryCopy.setDrawn();

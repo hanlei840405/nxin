@@ -7,14 +7,24 @@ import org.springframework.context.ApplicationEvent;
 
 public class JobExecuteEvent extends ApplicationEvent {
     private String instanceId;
+    private Long shellId;
     private Job job;
     private JobConfiguration jobConfiguration;
 
-    public JobExecuteEvent(RunningProcess runningProcess, String instanceId, Job job, JobConfiguration jobConfiguration) {
+    public JobExecuteEvent(RunningProcess runningProcess, String instanceId, Long shellId, Job job, JobConfiguration jobConfiguration) {
         super(runningProcess);
         this.instanceId = instanceId;
+        this.shellId = shellId;
         this.job = job;
         this.jobConfiguration = jobConfiguration;
+    }
+
+    public Long getShellId() {
+        return shellId;
+    }
+
+    public void setShellId(Long shellId) {
+        this.shellId = shellId;
     }
 
     public String getInstanceId() {

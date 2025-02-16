@@ -1,9 +1,11 @@
 package com.nxin.framework.service.task;
 
 import com.alibaba.fastjson2.util.DateUtils;
+import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -43,6 +47,8 @@ public class EtlTaskComp extends QuartzJobBean {
     private FileService fileService;
     @Autowired
     private TransactionTemplate transactionTemplate;
+    @Autowired
+    private FtpService ftpService;
     @Value("${production.dir}")
     private String productionDir;
     @Value("${attachment.dir}")
@@ -86,6 +92,18 @@ public class EtlTaskComp extends QuartzJobBean {
         taskHistory.setBeginTime(LocalDateTime.now());
         CarteObjectEntry carteObjectEntry = null;
         try {
+            List<Ftp> ftps = ftpService.all(Long.valueOf(projectId), "SFTP");
+            for (Ftp ftp : ftps) {
+                if (ftp.getUsePrivateKey()) {
+                    String sshFilePath = productionDir.concat(File.separator).concat(Constant.SSH_PATH).concat(File.separator).concat(projectId);
+                    File sshFileFolder = new File(sshFilePath);
+                    if (!sshFileFolder.exists()) {
+                        sshFileFolder.mkdirs();
+                    }
+                    File ssh = new File(sshFilePath.concat(File.separator).concat(ftp.getId().toString()));
+                    Files.write(ssh.toPath(), ftp.getPrivateKey().getBytes(Charset.defaultCharset()));
+                }
+            }
             String entryJobPath = null;
             for (Map<String, String> referencePathMap : referencePathList) {
                 String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
@@ -121,7 +139,7 @@ public class EtlTaskComp extends QuartzJobBean {
                 taskHistory.setLogChannelId(job.getLogChannelId());
                 taskHistory.setRunningProcessId(runningProcess.getId());
                 job.waitUntilFinished();
-                fileService.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd")  + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
+                fileService.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
                 KettleLogStore.getAppender().removeLoggingEventListener(fileLoggingEventListener);
                 runningProcessService.delete(runningProcess);
                 if (job.getErrors() > 0) {

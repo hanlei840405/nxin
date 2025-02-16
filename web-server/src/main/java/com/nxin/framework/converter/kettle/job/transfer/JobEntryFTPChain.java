@@ -16,6 +16,7 @@ import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.job.entries.ftp.JobEntryFTP;
+import org.pentaho.di.job.entries.sftp.SFTPClient;
 import org.pentaho.di.job.entries.simpleeval.JobEntrySimpleEval;
 import org.pentaho.di.job.entry.JobEntryCopy;
 import org.springframework.util.StringUtils;
@@ -27,8 +28,6 @@ import java.util.Map;
 @Slf4j
 public class JobEntryFTPChain extends JobConvertChain {
 
-    private static final String PROXY_CATEGORY_SOCKS5 = "SOCKS5";
-
     @Override
     public ResponseMeta parse(mxCell cell, JobMeta jobMeta) throws IOException {
         if (cell.isVertex() && "JobEntryFTP".equalsIgnoreCase(cell.getStyle())) {
@@ -39,7 +38,7 @@ public class JobEntryFTPChain extends JobConvertChain {
             String name = (String) formAttributes.get("name");
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(jobMeta.getVariable(Constant.SHELL_INFO), Shell.class);
-            String localDirectory = getJobVariable().get(Constant.VAR_DOWNLOAD_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
+            String localDirectory = ConvertFactory.getVariable().get(Constant.VAR_DOWNLOAD_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             File download = new File(localDirectory);
             if (!download.exists()) {
                 download.mkdirs();
@@ -85,7 +84,7 @@ public class JobEntryFTPChain extends JobConvertChain {
             jobEntryFTP.setUserName(userName);
             jobEntryFTP.setPassword(password);
             if (StringUtils.hasLength(proxyHost)) {
-                if (PROXY_CATEGORY_SOCKS5.equals(proxyCategory)) {
+                if (SFTPClient.PROXY_TYPE_SOCKS5.equals(proxyCategory)) {
                     jobEntryFTP.setSocksProxyHost(proxyHost);
                     jobEntryFTP.setSocksProxyPort(proxyPort);
                     jobEntryFTP.setSocksProxyUsername(proxyUsername);

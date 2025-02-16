@@ -135,7 +135,7 @@ public class DesignController {
                     Job job = new Job(null, jobMeta, spoonLoggingObject);
                     job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                     job.setGatheringMetrics(true);
-                    JobExecuteEvent jobExecuteEvent = new JobExecuteEvent(runningProcess, id, job, jobConfiguration);
+                    JobExecuteEvent jobExecuteEvent = new JobExecuteEvent(runningProcess, id, shell.getId(), job, jobConfiguration);
                     applicationContext.publishEvent(jobExecuteEvent);
                     runningProcess.setInstanceName(job.getName());
                     runningProcess.setCategory(Constant.JOB);
