@@ -1,10 +1,8 @@
 package com.nxin.framework.service.task;
 
 import com.alibaba.fastjson2.util.DateUtils;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.RunningProcess;
-import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.FtpService;
@@ -12,6 +10,7 @@ import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
@@ -30,6 +29,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
@@ -96,11 +98,12 @@ public class EtlTaskComp extends QuartzJobBean {
         taskHistory.setShellPublishId(Long.valueOf(id));
         taskHistory.setBeginTime(LocalDateTime.now());
         CarteObjectEntry carteObjectEntry = null;
+        FileLoggingEventListener fileLoggingEventListener = null;
         try {
             List<Ftp> ftps = ftpService.all(Long.valueOf(projectId), "SFTP");
             for (Ftp ftp : ftps) {
                 if (ftp.getUsePrivateKey()) {
-                    String sshFilePath = productionDir.concat(File.separator).concat(Constant.SSH_PATH).concat(File.separator).concat(projectId);
+                    String sshFilePath = productionDir.concat(rootPath).concat(Constant.SSH_PATH).concat(File.separator).concat(projectId);
                     File sshFileFolder = new File(sshFilePath);
                     if (!sshFileFolder.exists()) {
                         sshFileFolder.mkdirs();
@@ -130,9 +133,9 @@ public class EtlTaskComp extends QuartzJobBean {
                 carteObjectEntry = new CarteObjectEntry(job.getName(), uuid);
                 job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                 job.setGatheringMetrics(true);
-                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(logDir + job.getLogChannelId() + ".out", true);
-//                String logFilePath = fileService.getBaseUrl().concat("log/").concat(job.getLogChannelId()).concat(".out");
-//                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(logFilePath, true);
+
+                fileLoggingEventListener = new FileLoggingEventListener(job.getLogChannelId(), logDir + job.getLogChannelId() + ".out", true);
+                Constant.logMapping.put(uuid, fileLoggingEventListener);
                 KettleLogStore.getAppender().addLoggingEventListener(fileLoggingEventListener);
                 CarteSingleton.getInstance().getJobMap().addJob(job.getName(), uuid, job, jobConfiguration);
                 job.start();
@@ -150,8 +153,6 @@ public class EtlTaskComp extends QuartzJobBean {
                 taskHistory.setLogChannelId(job.getLogChannelId());
                 taskHistory.setRunningProcessId(runningProcess.getId());
                 job.waitUntilFinished();
-                fileService.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
-                KettleLogStore.getAppender().removeLoggingEventListener(fileLoggingEventListener);
                 runningProcessService.delete(runningProcess);
                 if (job.getErrors() > 0) {
                     taskHistory.setStatus(Constant.INACTIVE);
@@ -164,8 +165,21 @@ public class EtlTaskComp extends QuartzJobBean {
             log.error(e.getMessage(), e);
             taskHistory.setStatus(Constant.INACTIVE);
         } finally {
-            if (carteObjectEntry != null && CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry) != null) {
-                CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
+            if (carteObjectEntry != null) {
+                Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
+                if (job != null) {
+                    CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
+                    Constant.logMapping.remove(carteObjectEntry.getId());
+                    if (fileLoggingEventListener != null) {
+                        KettleLogStore.getAppender().removeLoggingEventListener(fileLoggingEventListener);
+                        try {
+                            fileLoggingEventListener.close();
+                        } catch (KettleException e) {
+                            log.error(e.getMessage(), e);
+                        }
+                        fileService.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
+                    }
+                }
             }
         }
         taskHistory.setEndTime(LocalDateTime.now());

@@ -13,12 +13,11 @@ import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.exception.KettleXMLException;
-import org.pentaho.di.core.logging.LogLevel;
-import org.pentaho.di.core.logging.LoggingObjectType;
-import org.pentaho.di.core.logging.SimpleLoggingObject;
+import org.pentaho.di.core.logging.*;
 import org.pentaho.di.job.JobConfiguration;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
+import org.pentaho.di.www.CarteObjectEntry;
 import org.pentaho.di.www.CarteSingleton;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -28,6 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
@@ -48,6 +50,8 @@ public class ScheduleService {
     private FtpService ftpService;
     @Value("${production.dir}")
     private String productionDir;
+    @Value("${log.dir}")
+    private String logDir;
 
     public Date createJob(TaskReq taskReq) throws SchedulerException {
         CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(taskReq.getCron());
@@ -208,6 +212,10 @@ public class ScheduleService {
                 org.pentaho.di.job.Job job = new org.pentaho.di.job.Job(null, jobMeta, spoonLoggingObject);
                 job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                 job.setGatheringMetrics(true);
+
+                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(job.getLogChannelId(), logDir + job.getLogChannelId() + ".out", true);
+                KettleLogStore.getAppender().addLoggingEventListener(fileLoggingEventListener);
+                Constant.logMapping.put(uuid, fileLoggingEventListener);
                 job.start();
                 CarteSingleton.getInstance().getJobMap().addJob(job.getName(), uuid, job, jobConfiguration);
                 RunningProcess runningProcess = new RunningProcess();

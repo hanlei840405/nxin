@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.task.TaskHistory;
+import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.task.TaskHistoryService;
 import org.pentaho.di.job.Job;
@@ -32,6 +33,7 @@ public class TopicShutdownListener {
         Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
         if (job != null) {
             job.stopAll();
+            Constant.logMapping.remove(carteObjectEntry.getId());
             CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
             TaskHistory taskHistory = taskHistoryService.getById(Long.valueOf(taskHistoryId));
             if (taskHistory != null) {

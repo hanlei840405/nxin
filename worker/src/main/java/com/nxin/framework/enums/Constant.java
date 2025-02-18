@@ -1,7 +1,11 @@
 package com.nxin.framework.enums;
 
+import org.pentaho.di.core.logging.FileLoggingEventListener;
+
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public interface Constant {
     String DOT = ".";
@@ -71,4 +75,5 @@ public interface Constant {
     int EXCEPTION_REMOVE_SCHEDULE = 10014;
     int EXCEPTION_FORBIDDEN_REMOVE_SELF = 10015;
     String SSH_PATH = "ssh";
+    Map<String, FileLoggingEventListener> logMapping = new HashMap<>();
 }

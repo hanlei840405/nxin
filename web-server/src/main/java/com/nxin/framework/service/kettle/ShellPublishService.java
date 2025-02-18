@@ -241,32 +241,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //        } else {
 //            taskId = UUID.randomUUID().toString();
 //        }
-        LambdaQueryWrapper<ShellPublish> shellPublishLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellPublishLambdaQueryWrapper.eq(ShellPublish::getProjectId, shellPublish.getProjectId());
-        List<ShellPublish> shellPublishes = getBaseMapper().selectList(shellPublishLambdaQueryWrapper);
-        Set<Long> compareIdList = new HashSet<>();
-        compareIdList.add(shellPublish.getId());
         Set<Long> idList = new HashSet<>();
+        idList.add(shellPublish.getId());
         String taskId = UUID.randomUUID().toString();
-        for (int i = 0; i < shellPublishes.size(); ) {
-            ShellPublish publish = shellPublishes.get(i);
-            i++;
-            for (Long compareId : compareIdList) {
-                if (publish.getId().equals(compareId)) {
-                    String reference = publish.getReference();
-                    idList.add(publish.getId());
-                    if (StringUtils.hasLength(reference)) {
-                        Set<Long> referenceIdList = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toSet());
-                        idList.addAll(referenceIdList);
-                        compareIdList.addAll(referenceIdList);
-                    }
-                    i = 0;
-//                    shellPublishes.remove(publish);
-                    compareIdList.remove(compareId);
-                }
-            }
-        }
-        List<ShellPublish> updateShellPublishes = shellPublishes.stream().filter(item -> idList.contains(item.getId())).collect(Collectors.toList());
+        String reference = shellPublish.getReference();
+        Set<Long> referenceIdList = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toSet());
+        idList.addAll(referenceIdList);
+        List<ShellPublish> updateShellPublishes = this.listByIds(idList);
         List<Map<String, String>> referencePathList = new ArrayList<>();
         Map<Long, Long> shellMappingShellPublish = new HashMap<>();
         updateShellPublishes.forEach(item -> {
@@ -389,32 +370,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             deployedShellPublishes.forEach(deployed -> deployed.setProd(Constant.INACTIVE));
             this.updateBatchById(deployedShellPublishes); // 将正在执行的脚本更新为下线状态
         }
-        LambdaQueryWrapper<ShellPublish> shellPublishLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellPublishLambdaQueryWrapper.eq(ShellPublish::getProjectId, shellPublish.getProjectId());
-        List<ShellPublish> shellPublishes = getBaseMapper().selectList(shellPublishLambdaQueryWrapper);
-        Set<Long> compareIdList = new HashSet<>();
-        compareIdList.add(shellPublish.getId());
         Set<Long> idList = new HashSet<>();
+        idList.add(shellPublish.getId());
         String taskId = UUID.randomUUID().toString();
-        for (int i = 0; i < shellPublishes.size();) {
-            ShellPublish publish = shellPublishes.get(i);
-            i++;
-            for (Long compareId : compareIdList) {
-                if (publish.getId().equals(compareId)) {
-                    String reference = publish.getReference();
-                    idList.add(publish.getId());
-                    if (StringUtils.hasLength(reference)) {
-                        Set<Long> referenceIdList = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toSet());
-                        idList.addAll(referenceIdList);
-                        compareIdList.addAll(referenceIdList);
-                    }
-                    i = 0;
-//                    shellPublishes.remove(publish);
-                    compareIdList.remove(compareId);
-                }
-            }
-        }
-        List<ShellPublish> updateShellPublishes = shellPublishes.stream().filter(item -> idList.contains(item.getId())).collect(Collectors.toList());
+        String reference = shellPublish.getReference();
+        Set<Long> referenceIdList = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toSet());
+        idList.addAll(referenceIdList);
+        List<ShellPublish> updateShellPublishes = this.listByIds(idList);
         List<Map<String, String>> referencePathList = new ArrayList<>();
         Map<Long, Long> shellMappingShellPublish = new HashMap<>();
         updateShellPublishes.forEach(item -> {
