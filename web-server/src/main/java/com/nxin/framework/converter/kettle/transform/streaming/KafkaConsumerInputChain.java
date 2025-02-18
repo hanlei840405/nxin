@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
-import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.entity.kettle.Shell;
@@ -20,7 +19,6 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class KafkaConsumerInputChain extends TransformConvertChain {
@@ -110,11 +108,7 @@ public class KafkaConsumerInputChain extends TransformConvertChain {
                 }
             }
             references.add(transformShell.getId());
-            if (ConvertFactory.getVariable().containsKey(Constant.VAR_REFERENCES)) {
-                references.addAll((Set<Long>) ConvertFactory.getVariable().get(Constant.VAR_REFERENCES));
-            }
-            ConvertFactory.getVariable().put(Constant.VAR_REFERENCES, references);
-            return new ResponseMeta(cell.getId(), stepMeta, null);
+            return new ResponseMeta(cell.getId(), stepMeta, null, references);
         } else {
             return next.parse(cell, transMeta);
         }

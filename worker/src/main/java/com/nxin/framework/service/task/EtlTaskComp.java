@@ -1,13 +1,16 @@
 package com.nxin.framework.service.task;
 
 import com.alibaba.fastjson2.util.DateUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.RunningProcess;
+import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.job.Job;
@@ -49,6 +52,8 @@ public class EtlTaskComp extends QuartzJobBean {
     private TransactionTemplate transactionTemplate;
     @Autowired
     private FtpService ftpService;
+    @Autowired
+    private ShellStorageService shellStorageService;
     @Value("${production.dir}")
     private String productionDir;
     @Value("${attachment.dir}")
@@ -66,22 +71,22 @@ public class EtlTaskComp extends QuartzJobBean {
         JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
         String id = jobDataMap.getString("id");
         String shellId = jobDataMap.getString("shellId");
-        String parentId = jobDataMap.getString("parentId");
         String projectId = jobDataMap.getString("projectId");
 
-        String attachmentPath = String.format("%s/%s/%s/%s/", attachmentDir, projectId, parentId, shellId);
-        File attachment = new File(attachmentPath);
-        if (!attachment.exists()) {
-            attachment.mkdirs();
-        }
-        String downloadPath = String.format("%s/%s/%s/%s/", downloadDir, projectId, parentId, shellId);
-        File download = new File(downloadPath);
-        if (!download.exists()) {
-            download.mkdirs();
-        }
+//        String attachmentPath = String.format("%s/%s/%s/%s/", attachmentDir, projectId, parentId, shellId);
+//        File attachment = new File(attachmentPath);
+//        if (!attachment.exists()) {
+//            attachment.mkdirs();
+//        }
+//        String downloadPath = String.format("%s/%s/%s/%s/", downloadDir, projectId, parentId, shellId);
+//        File download = new File(downloadPath);
+//        if (!download.exists()) {
+//            download.mkdirs();
+//        }
 
         String rootPath = jobDataMap.getString("rootPath");
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
+        List<String> attachmentOrDownloadDirList = (List<String>) jobDataMap.get("attachmentOrDownloadDirList");
         SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
         String uuid = UUID.randomUUID().toString();
         spoonLoggingObject.setContainerObjectId(uuid);
@@ -102,6 +107,12 @@ public class EtlTaskComp extends QuartzJobBean {
                     }
                     File ssh = new File(sshFilePath.concat(File.separator).concat(ftp.getId().toString()));
                     Files.write(ssh.toPath(), ftp.getPrivateKey().getBytes(Charset.defaultCharset()));
+                }
+            }
+            for (String attachmentOrDownloadDir : attachmentOrDownloadDirList) {
+                File folder = new File(attachmentOrDownloadDir);
+                if (!folder.exists()) {
+                    folder.mkdirs();
                 }
             }
             String entryJobPath = null;

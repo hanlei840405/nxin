@@ -15,5 +15,4 @@ public class CrudDto implements Serializable {
     private Date createTime;
     private String creator;
     private String modifier;
-    private int version;
 }

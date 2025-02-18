@@ -5,6 +5,7 @@ import com.mxgraph.model.mxCell;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.kettle.ShellService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 import org.pentaho.di.job.JobMeta;
 
 import java.io.IOException;
@@ -20,6 +21,8 @@ public abstract class JobConvertChain {
     private ShellService shellService;
 
     private FtpService ftpService;
+
+    private ShellStorageService shellStorageService;
 
     private Map<String, Object> jobVariable = new HashMap<>();
 
@@ -41,6 +44,14 @@ public abstract class JobConvertChain {
 
     public void setFtpService(FtpService ftpService) {
         this.ftpService = ftpService;
+    }
+
+    public ShellStorageService getShellStorageService() {
+        return shellStorageService;
+    }
+
+    public void setShellStorageService(ShellStorageService shellStorageService) {
+        this.shellStorageService = shellStorageService;
     }
 
     public Map<String, Object> getJobVariable() {

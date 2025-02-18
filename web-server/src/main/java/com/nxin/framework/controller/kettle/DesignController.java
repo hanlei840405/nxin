@@ -109,7 +109,7 @@ public class DesignController {
                     trans.injectVariables(transConfiguration.getTransExecutionConfiguration().getVariables());
                     trans.setGatheringMetrics(true);
                     transMeta.getXML();
-                    TransformExecuteEvent transformExecuteEvent = new TransformExecuteEvent(runningProcess, id, trans, transConfiguration);
+                    TransformExecuteEvent transformExecuteEvent = new TransformExecuteEvent(runningProcess, id, shell.getId(), trans, transConfiguration);
                     applicationContext.publishEvent(transformExecuteEvent);
                     runningProcess.setInstanceName(trans.getName());
                     runningProcess.setCategory(Constant.TRANSFORM);

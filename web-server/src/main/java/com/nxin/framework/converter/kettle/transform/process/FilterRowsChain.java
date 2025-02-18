@@ -63,7 +63,7 @@ public class FilterRowsChain extends TransformConvertChain {
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);
             TransformConvertFactory.getTransformConvertChains().add(this);
-            return new ResponseMeta(cell.getId(), stepMeta, null);
+            return new ResponseMeta(cell.getId(), stepMeta, null, null);
         } else {
             return next.parse(cell, transMeta);
         }

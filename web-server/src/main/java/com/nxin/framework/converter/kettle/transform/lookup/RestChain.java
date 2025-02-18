@@ -80,7 +80,7 @@ public class RestChain extends TransformConvertChain {
             stepMeta.setDraw(true);
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             stepMeta.setCopies(parallel);
-            return new ResponseMeta(cell.getId(), stepMeta, null);
+            return new ResponseMeta(cell.getId(), stepMeta, null, null);
         } else {
             return next.parse(cell, transMeta);
         }

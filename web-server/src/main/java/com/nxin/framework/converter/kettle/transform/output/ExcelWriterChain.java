@@ -1,6 +1,7 @@
 package com.nxin.framework.converter.kettle.transform.output;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
@@ -9,6 +10,7 @@ import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.entity.kettle.Shell;
+import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.enums.Constant;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -91,10 +93,26 @@ public class ExcelWriterChain extends TransformConvertChain {
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String attachmentDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
-            File folder = new File(attachmentDir);
-            if (!folder.exists()) {
-                folder.mkdirs();
+            LambdaQueryWrapper<ShellStorage> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ShellStorage::getShellId, shell.getId());
+            queryWrapper.eq(ShellStorage::getComponent, cell.getStyle());
+            queryWrapper.eq(ShellStorage::getComponentName, stepName);
+            ShellStorage shellStorage = getShellStorageService().getOne(queryWrapper);
+            if (shellStorage == null) {
+                shellStorage = new ShellStorage();
+                shellStorage.setShellId(shell.getId());
+                shellStorage.setShellParentId(shell.getParentId());
+                shellStorage.setComponent(cell.getStyle());
+                shellStorage.setComponentName(stepName);
+                shellStorage.setStorageDir(attachmentDir);
+                shellStorage.setStatus(Constant.ACTIVE);
+                shellStorage.setVersion(1);
+            } else if (shellStorage.getShellParentId().equals(shell.getParentId())) {
+                shellStorage.setShellParentId(shell.getParentId());
+                shellStorage.setStorageDir(attachmentDir);
             }
+            getShellStorageService().saveOrUpdate(shellStorage);
+
             if (!filename.startsWith(Constant.FILE_SEPARATOR)) {
                 filename = Constant.FILE_SEPARATOR + filename;
             }
@@ -129,7 +147,7 @@ public class ExcelWriterChain extends TransformConvertChain {
             if (!ConvertFactory.getVariable().containsKey("attachments")) {
                 ConvertFactory.getVariable().put("attachments", new ArrayList<Map<String, Object>>(0));
             }
-            return new ResponseMeta(cell.getId(), stepMeta, null);
+            return new ResponseMeta(cell.getId(), stepMeta, null, null);
         } else {
             return next.parse(cell, transMeta);
         }

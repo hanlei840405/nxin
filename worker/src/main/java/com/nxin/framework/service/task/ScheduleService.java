@@ -1,13 +1,16 @@
 package com.nxin.framework.service.task;
 
 import com.alibaba.fastjson2.JSON;
+import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.request.TaskReq;
 import com.nxin.framework.response.CronTriggerRes;
+import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.logging.LogLevel;
@@ -24,6 +27,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -38,6 +44,8 @@ public class ScheduleService {
     private TaskHistoryService taskHistoryService;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private FtpService ftpService;
     @Value("${production.dir}")
     private String productionDir;
 
@@ -159,6 +167,7 @@ public class ScheduleService {
         Number projectId = (Number) jobDataMap.get("projectId");
         String rootPath = (String) jobDataMap.get("rootPath");
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
+        List<String> attachmentOrDownloadDirList = (List<String>) jobDataMap.get("attachmentOrDownloadDirList");
         SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
         String uuid = UUID.randomUUID().toString();
         spoonLoggingObject.setContainerObjectId(uuid);
@@ -166,6 +175,25 @@ public class ScheduleService {
         jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
 
         try {
+            List<Ftp> ftps = ftpService.all(projectId.longValue(), "SFTP");
+            for (Ftp ftp : ftps) {
+                if (ftp.getUsePrivateKey()) {
+                    String sshFilePath = productionDir.concat(File.separator).concat(Constant.SSH_PATH).concat(File.separator).concat(String.valueOf(projectId));
+                    File sshFileFolder = new File(sshFilePath);
+                    if (!sshFileFolder.exists()) {
+                        sshFileFolder.mkdirs();
+                    }
+                    File ssh = new File(sshFilePath.concat(File.separator).concat(ftp.getId().toString()));
+                    Files.write(ssh.toPath(), ftp.getPrivateKey().getBytes(Charset.defaultCharset()));
+                }
+            }
+            for (String attachmentOrDownloadDir : attachmentOrDownloadDirList) {
+                File folder = new File(attachmentOrDownloadDir);
+                if (!folder.exists()) {
+                    folder.mkdirs();
+                }
+            }
+
             String entryJobPath = null;
             for (Map<String, String> referencePathMap : referencePathList) {
                 String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
@@ -203,7 +231,7 @@ public class ScheduleService {
                 taskHistoryService.save(taskHistory);
             }
             return true;
-        } catch (KettleXMLException e) {
+        } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return false;
         }

@@ -3,7 +3,6 @@ package com.nxin.framework.converter.kettle.job.common;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
-import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.job.JobConvertChain;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.entity.kettle.Shell;
@@ -106,12 +105,7 @@ public class JobEntryTransChain extends JobConvertChain {
                 });
             }
             references.add(transformShell.getId());
-            if (ConvertFactory.getVariable().containsKey(Constant.VAR_REFERENCES)) {
-                references.addAll((Set<Long>) ConvertFactory.getVariable().get(Constant.VAR_REFERENCES));
-            }
-            ConvertFactory.getVariable().put(Constant.VAR_REFERENCES, references);
-            jobEntryCopy.getXML();
-            return new ResponseMeta(cell.getId(), jobEntryCopy, null);
+            return new ResponseMeta(cell.getId(), jobEntryCopy, null, references);
         } else {
             return next.parse(cell, jobMeta);
         }

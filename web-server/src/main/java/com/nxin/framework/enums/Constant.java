@@ -32,7 +32,6 @@ public interface Constant {
     String SHELL_STORAGE_DIR = "shellStorageDir"; // 脚本文件在FTP服务器上的存放位置
     String VAR_ATTACHMENT_DIR = "attachmentDir"; // 步骤中有使用上传的文件的存放位置
     String VAR_DOWNLOAD_DIR = "downloadDir"; // 步骤中有使用下载的文件的存放位置
-    String VAR_REFERENCES = "references"; // 记录脚本依赖的其他脚本的ID
     String RESOURCE_CATEGORY_ROOT = "ROOT";
     String RESOURCE_CATEGORY_HOME = "HOME";
     String RESOURCE_CATEGORY_BASIC = "BASIC";

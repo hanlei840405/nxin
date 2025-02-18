@@ -14,6 +14,7 @@ import com.nxin.framework.converter.kettle.transform.shell.*;
 import com.nxin.framework.converter.kettle.transform.streaming.*;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.kettle.ShellService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class TransformConvertFactory extends ConvertFactory {
         transformConvertChains.remove();
     }
 
-    public static void init(DatasourceService datasourceService, ShellService shellService) {
+    public static void init(DatasourceService datasourceService, ShellService shellService, ShellStorageService shellStorageService) {
         TransformConvertChain beginChain = new BeginChain();
         TransformConvertChain tableInputChain = new TableInputChain();
         TransformConvertChain tableOutputChain = new TableOutputChain();
@@ -97,6 +98,7 @@ public class TransformConvertFactory extends ConvertFactory {
         execSqlChain.setDatasourceService(datasourceService);
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
+        excelWriterChain.setShellStorageService(shellStorageService);
         beginChain.setNext(tableInputChain);
         tableInputChain.setNext(tableOutputChain);
         tableOutputChain.setNext(tableInsertUpdateChain);

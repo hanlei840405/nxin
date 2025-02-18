@@ -123,7 +123,7 @@ public class TableOutputChain extends TransformConvertChain {
             }
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);
-            return new ResponseMeta(cell.getId(), stepMeta, databaseMeta);
+            return new ResponseMeta(cell.getId(), stepMeta, databaseMeta, null);
         } else {
             return next.parse(cell, transMeta);
         }

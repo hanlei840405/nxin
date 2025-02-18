@@ -8,6 +8,8 @@ import org.pentaho.di.trans.TransHopMeta;
 import org.pentaho.di.trans.step.StepMeta;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class ResponseMeta implements Serializable {
@@ -23,32 +25,34 @@ public class ResponseMeta implements Serializable {
 
     private JobHopMeta jobHopMeta;
 
+    private Set<Long> references;
+
 
     public ResponseMeta() {
 
     }
-
 
     public ResponseMeta(String id, TransHopMeta transHopMeta) {
         this.id = id;
         this.transHopMeta = transHopMeta;
     }
 
-
     public ResponseMeta(String id, JobHopMeta jobHopMeta) {
         this.id = id;
         this.jobHopMeta = jobHopMeta;
     }
 
-    public ResponseMeta(String id, StepMeta stepMeta, DatabaseMeta databaseMeta) {
+    public ResponseMeta(String id, StepMeta stepMeta, DatabaseMeta databaseMeta, Set<Long> references) {
         this.id = id;
         this.stepMeta = stepMeta;
         this.databaseMeta = databaseMeta;
+        this.references = references;
     }
 
-    public ResponseMeta(String id, JobEntryCopy jobEntryCopy, DatabaseMeta databaseMeta) {
+    public ResponseMeta(String id, JobEntryCopy jobEntryCopy, DatabaseMeta databaseMeta, Set<Long> references) {
         this.id = id;
         this.jobEntryCopy = jobEntryCopy;
         this.databaseMeta = databaseMeta;
+        this.references = references;
     }
 }

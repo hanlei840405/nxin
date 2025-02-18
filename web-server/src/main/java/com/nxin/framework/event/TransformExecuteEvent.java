@@ -7,10 +7,11 @@ import org.springframework.context.ApplicationEvent;
 
 public class TransformExecuteEvent extends ApplicationEvent {
     private String instanceId;
+    private Long shellId;
     private Trans trans;
     private TransConfiguration transConfiguration;
 
-    public TransformExecuteEvent(RunningProcess runningProcess, String instanceId, Trans trans, TransConfiguration transConfiguration) {
+    public TransformExecuteEvent(RunningProcess runningProcess, String instanceId, Long shellId, Trans trans, TransConfiguration transConfiguration) {
         super(runningProcess);
         this.instanceId = instanceId;
         this.trans = trans;
@@ -23,6 +24,14 @@ public class TransformExecuteEvent extends ApplicationEvent {
 
     public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
+    }
+
+    public Long getShellId() {
+        return shellId;
+    }
+
+    public void setShellId(Long shellId) {
+        this.shellId = shellId;
     }
 
     public Trans getTrans() {

@@ -1,5 +1,6 @@
 package com.nxin.framework.service.kettle;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -8,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.entity.kettle.ShellPublish;
+import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.exception.*;
@@ -77,6 +79,8 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private ShellStorageService shellStorageService;
 
     public ShellPublish one(Long id) {
         return shellPublishMapper.selectById(id);
@@ -237,49 +241,122 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //        } else {
 //            taskId = UUID.randomUUID().toString();
 //        }
-        List<Map<String, String>> referencePathList = new ArrayList<>();
-        // 将新关联的脚本启用上线
-        String reference = shellPublish.getReference();
-        if (StringUtils.hasLength(reference)) {
-            String taskId = UUID.randomUUID().toString();
-            List<Long> ids = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
-            ids.add(shellPublish.getId());
-            List<ShellPublish> toExecuteList = this.listByIds(ids);
-            toExecuteList.forEach(item -> {
-                Shell shell = shellService.one(item.getShellId());
-                String suffix;
-                if (Constant.JOB.equals(shell.getCategory())) {
-                    suffix = Constant.JOB_SUFFIX;
-                } else {
-                    suffix = Constant.TRANS_SUFFIX;
+        LambdaQueryWrapper<ShellPublish> shellPublishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellPublishLambdaQueryWrapper.eq(ShellPublish::getProjectId, shellPublish.getProjectId());
+        List<ShellPublish> shellPublishes = getBaseMapper().selectList(shellPublishLambdaQueryWrapper);
+        Set<Long> compareIdList = new HashSet<>();
+        compareIdList.add(shellPublish.getId());
+        Set<Long> idList = new HashSet<>();
+        String taskId = UUID.randomUUID().toString();
+        for (int i = 0; i < shellPublishes.size(); ) {
+            ShellPublish publish = shellPublishes.get(i);
+            i++;
+            for (Long compareId : compareIdList) {
+                if (publish.getId().equals(compareId)) {
+                    String reference = publish.getReference();
+                    idList.add(publish.getId());
+                    if (StringUtils.hasLength(reference)) {
+                        Set<Long> referenceIdList = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toSet());
+                        idList.addAll(referenceIdList);
+                        compareIdList.addAll(referenceIdList);
+                    }
+                    i = 0;
+//                    shellPublishes.remove(publish);
+                    compareIdList.remove(compareId);
                 }
-                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
-                String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
-                String name = shell.getId() + Constant.DOT + suffix;
-                referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
-                item.setProd(Constant.ACTIVE);
-                item.setTaskId(taskId);
-            });
-            this.updateBatchById(toExecuteList);
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", shellPublish.getId().toString());
-            jsonObject.put("referencePathList", referencePathList);
-            jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
-            jsonObject.put("shellId", shellPublish.getShellId().toString());
-            jsonObject.put("projectId", shellPublish.getProjectId().toString());
-            TaskReq taskReq = new TaskReq();
-            taskReq.setCron(cron);
-            taskReq.setDescription(shellPublish.getName());
-            taskReq.setId(taskId);
-            taskReq.setGroup(shellPublish.getProjectId().toString());
-            taskReq.setMisfire(misfire);
-            taskReq.setData(jsonObject.toJSONString());
-            HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
-            ResponseEntity<Date> response = restTemplate.postForEntity(createJobUri, requestEntity, Date.class);
-            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-                throw new CreateJobException();
             }
         }
+        List<ShellPublish> updateShellPublishes = shellPublishes.stream().filter(item -> idList.contains(item.getId())).collect(Collectors.toList());
+        List<Map<String, String>> referencePathList = new ArrayList<>();
+        Map<Long, Long> shellMappingShellPublish = new HashMap<>();
+        updateShellPublishes.forEach(item -> {
+            shellMappingShellPublish.put(item.getShellId(), item.getId());
+            item.setProd(Constant.ACTIVE);
+            item.setTaskId(taskId);
+        });
+        this.updateBatchById(updateShellPublishes);
+        List<Long> shellIdList = updateShellPublishes.stream().map(ShellPublish::getShellId).collect(Collectors.toList());
+        List<Shell> shellList = shellService.listByIds(shellIdList);
+        shellList.forEach(shell -> {
+            String suffix;
+            if (Constant.JOB.equals(shell.getCategory())) {
+                suffix = Constant.JOB_SUFFIX;
+            } else {
+                suffix = Constant.TRANS_SUFFIX;
+            }
+            String remotePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellMappingShellPublish.get(shell.getId()) + Constant.DOT + suffix;
+            String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
+            String name = shell.getId() + Constant.DOT + suffix;
+            referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
+        });
+        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.in(ShellStorage::getShellId, shellIdList);
+        List<ShellStorage> shellStorageList = shellStorageService.list(shellStorageLambdaQueryWrapper);
+        List<String> attachmentOrDownloadDirList = shellStorageList.stream().collect(Collectors.groupingBy(ShellStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(ShellStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", shellPublish.getId().toString());
+        jsonObject.put("referencePathList", referencePathList);
+        jsonObject.put("attachmentOrDownloadDirList", attachmentOrDownloadDirList);
+        jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
+        jsonObject.put("shellId", shellPublish.getShellId().toString());
+        jsonObject.put("parentId", shellPublish.getShellId().toString());
+        jsonObject.put("projectId", shellPublish.getProjectId().toString());
+        TaskReq taskReq = new TaskReq();
+        taskReq.setCron(cron);
+        taskReq.setDescription(shellPublish.getName());
+        taskReq.setId(taskId);
+        taskReq.setGroup(shellPublish.getProjectId().toString());
+        taskReq.setMisfire(misfire);
+        taskReq.setData(jsonObject.toJSONString());
+        HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+        ResponseEntity<Date> response = restTemplate.postForEntity(createJobUri, requestEntity, Date.class);
+        if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+            throw new CreateJobException();
+        }
+
+        // 将新关联的脚本启用上线
+//        String reference = shellPublish.getReference();
+//        if (StringUtils.hasLength(reference)) {
+//            String taskId = UUID.randomUUID().toString();
+//            List<Long> ids = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
+//            ids.add(shellPublish.getId());
+//            List<ShellPublish> toExecuteList = this.listByIds(ids);
+//            toExecuteList.forEach(item -> {
+//                Shell shell = shellService.one(item.getShellId());
+//                String suffix;
+//                if (Constant.JOB.equals(shell.getCategory())) {
+//                    suffix = Constant.JOB_SUFFIX;
+//                } else {
+//                    suffix = Constant.TRANS_SUFFIX;
+//                }
+//                String remotePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
+//                String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
+//                String name = shell.getId() + Constant.DOT + suffix;
+//                referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
+//                item.setProd(Constant.ACTIVE);
+//                item.setTaskId(taskId);
+//            });
+//            this.updateBatchById(toExecuteList);
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.put("id", shellPublish.getId().toString());
+//            jsonObject.put("referencePathList", referencePathList);
+//            jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
+//            jsonObject.put("shellId", shellPublish.getShellId().toString());
+//            jsonObject.put("parentId", shellPublish.getShellId().toString());
+//            jsonObject.put("projectId", shellPublish.getProjectId().toString());
+//            TaskReq taskReq = new TaskReq();
+//            taskReq.setCron(cron);
+//            taskReq.setDescription(shellPublish.getName());
+//            taskReq.setId(taskId);
+//            taskReq.setGroup(shellPublish.getProjectId().toString());
+//            taskReq.setMisfire(misfire);
+//            taskReq.setData(jsonObject.toJSONString());
+//            HttpEntity<TaskReq> requestEntity = new HttpEntity<>(taskReq);
+//            ResponseEntity<Date> response = restTemplate.postForEntity(createJobUri, requestEntity, Date.class);
+//            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+//                throw new CreateJobException();
+//            }
+//        }
     }
 
     /**
@@ -312,45 +389,113 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             deployedShellPublishes.forEach(deployed -> deployed.setProd(Constant.INACTIVE));
             this.updateBatchById(deployedShellPublishes); // 将正在执行的脚本更新为下线状态
         }
-        List<Map<String, String>> referencePathList = new ArrayList<>();
-        // 将新关联的脚本启用上线
-        String reference = shellPublish.getReference();
-        if (StringUtils.hasLength(reference)) {
-            String taskId = UUID.randomUUID().toString();
-            List<Long> ids = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
-            ids.add(shellPublish.getId());
-            List<ShellPublish> toExecuteList = this.listByIds(ids);
-            toExecuteList.forEach(item -> {
-                Shell shell = shellService.one(item.getShellId());
-                String suffix;
-                if (Constant.JOB.equals(shell.getCategory())) {
-                    suffix = Constant.JOB_SUFFIX;
-                } else {
-                    suffix = Constant.TRANS_SUFFIX;
+        LambdaQueryWrapper<ShellPublish> shellPublishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellPublishLambdaQueryWrapper.eq(ShellPublish::getProjectId, shellPublish.getProjectId());
+        List<ShellPublish> shellPublishes = getBaseMapper().selectList(shellPublishLambdaQueryWrapper);
+        Set<Long> compareIdList = new HashSet<>();
+        compareIdList.add(shellPublish.getId());
+        Set<Long> idList = new HashSet<>();
+        String taskId = UUID.randomUUID().toString();
+        for (int i = 0; i < shellPublishes.size();) {
+            ShellPublish publish = shellPublishes.get(i);
+            i++;
+            for (Long compareId : compareIdList) {
+                if (publish.getId().equals(compareId)) {
+                    String reference = publish.getReference();
+                    idList.add(publish.getId());
+                    if (StringUtils.hasLength(reference)) {
+                        Set<Long> referenceIdList = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toSet());
+                        idList.addAll(referenceIdList);
+                        compareIdList.addAll(referenceIdList);
+                    }
+                    i = 0;
+//                    shellPublishes.remove(publish);
+                    compareIdList.remove(compareId);
                 }
-                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
-                String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
-                String name = shell.getId() + Constant.DOT + suffix;
-                referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
-                item.setProd(Constant.ACTIVE);
-                item.setTaskId(taskId);
-            });
-            this.updateBatchById(toExecuteList);
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", shellPublish.getId());
-            jsonObject.put("referencePathList", referencePathList);
-            jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
-            jsonObject.put("shellId", shellPublish.getShellId());
-            jsonObject.put("projectId", shellPublish.getProjectId());
-
-            StreamingReq streamingReq = new StreamingReq();
-            streamingReq.setPayload(jsonObject.toJSONString());
-            HttpEntity<StreamingReq> requestEntity = new HttpEntity<>(streamingReq);
-            ResponseEntity<Boolean> response = restTemplate.postForEntity(createStreamingUri, requestEntity, Boolean.class);
-            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-                throw new CreateJobException();
             }
         }
+        List<ShellPublish> updateShellPublishes = shellPublishes.stream().filter(item -> idList.contains(item.getId())).collect(Collectors.toList());
+        List<Map<String, String>> referencePathList = new ArrayList<>();
+        Map<Long, Long> shellMappingShellPublish = new HashMap<>();
+        updateShellPublishes.forEach(item -> {
+            shellMappingShellPublish.put(item.getShellId(), item.getId());
+            item.setProd(Constant.ACTIVE);
+            item.setTaskId(taskId);
+        });
+        this.updateBatchById(updateShellPublishes);
+        List<Long> shellIdList = updateShellPublishes.stream().map(ShellPublish::getShellId).collect(Collectors.toList());
+        List<Shell> shellList = shellService.listByIds(shellIdList);
+        shellList.forEach(shell -> {
+            String suffix;
+            if (Constant.JOB.equals(shell.getCategory())) {
+                suffix = Constant.JOB_SUFFIX;
+            } else {
+                suffix = Constant.TRANS_SUFFIX;
+            }
+            String remotePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellMappingShellPublish.get(shell.getId()) + Constant.DOT + suffix;
+            String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
+            String name = shell.getId() + Constant.DOT + suffix;
+            referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
+        });
+        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.in(ShellStorage::getShellId, shellIdList);
+        List<ShellStorage> shellStorageList = shellStorageService.list(shellStorageLambdaQueryWrapper);
+        List<String> attachmentOrDownloadDirList = shellStorageList.stream().collect(Collectors.groupingBy(ShellStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(ShellStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", shellPublish.getId());
+        jsonObject.put("referencePathList", referencePathList);
+        jsonObject.put("attachmentOrDownloadDirList", attachmentOrDownloadDirList);
+        jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
+        jsonObject.put("shellId", shellPublish.getShellId());
+        jsonObject.put("projectId", shellPublish.getProjectId());
+
+        StreamingReq streamingReq = new StreamingReq();
+        streamingReq.setPayload(jsonObject.toJSONString());
+        HttpEntity<StreamingReq> requestEntity = new HttpEntity<>(streamingReq);
+        ResponseEntity<Boolean> response = restTemplate.postForEntity(createStreamingUri, requestEntity, Boolean.class);
+        if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+            throw new CreateJobException();
+        }
+
+//        List<Map<String, String>> referencePathList = new ArrayList<>();
+//        // 将新关联的脚本启用上线
+//        String reference = shellPublish.getReference();
+//        if (StringUtils.hasLength(reference)) {
+//            String taskId = UUID.randomUUID().toString();
+//            List<Long> ids = Arrays.stream(reference.split(",")).map(Long::parseLong).collect(Collectors.toList());
+//            ids.add(shellPublish.getId());
+//            List<ShellPublish> toExecuteList = this.listByIds(ids);
+//            toExecuteList.forEach(item -> {
+//                Shell shell = shellService.one(item.getShellId());
+//                String suffix;
+//                if (Constant.JOB.equals(shell.getCategory())) {
+//                    suffix = Constant.JOB_SUFFIX;
+//                } else {
+//                    suffix = Constant.TRANS_SUFFIX;
+//                }
+//                String ossPath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + item.getId() + Constant.DOT + suffix;
+//                String nativePath = shell.getProjectId() + File.separator + shell.getParentId() + File.separator;
+//                String name = shell.getId() + Constant.DOT + suffix;
+//                referencePathList.add(ImmutableMap.of(name, ossPath + "," + nativePath));
+//                item.setProd(Constant.ACTIVE);
+//                item.setTaskId(taskId);
+//            });
+//            this.updateBatchById(toExecuteList);
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.put("id", shellPublish.getId());
+//            jsonObject.put("referencePathList", referencePathList);
+//            jsonObject.put("rootPath", UUID.randomUUID() + File.separator);
+//            jsonObject.put("shellId", shellPublish.getShellId());
+//            jsonObject.put("projectId", shellPublish.getProjectId());
+//
+//            StreamingReq streamingReq = new StreamingReq();
+//            streamingReq.setPayload(jsonObject.toJSONString());
+//            HttpEntity<StreamingReq> requestEntity = new HttpEntity<>(streamingReq);
+//            ResponseEntity<Boolean> response = restTemplate.postForEntity(createStreamingUri, requestEntity, Boolean.class);
+//            if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+//                throw new CreateJobException();
+//            }
+//        }
 //        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
 //        // 找到已发行的版本，停止运行
 //        if (deployedShellPublish != null) {

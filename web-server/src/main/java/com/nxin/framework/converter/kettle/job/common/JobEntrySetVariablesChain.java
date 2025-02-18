@@ -53,7 +53,7 @@ public class JobEntrySetVariablesChain extends JobConvertChain {
                 boolean parallel = (boolean) formAttributes.get(Constant.ETL_PARALLEL);
                 jobEntryCopy.setLaunchingInParallel(parallel);
             }
-            return new ResponseMeta(cell.getId(), jobEntryCopy, null);
+            return new ResponseMeta(cell.getId(), jobEntryCopy, null, null);
         } else {
             return next.parse(cell, jobMeta);
         }

@@ -138,7 +138,7 @@ public class DatabaseLookupChain extends TransformConvertChain {
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);
             stepMeta.setCopies(parallel);
-            return new ResponseMeta(cell.getId(), stepMeta, databaseMeta);
+            return new ResponseMeta(cell.getId(), stepMeta, databaseMeta, null);
         } else {
             return next.parse(cell, transMeta);
         }

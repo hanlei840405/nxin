@@ -58,7 +58,6 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             boolean binaryMode = (boolean) formAttributes.get("binaryMode");
             boolean remove = (boolean) formAttributes.get("remove");
             boolean onlyPuttingNewFiles = (boolean) formAttributes.get("onlyPuttingNewFiles");
-//            boolean activeConnection = (boolean) formAttributes.get("activeConnection");
             String controlEncoding = (String) formAttributes.get("controlEncoding");
             int timeout = (int) formAttributes.get("timeout");
             JobEntryFTPPUT jobEntryFTPPUT = new JobEntryFTPPUT();
@@ -101,7 +100,7 @@ public class JobEntryFTPPutChain extends JobConvertChain {
                 boolean parallel = (boolean) formAttributes.get(Constant.ETL_PARALLEL);
                 jobEntryCopy.setLaunchingInParallel(parallel);
             }
-            return new ResponseMeta(cell.getId(), jobEntryCopy, null);
+            return new ResponseMeta(cell.getId(), jobEntryCopy, null, null);
         } else {
             return next.parse(cell, jobMeta);
         }

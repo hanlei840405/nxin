@@ -137,6 +137,16 @@ public class FileService {
                             }
                         }
                     }
+                    Element keyfilenameElement = entry.element("keyfilename");
+                    if (keyfilenameElement != null) {
+                        Element nameElement = entry.element("name");
+                        if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
+                            String value = keyfilenameElement.getTextTrim();
+                            if (StringUtils.hasLength(value)) {
+                                keyfilenameElement.setText(target + value);
+                            }
+                        }
+                    }
                 }
             } else {
                 List<Element> steps = rootElement.element("step").elements();

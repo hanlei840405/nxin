@@ -36,7 +36,7 @@ public class JobEntrySpecialChain extends JobConvertChain {
                 jobEntryCopy.setLaunchingInParallel(parallel);
             }
             jobEntryCopy.getXML();
-            return new ResponseMeta(cell.getId(), jobEntryCopy, null);
+            return new ResponseMeta(cell.getId(), jobEntryCopy, null, null);
         } else {
             return next.parse(cell, jobMeta);
         }

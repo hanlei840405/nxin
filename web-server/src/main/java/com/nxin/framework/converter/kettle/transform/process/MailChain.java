@@ -87,7 +87,7 @@ public class MailChain extends TransformConvertChain {
             }
             stepMeta.setDraw(true);
             stepMeta.setCopies(parallel);
-            return new ResponseMeta(cell.getId(), stepMeta, null);
+            return new ResponseMeta(cell.getId(), stepMeta, null, null);
         } else {
             return next.parse(cell, transMeta);
         }

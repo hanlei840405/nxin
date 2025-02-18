@@ -1,10 +1,13 @@
 package com.nxin.framework.event.listener;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.kettle.RunningProcess;
+import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.event.TransformExecuteEvent;
 import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.www.CarteObjectEntry;
@@ -16,6 +19,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,15 +34,27 @@ public class TransformExecuteListener {
     private SimpMessagingTemplate simpMessagingTemplate;
     @Autowired
     private RunningProcessService runningProcessService;
+    @Autowired
+    private ShellStorageService shellStorageService;
     @Value("${etl.log.send-delay}")
     private Integer sendDelay = 5;
 
     @Async
     @EventListener(TransformExecuteEvent.class)
     public void action(TransformExecuteEvent transformExecuteEvent) {
+        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.eq(ShellStorage::getShellId, transformExecuteEvent.getShellId());
+        List<ShellStorage> shellStorages = shellStorageService.list();
+
         RunningProcess runningProcess = (RunningProcess) transformExecuteEvent.getSource();
         LoggingRegistry loggingRegistry = LoggingRegistry.getInstance();
         try {
+            for (ShellStorage shellStorage : shellStorages) {
+                File folder = new File(shellStorage.getStorageDir());
+                if (!folder.exists()) {
+                    folder.mkdirs();
+                }
+            }
             CarteSingleton.getInstance().getTransformationMap().addTransformation(transformExecuteEvent.getTrans().getName(), transformExecuteEvent.getInstanceId(), transformExecuteEvent.getTrans(), transformExecuteEvent.getTransConfiguration());
             // 空参调用
             transformExecuteEvent.getTrans().setLogLevel(LogLevel.BASIC);

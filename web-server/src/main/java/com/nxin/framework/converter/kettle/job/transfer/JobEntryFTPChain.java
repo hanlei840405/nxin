@@ -1,6 +1,7 @@
 package com.nxin.framework.converter.kettle.job.transfer;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
@@ -9,6 +10,7 @@ import com.nxin.framework.converter.kettle.job.JobConvertChain;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.Shell;
+import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.exception.RecordsNotMatchException;
 import com.nxin.framework.exception.UnExecutableException;
@@ -39,13 +41,26 @@ public class JobEntryFTPChain extends JobConvertChain {
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(jobMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String localDirectory = ConvertFactory.getVariable().get(Constant.VAR_DOWNLOAD_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
-            File download = new File(localDirectory);
-            if (!download.exists()) {
-                download.mkdirs();
+            LambdaQueryWrapper<ShellStorage> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ShellStorage::getShellId, shell.getId());
+            queryWrapper.eq(ShellStorage::getComponent, cell.getStyle());
+            queryWrapper.eq(ShellStorage::getComponentName, name);
+            ShellStorage shellStorage = getShellStorageService().getOne(queryWrapper);
+            if (shellStorage == null) {
+                shellStorage = new ShellStorage();
+                shellStorage.setShellId(shell.getId());
+                shellStorage.setShellParentId(shell.getParentId());
+                shellStorage.setComponent(cell.getStyle());
+                shellStorage.setComponentName(name);
+                shellStorage.setStorageDir(localDirectory);
+                shellStorage.setStatus(Constant.ACTIVE);
+                shellStorage.setVersion(1);
+            } else if (shellStorage.getShellParentId().equals(shell.getParentId())) {
+                shellStorage.setShellParentId(shell.getParentId());
+                shellStorage.setStorageDir(localDirectory);
             }
+            getShellStorageService().saveOrUpdate(shellStorage);
             boolean binaryMode = (boolean) formAttributes.get("binaryMode");
-//            boolean activeConnection = (boolean) formAttributes.get("activeConnection");
-
             // remote
             Number server = (Number) formAttributes.get("server");
             Ftp ftp = getFtpService().one(server.longValue());
@@ -137,7 +152,7 @@ public class JobEntryFTPChain extends JobConvertChain {
                 boolean parallel = (boolean) formAttributes.get(Constant.ETL_PARALLEL);
                 jobEntryCopy.setLaunchingInParallel(parallel);
             }
-            return new ResponseMeta(cell.getId(), jobEntryCopy, null);
+            return new ResponseMeta(cell.getId(), jobEntryCopy, null, null);
         } else {
             return next.parse(cell, jobMeta);
         }

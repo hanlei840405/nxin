@@ -24,13 +24,13 @@ public class Test {
 
                 }))
                 .packageConfig(builder -> {
-                    builder.parent("com.nxin.framework.bi") // 设置父包名
-                            .moduleName("bi") // 设置父包模块名
+                    builder.parent("com.nxin.framework.kettle") // 设置父包名
+                            .moduleName("kettle") // 设置父包模块名
                             .pathInfo(Collections.singletonMap(OutputFile.xml, "D:/coding/xml/")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("basic_ftp") // 设置需要生成的表名
-                            .addTablePrefix("basic_"); // 设置过滤表前缀
+                    builder.addInclude("kettle_shell_storage") // 设置需要生成的表名
+                            .addTablePrefix("kettle_"); // 设置过滤表前缀
                 })
                 .templateEngine(new FreemarkerTemplateEngine()) // 使用Freemarker引擎模板，默认的是Velocity引擎模板
                 .execute();

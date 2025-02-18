@@ -1,14 +1,17 @@
 package com.nxin.framework.event.listener;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
+import com.nxin.framework.entity.kettle.ShellStorage;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.event.JobExecuteEvent;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.www.CarteObjectEntry;
@@ -41,6 +44,8 @@ public class JobExecuteListener {
     private ShellService shellService;
     @Autowired
     private FtpService ftpService;
+    @Autowired
+    private ShellStorageService shellStorageService;
     @Value("${etl.log.send-delay}")
     private Integer sendDelay = 5;
     @Value("${dev.dir}")
@@ -51,6 +56,9 @@ public class JobExecuteListener {
     public void action(JobExecuteEvent jobExecuteEvent) {
         Shell shell = shellService.one(jobExecuteEvent.getShellId());
         List<Ftp> ftps = ftpService.all(shell.getProjectId(), "SFTP");
+        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.eq(ShellStorage::getShellId, jobExecuteEvent.getShellId());
+        List<ShellStorage> shellStorages = shellStorageService.list();
 
         RunningProcess runningProcess = (RunningProcess) jobExecuteEvent.getSource();
         LoggingRegistry loggingRegistry = LoggingRegistry.getInstance();
@@ -64,6 +72,12 @@ public class JobExecuteListener {
                     }
                     File ssh = new File(sshFilePath.concat(File.separator).concat(ftp.getId().toString()));
                     Files.write(ssh.toPath(), ftp.getPrivateKey().getBytes(Charset.defaultCharset()));
+                }
+            }
+            for (ShellStorage shellStorage : shellStorages) {
+                File folder = new File(shellStorage.getStorageDir());
+                if (!folder.exists()) {
+                    folder.mkdirs();
                 }
             }
             CarteSingleton.getInstance().getJobMap().addJob(jobExecuteEvent.getJob().getName(), jobExecuteEvent.getInstanceId(), jobExecuteEvent.getJob(), jobExecuteEvent.getJobConfiguration());

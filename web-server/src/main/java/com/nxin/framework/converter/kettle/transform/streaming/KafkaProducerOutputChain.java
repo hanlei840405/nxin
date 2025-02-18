@@ -58,7 +58,7 @@ public class KafkaProducerOutputChain extends TransformConvertChain {
             mxGeometry geometry = cell.getGeometry();
             stepMeta.setLocation(new Double(geometry.getX()).intValue(), new Double(geometry.getY()).intValue());
             stepMeta.setDraw(true);
-            return new ResponseMeta(cell.getId(), stepMeta, null);
+            return new ResponseMeta(cell.getId(), stepMeta, null, null);
         } else {
             return next.parse(cell, transMeta);
         }

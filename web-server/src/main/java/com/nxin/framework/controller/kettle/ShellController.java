@@ -119,7 +119,12 @@ public class ShellController {
     public ResponseEntity<?> save(@RequestBody ShellDto shellDto) {
         List<User> members = userService.findByResource(shellDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         if (members.stream().anyMatch(member -> member.getEmail().equals(LoginUtils.getUsername()))) {
-            Shell shell = new Shell();
+            Shell shell;
+            if (shellDto.getId() != null) {
+                shell = shellService.one(shellDto.getId());
+            } else {
+                shell = new Shell();
+            }
             BeanUtils.copyProperties(shellDto, shell, "xml");
             try {
                 shellService.save(shell);

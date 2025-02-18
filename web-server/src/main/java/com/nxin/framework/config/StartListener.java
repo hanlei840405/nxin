@@ -8,6 +8,7 @@ import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.ShellService;
+import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,11 +48,13 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     private FileService fileService;
     @Autowired
     private FtpService ftpService;
+    @Autowired
+    private ShellStorageService shellStorageService;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-        TransformConvertFactory.init(datasourceService, shellService);
-        JobConvertFactory.init(shellService, ftpService);
+        TransformConvertFactory.init(datasourceService, shellService, shellStorageService);
+        JobConvertFactory.init(shellService, ftpService, shellStorageService);
         ConvertFactory.getVariable().put(Constant.VAR_ATTACHMENT_DIR, attachmentDir);
         ConvertFactory.getVariable().put(Constant.VAR_DOWNLOAD_DIR, downloadDir);
         File dev = new File(devDir);

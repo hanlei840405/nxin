@@ -32,6 +32,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -111,7 +112,7 @@ public class KettleGeneratorService {
         channelLogTable.setTableName("log_etl_transform_channel");
         transMeta.setLogLevel(LogLevel.DETAILED);
         String dir = prod ? File.separator : devDir;
-        transMeta.setVariable(Constant.SHELL_STORAGE_DIR, prod ? File.separator : devDir);
+        transMeta.setVariable(Constant.SHELL_STORAGE_DIR, dir);
         transMeta.setVariable(Constant.SHELL_INFO, JSON.toJSONString(shell));
         Set<Long> referenceIds = new HashSet<>(0);
         Map<String, String> idNameMapping = new HashMap<>(0);
@@ -119,6 +120,9 @@ public class KettleGeneratorService {
             mxCell cell = (mxCell) element;
             try {
                 ResponseMeta responseMeta = transformConvertChain.parse(cell, transMeta);
+                if (!CollectionUtils.isEmpty(responseMeta.getReferences())) {
+                    referenceIds.addAll(responseMeta.getReferences());
+                }
                 if (responseMeta.getStepMeta() != null) {
                     idNameMapping.put(responseMeta.getId(), responseMeta.getStepMeta().getName());
                 }
@@ -140,8 +144,7 @@ public class KettleGeneratorService {
         for (TransformConvertChain chain : TransformConvertFactory.getTransformConvertChains()) {
             chain.callback(transMeta, idNameMapping);
         }
-        if (ConvertFactory.getVariable().containsKey(Constant.VAR_REFERENCES)) {
-            referenceIds = (Set<Long>) ConvertFactory.getVariable().get(Constant.VAR_REFERENCES);
+        if (!referenceIds.isEmpty()) {
             List<Shell> shells = shellService.listByIds(referenceIds);
             shells.forEach(item -> {
                 String suffix = item.getCategory().equals(Constant.JOB) ? Constant.JOB_SUFFIX : Constant.TRANS_SUFFIX;
@@ -208,7 +211,7 @@ public class KettleGeneratorService {
         channelLogTable.setTableName("log_etl_transform_channel");
         jobMeta.setLogLevel(LogLevel.DETAILED);
         String dir = prod ? File.separator : devDir;
-        jobMeta.setVariable(Constant.SHELL_STORAGE_DIR, prod ? File.separator : devDir);
+        jobMeta.setVariable(Constant.SHELL_STORAGE_DIR, dir);
         jobMeta.setVariable(Constant.SHELL_INFO, JSON.toJSONString(shell));
 
         Set<Long> referenceIds = new HashSet<>(0);
@@ -216,6 +219,9 @@ public class KettleGeneratorService {
             mxCell cell = (mxCell) element;
             try {
                 ResponseMeta responseMeta = jobConvertChain.parse(cell, jobMeta);
+                if (!CollectionUtils.isEmpty(responseMeta.getReferences())) {
+                    referenceIds.addAll(responseMeta.getReferences());
+                }
                 if (cell.isVertex()) {
                     jobMeta.addJobEntry(responseMeta.getJobEntryCopy());
                     if (responseMeta.getDatabaseMeta() != null && Arrays.stream(jobMeta.getDatabaseNames()).noneMatch(databaseName -> databaseName.equals(responseMeta.getDatabaseMeta().getName()))) {
@@ -231,8 +237,7 @@ public class KettleGeneratorService {
                 throw new ConvertException(attr.getValue());
             }
         }
-        if (ConvertFactory.getVariable().containsKey(Constant.VAR_REFERENCES)) {
-            referenceIds = (Set<Long>) ConvertFactory.getVariable().get(Constant.VAR_REFERENCES);
+        if (!referenceIds.isEmpty()) {
             List<Shell> shells = shellService.listByIds(referenceIds);
             shells.forEach(item -> {
                 String suffix = item.getCategory().equals(Constant.JOB) ? Constant.JOB_SUFFIX : Constant.TRANS_SUFFIX;

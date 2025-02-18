@@ -86,8 +86,6 @@ jwt:
   refreshExpirationDateInMs: 9000000
 attachment:
   dir: ${user.home}/.etl-designer/attachment/
-production:
-  dir: ${user.home}/.etl-designer/production/
 dev:
   dir: ${user.home}/.etl-designer/dev/
 download:
