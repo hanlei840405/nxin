@@ -53,7 +53,6 @@ public class JobEntrySFTPChain extends JobConvertChain {
             String compression = (String) formAttributes.get("compression");
             boolean remove = (boolean) formAttributes.get("remove");
             boolean isAddResult = (boolean) formAttributes.get("isAddResult");
-            boolean createTargetFolder = (boolean) formAttributes.get("createRemoteFolder");
             String wildcard = (String) formAttributes.get("wildcard");
             // 需要上传的文件目录，{环境目录}/工程ID/根目录ID/文件ID
             Shell shell = JSON.parseObject(jobMeta.getVariable(Constant.SHELL_INFO), Shell.class);
@@ -106,7 +105,7 @@ public class JobEntrySFTPChain extends JobConvertChain {
             jobEntrySFTP.setWildcard(wildcard);
             jobEntrySFTP.setRemove(remove);
             jobEntrySFTP.setTargetDirectory(localDirectory);
-            jobEntrySFTP.setCreateTargetFolder(createTargetFolder);
+            jobEntrySFTP.setCreateTargetFolder(false);
             jobEntrySFTP.setAddToResult(isAddResult);
             JobEntryCopy jobEntryCopy = new JobEntryCopy(jobEntrySFTP);
             mxGeometry geometry = cell.getGeometry();
