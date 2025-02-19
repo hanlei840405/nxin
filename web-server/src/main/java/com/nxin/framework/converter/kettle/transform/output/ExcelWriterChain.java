@@ -10,7 +10,7 @@ import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.entity.kettle.Shell;
-import com.nxin.framework.entity.kettle.ShellStorage;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.enums.Constant;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -93,25 +93,26 @@ public class ExcelWriterChain extends TransformConvertChain {
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String attachmentDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
-            LambdaQueryWrapper<ShellStorage> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(ShellStorage::getShellId, shell.getId());
-            queryWrapper.eq(ShellStorage::getComponent, cell.getStyle());
-            queryWrapper.eq(ShellStorage::getComponentName, stepName);
-            ShellStorage shellStorage = getShellStorageService().getOne(queryWrapper);
-            if (shellStorage == null) {
-                shellStorage = new ShellStorage();
-                shellStorage.setShellId(shell.getId());
-                shellStorage.setShellParentId(shell.getParentId());
-                shellStorage.setComponent(cell.getStyle());
-                shellStorage.setComponentName(stepName);
-                shellStorage.setStorageDir(attachmentDir);
-                shellStorage.setStatus(Constant.ACTIVE);
-                shellStorage.setVersion(1);
-            } else if (shellStorage.getShellParentId().equals(shell.getParentId())) {
-                shellStorage.setShellParentId(shell.getParentId());
-                shellStorage.setStorageDir(attachmentDir);
+            LambdaQueryWrapper<AttachmentStorage> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(AttachmentStorage::getShellId, shell.getId());
+            queryWrapper.eq(AttachmentStorage::getComponent, cell.getStyle());
+            queryWrapper.eq(AttachmentStorage::getComponentName, stepName);
+            AttachmentStorage attachmentStorage = getAttachmentStorageService().getOne(queryWrapper);
+            if (attachmentStorage == null) {
+                attachmentStorage = new AttachmentStorage();
+                attachmentStorage.setShellId(shell.getId());
+                attachmentStorage.setShellParentId(shell.getParentId());
+                attachmentStorage.setComponent(cell.getStyle());
+                attachmentStorage.setComponentName(stepName);
+                attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_UPLOAD);
+                attachmentStorage.setStorageDir(attachmentDir);
+                attachmentStorage.setStatus(Constant.ACTIVE);
+                attachmentStorage.setVersion(1);
+            } else if (attachmentStorage.getShellParentId().equals(shell.getParentId())) {
+                attachmentStorage.setShellParentId(shell.getParentId());
+                attachmentStorage.setStorageDir(attachmentDir);
             }
-            getShellStorageService().saveOrUpdate(shellStorage);
+            getAttachmentStorageService().saveOrUpdate(attachmentStorage);
 
             if (!filename.startsWith(Constant.FILE_SEPARATOR)) {
                 filename = Constant.FILE_SEPARATOR + filename;

@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.entity.kettle.ShellPublish;
-import com.nxin.framework.entity.kettle.ShellStorage;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.exception.*;
@@ -80,7 +80,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     @Autowired
     private RestTemplate restTemplate;
     @Autowired
-    private ShellStorageService shellStorageService;
+    private AttachmentStorageService attachmentStorageService;
 
     public ShellPublish one(Long id) {
         return shellPublishMapper.selectById(id);
@@ -270,10 +270,10 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             String name = shell.getId() + Constant.DOT + suffix;
             referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
         });
-        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.in(ShellStorage::getShellId, shellIdList);
-        List<ShellStorage> shellStorageList = shellStorageService.list(shellStorageLambdaQueryWrapper);
-        List<String> attachmentOrDownloadDirList = shellStorageList.stream().collect(Collectors.groupingBy(ShellStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(ShellStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
+        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.in(AttachmentStorage::getShellId, shellIdList);
+        List<AttachmentStorage> attachmentStorageList = attachmentStorageService.list(shellStorageLambdaQueryWrapper);
+        List<String> attachmentOrDownloadDirList = attachmentStorageList.stream().collect(Collectors.groupingBy(AttachmentStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(AttachmentStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", shellPublish.getId().toString());
         jsonObject.put("referencePathList", referencePathList);
@@ -399,10 +399,10 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             String name = shell.getId() + Constant.DOT + suffix;
             referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
         });
-        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.in(ShellStorage::getShellId, shellIdList);
-        List<ShellStorage> shellStorageList = shellStorageService.list(shellStorageLambdaQueryWrapper);
-        List<String> attachmentOrDownloadDirList = shellStorageList.stream().collect(Collectors.groupingBy(ShellStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(ShellStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
+        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.in(AttachmentStorage::getShellId, shellIdList);
+        List<AttachmentStorage> attachmentStorageList = attachmentStorageService.list(shellStorageLambdaQueryWrapper);
+        List<String> attachmentOrDownloadDirList = attachmentStorageList.stream().collect(Collectors.groupingBy(AttachmentStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(AttachmentStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", shellPublish.getId());
         jsonObject.put("referencePathList", referencePathList);

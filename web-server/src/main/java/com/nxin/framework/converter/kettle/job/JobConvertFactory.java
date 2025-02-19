@@ -7,12 +7,12 @@ import com.nxin.framework.converter.kettle.job.shell.JobEntryEvalChain;
 import com.nxin.framework.converter.kettle.job.transfer.*;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.kettle.ShellService;
-import com.nxin.framework.service.kettle.ShellStorageService;
+import com.nxin.framework.service.kettle.AttachmentStorageService;
 
 public class JobConvertFactory extends ConvertFactory {
     private static JobConvertChain beginChain;
 
-    public static void init(ShellService shellService, FtpService ftpService, ShellStorageService shellStorageService) {
+    public static void init(ShellService shellService, FtpService ftpService, AttachmentStorageService attachmentStorageService) {
         JobConvertChain beginChain = new BeginChain();
         JobConvertChain jobEntrySpecialChain = new JobEntrySpecialChain();
         JobConvertChain jobEntryDummyChain = new JobEntryDummyChain();
@@ -34,9 +34,9 @@ public class JobConvertFactory extends ConvertFactory {
         jobEntryFTPPutChain.setShellService(shellService);
         jobEntryFTPPutChain.setFtpService(ftpService);
         jobEntryFTPChain.setFtpService(ftpService);
-        jobEntryFTPChain.setShellStorageService(shellStorageService);
+        jobEntryFTPChain.setAttachmentStorageService(attachmentStorageService);
         jobEntrySFTPChain.setFtpService(ftpService);
-        jobEntrySFTPChain.setShellStorageService(shellStorageService);
+        jobEntrySFTPChain.setAttachmentStorageService(attachmentStorageService);
         jobEntrySFTPPutChain.setShellService(shellService);
         jobEntrySFTPPutChain.setFtpService(ftpService);
         beginChain.setNext(jobEntrySpecialChain);

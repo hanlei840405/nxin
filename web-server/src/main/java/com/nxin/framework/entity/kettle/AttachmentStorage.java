@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
  * @author jesse han
  * @since 2025-02-17
  */
-@TableName("kettle_shell_storage")
-@ApiModel(value = "ShellStorage对象", description = "脚本运行时生成的文件存放位置")
-public class ShellStorage implements Serializable {
+@TableName("kettle_attachment_storage")
+@ApiModel(value = "AttachmentStorage对象", description = "脚本运行时生成的文件存放位置")
+public class AttachmentStorage implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -30,6 +30,8 @@ public class ShellStorage implements Serializable {
     private String component;
 
     private String componentName;
+
+    private Integer category;
 
     private String storageDir;
 
@@ -90,6 +92,14 @@ public class ShellStorage implements Serializable {
         this.componentName = componentName;
     }
 
+    public Integer getCategory() {
+        return category;
+    }
+
+    public void setCategory(Integer category) {
+        this.category = category;
+    }
+
     public String getStorageDir() {
         return storageDir;
     }
@@ -148,16 +158,20 @@ public class ShellStorage implements Serializable {
 
     @Override
     public String toString() {
-        return "ShellStorage{" +
-                "id = " + id +
-                ", shellId = " + shellId +
-                ", storageDir = " + storageDir +
-                ", status = " + status +
-                ", creator = " + creator +
-                ", modifier = " + modifier +
-                ", createTime = " + createTime +
-                ", modifyTime = " + modifyTime +
-                ", version = " + version +
-                "}";
+        return "AttachmentStorage{" +
+                "id=" + id +
+                ", shellId=" + shellId +
+                ", shellParentId=" + shellParentId +
+                ", component='" + component + '\'' +
+                ", componentName='" + componentName + '\'' +
+                ", category=" + category +
+                ", storageDir='" + storageDir + '\'' +
+                ", status='" + status + '\'' +
+                ", createTime=" + createTime +
+                ", creator='" + creator + '\'' +
+                ", modifier='" + modifier + '\'' +
+                ", modifyTime=" + modifyTime +
+                ", version=" + version +
+                '}';
     }
 }

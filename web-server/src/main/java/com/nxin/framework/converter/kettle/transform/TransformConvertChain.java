@@ -6,7 +6,7 @@ import com.mxgraph.model.mxCell;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.kettle.ShellService;
-import com.nxin.framework.service.kettle.ShellStorageService;
+import com.nxin.framework.service.kettle.AttachmentStorageService;
 import org.pentaho.di.trans.TransMeta;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ public abstract class TransformConvertChain {
 
     private FtpService ftpService;
 
-    private ShellStorageService shellStorageService;
+    private AttachmentStorageService attachmentStorageService;
 
     public void setNext(TransformConvertChain next) {
         this.next = next;
@@ -55,12 +55,12 @@ public abstract class TransformConvertChain {
         this.ftpService = ftpService;
     }
 
-    public ShellStorageService getShellStorageService() {
-        return shellStorageService;
+    public AttachmentStorageService getAttachmentStorageService() {
+        return attachmentStorageService;
     }
 
-    public void setShellStorageService(ShellStorageService shellStorageService) {
-        this.shellStorageService = shellStorageService;
+    public void setAttachmentStorageService(AttachmentStorageService attachmentStorageService) {
+        this.attachmentStorageService = attachmentStorageService;
     }
 
     public abstract ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException;

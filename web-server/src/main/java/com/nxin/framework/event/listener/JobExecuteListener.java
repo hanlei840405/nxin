@@ -4,14 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
-import com.nxin.framework.entity.kettle.ShellStorage;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.event.JobExecuteEvent;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellService;
-import com.nxin.framework.service.kettle.ShellStorageService;
+import com.nxin.framework.service.kettle.AttachmentStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.www.CarteObjectEntry;
@@ -22,14 +22,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -45,7 +42,7 @@ public class JobExecuteListener {
     @Autowired
     private FtpService ftpService;
     @Autowired
-    private ShellStorageService shellStorageService;
+    private AttachmentStorageService attachmentStorageService;
     @Value("${etl.log.send-delay}")
     private Integer sendDelay = 5;
     @Value("${dev.dir}")
@@ -56,9 +53,9 @@ public class JobExecuteListener {
     public void action(JobExecuteEvent jobExecuteEvent) {
         Shell shell = shellService.one(jobExecuteEvent.getShellId());
         List<Ftp> ftps = ftpService.all(shell.getProjectId(), "SFTP");
-        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.eq(ShellStorage::getShellId, jobExecuteEvent.getShellId());
-        List<ShellStorage> shellStorages = shellStorageService.list();
+        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.eq(AttachmentStorage::getShellId, jobExecuteEvent.getShellId());
+        List<AttachmentStorage> attachmentStorages = attachmentStorageService.list();
 
         RunningProcess runningProcess = (RunningProcess) jobExecuteEvent.getSource();
         LoggingRegistry loggingRegistry = LoggingRegistry.getInstance();
@@ -74,8 +71,8 @@ public class JobExecuteListener {
                     Files.write(ssh.toPath(), ftp.getPrivateKey().getBytes(Charset.defaultCharset()));
                 }
             }
-            for (ShellStorage shellStorage : shellStorages) {
-                File folder = new File(shellStorage.getStorageDir());
+            for (AttachmentStorage attachmentStorage : attachmentStorages) {
+                File folder = new File(attachmentStorage.getStorageDir());
                 if (!folder.exists()) {
                     folder.mkdirs();
                 }

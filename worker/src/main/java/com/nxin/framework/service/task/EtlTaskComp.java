@@ -8,7 +8,6 @@ import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
-import com.nxin.framework.service.kettle.ShellStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.*;
@@ -29,9 +28,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
@@ -54,8 +50,6 @@ public class EtlTaskComp extends QuartzJobBean {
     private TransactionTemplate transactionTemplate;
     @Autowired
     private FtpService ftpService;
-    @Autowired
-    private ShellStorageService shellStorageService;
     @Value("${production.dir}")
     private String productionDir;
     @Value("${attachment.dir}")

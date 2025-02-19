@@ -10,16 +10,13 @@ import com.nxin.framework.converter.kettle.job.JobConvertChain;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.entity.kettle.Shell;
-import com.nxin.framework.entity.kettle.ShellStorage;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.exception.RecordsNotMatchException;
-import com.nxin.framework.exception.UnExecutableException;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.job.entries.ftp.JobEntryFTP;
 import org.pentaho.di.job.entries.sftp.SFTPClient;
-import org.pentaho.di.job.entries.simpleeval.JobEntrySimpleEval;
 import org.pentaho.di.job.entry.JobEntryCopy;
 import org.springframework.util.StringUtils;
 
@@ -41,25 +38,26 @@ public class JobEntryFTPChain extends JobConvertChain {
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(jobMeta.getVariable(Constant.SHELL_INFO), Shell.class);
             String localDirectory = ConvertFactory.getVariable().get(Constant.VAR_DOWNLOAD_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
-            LambdaQueryWrapper<ShellStorage> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(ShellStorage::getShellId, shell.getId());
-            queryWrapper.eq(ShellStorage::getComponent, cell.getStyle());
-            queryWrapper.eq(ShellStorage::getComponentName, name);
-            ShellStorage shellStorage = getShellStorageService().getOne(queryWrapper);
-            if (shellStorage == null) {
-                shellStorage = new ShellStorage();
-                shellStorage.setShellId(shell.getId());
-                shellStorage.setShellParentId(shell.getParentId());
-                shellStorage.setComponent(cell.getStyle());
-                shellStorage.setComponentName(name);
-                shellStorage.setStorageDir(localDirectory);
-                shellStorage.setStatus(Constant.ACTIVE);
-                shellStorage.setVersion(1);
-            } else if (shellStorage.getShellParentId().equals(shell.getParentId())) {
-                shellStorage.setShellParentId(shell.getParentId());
-                shellStorage.setStorageDir(localDirectory);
+            LambdaQueryWrapper<AttachmentStorage> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(AttachmentStorage::getShellId, shell.getId());
+            queryWrapper.eq(AttachmentStorage::getComponent, cell.getStyle());
+            queryWrapper.eq(AttachmentStorage::getComponentName, name);
+            AttachmentStorage attachmentStorage = getAttachmentStorageService().getOne(queryWrapper);
+            if (attachmentStorage == null) {
+                attachmentStorage = new AttachmentStorage();
+                attachmentStorage.setShellId(shell.getId());
+                attachmentStorage.setShellParentId(shell.getParentId());
+                attachmentStorage.setComponent(cell.getStyle());
+                attachmentStorage.setComponentName(name);
+                attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_DOWNLOAD);
+                attachmentStorage.setStorageDir(localDirectory);
+                attachmentStorage.setStatus(Constant.ACTIVE);
+                attachmentStorage.setVersion(1);
+            } else if (attachmentStorage.getShellParentId().equals(shell.getParentId())) {
+                attachmentStorage.setShellParentId(shell.getParentId());
+                attachmentStorage.setStorageDir(localDirectory);
             }
-            getShellStorageService().saveOrUpdate(shellStorage);
+            getAttachmentStorageService().saveOrUpdate(attachmentStorage);
             boolean binaryMode = (boolean) formAttributes.get("binaryMode");
             // remote
             Number server = (Number) formAttributes.get("server");

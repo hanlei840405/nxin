@@ -1,13 +1,12 @@
 package com.nxin.framework.event.listener;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.kettle.RunningProcess;
-import com.nxin.framework.entity.kettle.ShellStorage;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.event.TransformExecuteEvent;
 import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
-import com.nxin.framework.service.kettle.ShellStorageService;
+import com.nxin.framework.service.kettle.AttachmentStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.www.CarteObjectEntry;
@@ -35,22 +34,22 @@ public class TransformExecuteListener {
     @Autowired
     private RunningProcessService runningProcessService;
     @Autowired
-    private ShellStorageService shellStorageService;
+    private AttachmentStorageService attachmentStorageService;
     @Value("${etl.log.send-delay}")
     private Integer sendDelay = 5;
 
     @Async
     @EventListener(TransformExecuteEvent.class)
     public void action(TransformExecuteEvent transformExecuteEvent) {
-        LambdaQueryWrapper<ShellStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.eq(ShellStorage::getShellId, transformExecuteEvent.getShellId());
-        List<ShellStorage> shellStorages = shellStorageService.list();
+        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        shellStorageLambdaQueryWrapper.eq(AttachmentStorage::getShellId, transformExecuteEvent.getShellId());
+        List<AttachmentStorage> attachmentStorages = attachmentStorageService.list();
 
         RunningProcess runningProcess = (RunningProcess) transformExecuteEvent.getSource();
         LoggingRegistry loggingRegistry = LoggingRegistry.getInstance();
         try {
-            for (ShellStorage shellStorage : shellStorages) {
-                File folder = new File(shellStorage.getStorageDir());
+            for (AttachmentStorage attachmentStorage : attachmentStorages) {
+                File folder = new File(attachmentStorage.getStorageDir());
                 if (!folder.exists()) {
                     folder.mkdirs();
                 }

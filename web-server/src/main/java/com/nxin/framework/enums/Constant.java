@@ -82,4 +82,6 @@ public interface Constant {
     String SHELL_INFO = "shellInfo";
     String FILE_SEPARATOR = "/";
     String SSH_PATH = "ssh";
+    int ATTACHMENT_CATEGORY_DOWNLOAD = 0;
+    int ATTACHMENT_CATEGORY_UPLOAD = 1;
 }

@@ -710,3 +710,21 @@ CREATE TABLE `bi_model` (
   `version` int NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `kettle_attachment_storage` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `shell_id` bigint DEFAULT NULL,
+  `shell_parent_id` bigint DEFAULT NULL,
+  `component` varchar(255) DEFAULT NULL,
+  `component_name` varchar(255) DEFAULT NULL,
+  `category` int DEFAULT NULL COMMENT '类型：0:download,1:upload',
+  `storage_dir` varchar(255) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `creator` varchar(255) DEFAULT NULL,
+  `modifier` varchar(255) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `modify_time` datetime DEFAULT NULL,
+  `version` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `uni_component` (`shell_id`,`component`,`component_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='脚本运行时生成的文件存放在本地服务器的位置';
