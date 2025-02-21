@@ -83,5 +83,5 @@ public interface Constant {
     String FILE_SEPARATOR = "/";
     String SSH_PATH = "ssh";
     int ATTACHMENT_CATEGORY_DOWNLOAD = 0;
-    int ATTACHMENT_CATEGORY_UPLOAD = 1;
+    int ATTACHMENT_CATEGORY_EXPORT = 1;
 }

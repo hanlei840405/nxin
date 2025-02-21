@@ -92,7 +92,7 @@ public class ExcelWriterChain extends TransformConvertChain {
 
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
-            String attachmentDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
+            String exportDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
             LambdaQueryWrapper<AttachmentStorage> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(AttachmentStorage::getShellId, shell.getId());
             queryWrapper.eq(AttachmentStorage::getComponent, cell.getStyle());
@@ -104,20 +104,20 @@ public class ExcelWriterChain extends TransformConvertChain {
                 attachmentStorage.setShellParentId(shell.getParentId());
                 attachmentStorage.setComponent(cell.getStyle());
                 attachmentStorage.setComponentName(stepName);
-                attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_UPLOAD);
-                attachmentStorage.setStorageDir(attachmentDir);
+                attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_EXPORT);
+                attachmentStorage.setStorageDir(exportDir);
                 attachmentStorage.setStatus(Constant.ACTIVE);
                 attachmentStorage.setVersion(1);
             } else if (attachmentStorage.getShellParentId().equals(shell.getParentId())) {
                 attachmentStorage.setShellParentId(shell.getParentId());
-                attachmentStorage.setStorageDir(attachmentDir);
+                attachmentStorage.setStorageDir(exportDir);
             }
             getAttachmentStorageService().saveOrUpdate(attachmentStorage);
 
             if (!filename.startsWith(Constant.FILE_SEPARATOR)) {
                 filename = Constant.FILE_SEPARATOR + filename;
             }
-            excelWriterStepMeta.setFileName(attachmentDir + filename);
+            excelWriterStepMeta.setFileName(exportDir + filename);
             List<Map<String, String>> parameters = (List<Map<String, String>>) formAttributes.get("parameters");
             for (Map<String, String> parameter : parameters) {
                 ExcelWriterStepField excelWriterStepField = new ExcelWriterStepField();
