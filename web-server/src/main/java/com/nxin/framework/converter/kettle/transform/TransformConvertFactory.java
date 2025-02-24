@@ -99,6 +99,7 @@ public class TransformConvertFactory extends ConvertFactory {
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
         excelWriterChain.setAttachmentStorageService(attachmentStorageService);
+        jsonOutputChain.setAttachmentStorageService(attachmentStorageService);
         beginChain.setNext(tableInputChain);
         tableInputChain.setNext(tableOutputChain);
         tableOutputChain.setNext(tableInsertUpdateChain);
