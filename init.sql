@@ -715,6 +715,7 @@ CREATE TABLE `kettle_attachment_storage` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `project_id` bigint DEFAULT NULL,
   `shell_id` bigint DEFAULT NULL,
+  `shell_name` varchar(255) DEFAULT NULL,
   `shell_parent_id` bigint DEFAULT NULL,
   `component` varchar(255) DEFAULT NULL,
   `component_id` varchar(255) DEFAULT NULL,
@@ -730,3 +731,4 @@ CREATE TABLE `kettle_attachment_storage` (
   PRIMARY KEY (`id`),
   KEY `uni_component` (`shell_id`,`component`,`component_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='脚本运行时生成的文件存放在本地服务器的位置';
+
