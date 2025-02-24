@@ -100,21 +100,19 @@ public class ExcelWriterChain extends TransformConvertChain {
             AttachmentStorage attachmentStorage = getAttachmentStorageService().getOne(queryWrapper);
             if (attachmentStorage == null) {
                 attachmentStorage = new AttachmentStorage();
-                attachmentStorage.setProjectId(shell.getProjectId());
-                attachmentStorage.setShellId(shell.getId());
-                attachmentStorage.setShellParentId(shell.getParentId());
-                attachmentStorage.setComponent(cell.getStyle());
-                attachmentStorage.setComponentId(cell.getId());
-                attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_EXPORT);
-                attachmentStorage.setStorageDir(exportDir);
-                attachmentStorage.setStorageDirRelative(shell.getName() + "(" + Constant.FILE_SEPARATOR + shell.getProjectId() + Constant.FILE_SEPARATOR + shell.getParentId() + Constant.FILE_SEPARATOR + shell.getId() + Constant.FILE_SEPARATOR + cell.getId() + ")");
                 attachmentStorage.setStatus(Constant.ACTIVE);
                 attachmentStorage.setVersion(1);
-            } else if (attachmentStorage.getShellParentId().equals(shell.getParentId())) {
-                attachmentStorage.setShellParentId(shell.getParentId());
-                attachmentStorage.setStorageDir(exportDir);
-                attachmentStorage.setStorageDirRelative(shell.getName() + "(" + Constant.FILE_SEPARATOR + shell.getProjectId() + Constant.FILE_SEPARATOR + shell.getParentId() + Constant.FILE_SEPARATOR + shell.getId() + Constant.FILE_SEPARATOR + cell.getId() + ")");
             }
+            attachmentStorage.setProjectId(shell.getProjectId());
+            attachmentStorage.setShellId(shell.getId());
+            attachmentStorage.setShellName(shell.getName());
+            attachmentStorage.setShellParentId(shell.getParentId());
+            attachmentStorage.setComponent(cell.getStyle());
+            attachmentStorage.setComponentId(cell.getId());
+            attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_EXPORT);
+            attachmentStorage.setStorageDir(exportDir);
+            attachmentStorage.setStorageDirRelative(Constant.FILE_SEPARATOR + shell.getProjectId() + Constant.FILE_SEPARATOR + shell.getParentId() + Constant.FILE_SEPARATOR + shell.getId() + Constant.FILE_SEPARATOR + cell.getId());
+
             getAttachmentStorageService().saveOrUpdate(attachmentStorage);
 
             if (!filename.startsWith(Constant.FILE_SEPARATOR)) {

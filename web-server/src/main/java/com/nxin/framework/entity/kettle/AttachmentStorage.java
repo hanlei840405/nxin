@@ -27,6 +27,8 @@ public class AttachmentStorage implements Serializable {
 
     private Long shellId;
 
+    private String shellName;
+
     private Long shellParentId;
 
     private String component;
@@ -78,6 +80,14 @@ public class AttachmentStorage implements Serializable {
 
     public void setShellId(Long shellId) {
         this.shellId = shellId;
+    }
+
+    public String getShellName() {
+        return shellName;
+    }
+
+    public void setShellName(String shellName) {
+        this.shellName = shellName;
     }
 
     public Long getShellParentId() {

@@ -12,6 +12,7 @@ public class AttachmentStorageVo extends BaseVo {
 
     private Long projectId;
     private Long shellId;
+    private String shellName;
     private Long shellParentId;
     private String component;
     private String componentName;
