@@ -114,6 +114,7 @@ public class KettleGeneratorService {
         String dir = prod ? File.separator : devDir;
         transMeta.setVariable(Constant.SHELL_STORAGE_DIR, dir);
         transMeta.setVariable(Constant.SHELL_INFO, JSON.toJSONString(shell));
+        transMeta.setVariable(Constant.SHELL_INFO, JSON.toJSONString(shell));
         Set<Long> referenceIds = new HashSet<>(0);
         Map<String, String> idNameMapping = new HashMap<>(0);
         for (Object element : elements) {

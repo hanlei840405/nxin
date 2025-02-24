@@ -23,17 +23,21 @@ public class AttachmentStorage implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    private Long projectId;
+
     private Long shellId;
 
     private Long shellParentId;
 
     private String component;
 
-    private String componentName;
+    private String componentId;
 
     private Integer category;
 
     private String storageDir;
+
+    private String storageDirRelative;
 
     private String status;
 
@@ -60,6 +64,14 @@ public class AttachmentStorage implements Serializable {
         this.id = id;
     }
 
+    public Long getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(Long projectId) {
+        this.projectId = projectId;
+    }
+
     public Long getShellId() {
         return shellId;
     }
@@ -84,12 +96,12 @@ public class AttachmentStorage implements Serializable {
         this.component = component;
     }
 
-    public String getComponentName() {
-        return componentName;
+    public String getComponentId() {
+        return componentId;
     }
 
-    public void setComponentName(String componentName) {
-        this.componentName = componentName;
+    public void setComponentId(String componentId) {
+        this.componentId = componentId;
     }
 
     public Integer getCategory() {
@@ -106,6 +118,14 @@ public class AttachmentStorage implements Serializable {
 
     public void setStorageDir(String storageDir) {
         this.storageDir = storageDir;
+    }
+
+    public String getStorageDirRelative() {
+        return storageDirRelative;
+    }
+
+    public void setStorageDirRelative(String storageDirRelative) {
+        this.storageDirRelative = storageDirRelative;
     }
 
     public String getStatus() {
@@ -163,7 +183,7 @@ public class AttachmentStorage implements Serializable {
                 ", shellId=" + shellId +
                 ", shellParentId=" + shellParentId +
                 ", component='" + component + '\'' +
-                ", componentName='" + componentName + '\'' +
+                ", componentId='" + componentId + '\'' +
                 ", category=" + category +
                 ", storageDir='" + storageDir + '\'' +
                 ", status='" + status + '\'' +

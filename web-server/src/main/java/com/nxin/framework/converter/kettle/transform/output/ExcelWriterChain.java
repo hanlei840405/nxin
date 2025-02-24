@@ -92,25 +92,28 @@ public class ExcelWriterChain extends TransformConvertChain {
 
             // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
             Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
-            String exportDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
+            String exportDir = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + cell.getId();
             LambdaQueryWrapper<AttachmentStorage> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(AttachmentStorage::getShellId, shell.getId());
             queryWrapper.eq(AttachmentStorage::getComponent, cell.getStyle());
-            queryWrapper.eq(AttachmentStorage::getComponentName, stepName);
+            queryWrapper.eq(AttachmentStorage::getComponentId, cell.getId());
             AttachmentStorage attachmentStorage = getAttachmentStorageService().getOne(queryWrapper);
             if (attachmentStorage == null) {
                 attachmentStorage = new AttachmentStorage();
+                attachmentStorage.setProjectId(shell.getProjectId());
                 attachmentStorage.setShellId(shell.getId());
                 attachmentStorage.setShellParentId(shell.getParentId());
                 attachmentStorage.setComponent(cell.getStyle());
-                attachmentStorage.setComponentName(stepName);
+                attachmentStorage.setComponentId(cell.getId());
                 attachmentStorage.setCategory(Constant.ATTACHMENT_CATEGORY_EXPORT);
                 attachmentStorage.setStorageDir(exportDir);
+                attachmentStorage.setStorageDirRelative(shell.getName() + "(" + Constant.FILE_SEPARATOR + shell.getProjectId() + Constant.FILE_SEPARATOR + shell.getParentId() + Constant.FILE_SEPARATOR + shell.getId() + Constant.FILE_SEPARATOR + cell.getId() + ")");
                 attachmentStorage.setStatus(Constant.ACTIVE);
                 attachmentStorage.setVersion(1);
             } else if (attachmentStorage.getShellParentId().equals(shell.getParentId())) {
                 attachmentStorage.setShellParentId(shell.getParentId());
                 attachmentStorage.setStorageDir(exportDir);
+                attachmentStorage.setStorageDirRelative(shell.getName() + "(" + Constant.FILE_SEPARATOR + shell.getProjectId() + Constant.FILE_SEPARATOR + shell.getParentId() + Constant.FILE_SEPARATOR + shell.getId() + Constant.FILE_SEPARATOR + cell.getId() + ")");
             }
             getAttachmentStorageService().saveOrUpdate(attachmentStorage);
 

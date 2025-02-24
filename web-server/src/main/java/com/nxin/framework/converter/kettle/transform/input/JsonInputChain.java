@@ -1,14 +1,11 @@
 package com.nxin.framework.converter.kettle.transform.input;
 
-import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
-import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
-import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.enums.Constant;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -18,13 +15,14 @@ import org.pentaho.di.trans.steps.jsoninput.JsonInputField;
 import org.pentaho.di.trans.steps.jsoninput.JsonInputMeta;
 import org.springframework.util.ObjectUtils;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class JsonInputChain extends TransformConvertChain {
+
+    private static final String SOURCE_FROM_FILE = "file";
 
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
@@ -34,57 +32,33 @@ public class JsonInputChain extends TransformConvertChain {
             Map<String, Object> formAttributes = objectMapper.readValue(value.getAttribute("form"), new TypeReference<Map<String, Object>>() {
             });
             String stepName = (String) formAttributes.get("name");
-            boolean inFields = (boolean) formAttributes.get("inFields");
+            String sourceFrom = (String) formAttributes.get("sourceFrom");
+            String downloadDir = (String) formAttributes.get("downloadDir");
+            String wildcard = (String) formAttributes.get("wildcard");
             String valueField = (String) formAttributes.get("valueField");
             boolean ignoreEmptyFile = (boolean) formAttributes.get("ignoreEmptyFile");
             boolean notFailIfNoFile = (boolean) formAttributes.get("notFailIfNoFile");
             boolean ignoreMissingPath = (boolean) formAttributes.get("ignoreMissingPath");
             boolean defaultPathLeafToNull = (boolean) formAttributes.get("defaultPathLeafToNull");
             int rowLimit = (int) formAttributes.get("rowLimit");
-            boolean includeFilename = (boolean) formAttributes.get("includeFilename");
-            String filenameField = (String) formAttributes.get("filenameField");
-            boolean includeRowNumber = (boolean) formAttributes.get("includeRowNumber");
-            String rowNumberField = (String) formAttributes.get("rowNumberField");
-            jsonInputMeta.setInFields(inFields);
             jsonInputMeta.setFieldValue(valueField);
             jsonInputMeta.setIgnoreEmptyFile(ignoreEmptyFile);
             jsonInputMeta.setDoNotFailIfNoFile(notFailIfNoFile);
             jsonInputMeta.setIgnoreMissingPath(ignoreMissingPath);
             jsonInputMeta.setDefaultPathLeafToNull(defaultPathLeafToNull);
             jsonInputMeta.setRowLimit(rowLimit);
-            jsonInputMeta.setIncludeFilename(includeFilename);
-            jsonInputMeta.setFilenameField(filenameField);
-            jsonInputMeta.setIncludeFilename(includeFilename);
-            jsonInputMeta.setIncludeRowNumber(includeRowNumber);
-            jsonInputMeta.setRowNumberField(rowNumberField);
-            List<Map<String, String>> sourceFiles = (List<Map<String, String>>) formAttributes.get("sourceFileData");
-            List<String> fileNameList = new ArrayList<>(0);
-            List<String> fileMaskList = new ArrayList<>(0);
-            List<String> excludeFileMaskList = new ArrayList<>(0);
-            List<String> fileRequiredList = new ArrayList<>(0);
-            List<String> includeSubFoldersList = new ArrayList<>(0);
-            // 本地目录，路径：~/attachment/{projectId}/{脚本所在目录ID}/{脚本ID}
-            Shell shell = JSON.parseObject(transMeta.getVariable(Constant.SHELL_INFO), Shell.class);
-            String folder = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId();
-            for (Map<String, String> sourceFile : sourceFiles) {
-                String path = sourceFile.get("path");
-                if (!path.startsWith(Constant.FILE_SEPARATOR)) {
-                    path = Constant.FILE_SEPARATOR + path;
-                }
-                fileNameList.add(folder + path);
-                fileMaskList.add(sourceFile.get("wildcard"));
-                excludeFileMaskList.add(sourceFile.get("excludeWildcard"));
-                fileRequiredList.add(sourceFile.get("required"));
-                includeSubFoldersList.add(sourceFile.get("includeChildrenFolder"));
+            if (SOURCE_FROM_FILE.equals(sourceFrom)) {
+                jsonInputMeta.setInFields(false);
+                jsonInputMeta.inputFiles = new JsonInputMeta.InputFiles();
+                jsonInputMeta.inputFiles.allocate(1);
+                jsonInputMeta.setFileName(new String[]{downloadDir});
+                jsonInputMeta.setFileMask(new String[]{wildcard});
+                jsonInputMeta.setExcludeFileMask(new String[]{null});
+                jsonInputMeta.setFileRequired(new String[]{"Y"});
+                jsonInputMeta.setIncludeSubFolders(new String[]{null});
+            } else {
+                jsonInputMeta.setInFields(true);
             }
-            jsonInputMeta.inputFiles = new JsonInputMeta.InputFiles();
-            jsonInputMeta.inputFiles.allocate(sourceFiles.size());
-            jsonInputMeta.setFileName(fileNameList.toArray(new String[0]));
-            jsonInputMeta.setFileMask(fileMaskList.toArray(new String[0]));
-            jsonInputMeta.setExcludeFileMask(excludeFileMaskList.toArray(new String[0]));
-            jsonInputMeta.setFileRequired(fileRequiredList.toArray(new String[0]));
-            jsonInputMeta.setIncludeSubFolders(includeSubFoldersList.toArray(new String[0]));
-
             List<Map<String, Object>> parameters = (List<Map<String, Object>>) formAttributes.get("parameters");
             List<JsonInputField> jsonInputFields = new ArrayList<>(0);
             for (Map<String, Object> fieldMapping : parameters) {
