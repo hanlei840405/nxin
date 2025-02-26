@@ -70,6 +70,7 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertChain rowGeneratorChain = new RowGeneratorChain();
         TransformConvertChain userDefinedJavaClassChain = new UserDefinedJavaClassChain();
         TransformConvertChain excelWriterChain = new ExcelWriterChain();
+        TransformConvertChain textFileOutputChain = new TextFileOutputChain();
         TransformConvertChain elasticSearchBulkChain = new ElasticSearchBulkChain();
         TransformConvertChain randomValueChain = new RandomValueChain();
         TransformConvertChain concatFieldsChain = new ConcatFieldsChain();
@@ -100,6 +101,7 @@ public class TransformConvertFactory extends ConvertFactory {
         jmsConsumerInputChain.setShellService(shellService);
         excelWriterChain.setAttachmentStorageService(attachmentStorageService);
         jsonOutputChain.setAttachmentStorageService(attachmentStorageService);
+        textFileOutputChain.setAttachmentStorageService(attachmentStorageService);
         beginChain.setNext(tableInputChain);
         tableInputChain.setNext(tableOutputChain);
         tableOutputChain.setNext(tableInsertUpdateChain);
@@ -135,7 +137,8 @@ public class TransformConvertFactory extends ConvertFactory {
         jsonOutputChain.setNext(rowGeneratorChain);
         rowGeneratorChain.setNext(userDefinedJavaClassChain);
         userDefinedJavaClassChain.setNext(excelWriterChain);
-        excelWriterChain.setNext(elasticSearchBulkChain);
+        excelWriterChain.setNext(textFileOutputChain);
+        textFileOutputChain.setNext(elasticSearchBulkChain);
         elasticSearchBulkChain.setNext(concatFieldsChain);
         concatFieldsChain.setNext(recordsFromStreamChain);
         recordsFromStreamChain.setNext(kafkaProducerOutputChain);

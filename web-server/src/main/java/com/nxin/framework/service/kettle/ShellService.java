@@ -1,6 +1,8 @@
 package com.nxin.framework.service.kettle;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.auth.Privilege;
@@ -62,14 +64,15 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
     }
 
     public List<Shell> all(Long projectId, Long parentId) {
-        QueryWrapper<Shell> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(Shell.STATUS_COLUMN, Constant.ACTIVE);
-        queryWrapper.eq(Shell.PROJECT_ID_COLUMN, projectId);
+        LambdaQueryWrapper<Shell> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Shell::getStatus, Constant.ACTIVE);
+        queryWrapper.eq(Shell::getProjectId, projectId);
         if (parentId != null) {
-            queryWrapper.eq(Shell.PARENT_ID_COLUMN, parentId);
+            queryWrapper.eq(Shell::getParentId, parentId);
         } else {
-            queryWrapper.isNull(Shell.PARENT_ID_COLUMN);
+            queryWrapper.isNull(Shell::getParentId);
         }
+        queryWrapper.orderByDesc(Shell::getCreateTime);
         return shellMapper.selectList(queryWrapper);
     }
 
@@ -144,19 +147,19 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
 
     @Transactional
     public void move(long parentId, List<Long> idList) {
-        UpdateWrapper<Shell> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq(Shell.STATUS_COLUMN, Constant.ACTIVE);
-        updateWrapper.in(Shell.ID_COLUMN, idList);
-        updateWrapper.set(Shell.PARENT_ID_COLUMN, parentId > 0 ? parentId : null);
+        LambdaUpdateWrapper<Shell> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Shell::getStatus, Constant.ACTIVE);
+        updateWrapper.in(Shell::getId, idList);
+        updateWrapper.set(Shell::getParentId, parentId > 0 ? parentId : null);
         shellMapper.update(updateWrapper);
     }
 
     public void delete(Long projectId, List<Long> idList) {
-        QueryWrapper<Shell> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(Shell.STATUS_COLUMN, Constant.ACTIVE);
-        queryWrapper.eq(Shell.PROJECT_ID_COLUMN, projectId);
+        LambdaQueryWrapper<Shell> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Shell::getStatus, Constant.ACTIVE);
+        queryWrapper.eq(Shell::getProjectId, projectId);
         if (!idList.isEmpty()) {
-            queryWrapper.in(Shell.ID_COLUMN, idList);
+            queryWrapper.in(Shell::getId, idList);
         }
         shellMapper.delete(queryWrapper);
     }

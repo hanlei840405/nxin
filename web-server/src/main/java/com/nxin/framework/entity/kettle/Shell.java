@@ -64,16 +64,6 @@ public class Shell implements Serializable {
     @TableField(exist = false)
     private String content;
 
-    public static String ID_COLUMN = "id";
-
-    public static String STATUS_COLUMN = "status";
-
-    public static String NAME_COLUMN = "name";
-
-    public static String PROJECT_ID_COLUMN = "project_id";
-
-    public static String PARENT_ID_COLUMN = "parent_id";
-
     public Long getId() {
         return id;
     }

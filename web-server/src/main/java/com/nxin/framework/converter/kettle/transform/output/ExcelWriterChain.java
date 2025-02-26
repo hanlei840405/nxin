@@ -63,7 +63,6 @@ public class ExcelWriterChain extends TransformConvertChain {
             boolean asActiveSheet = (boolean) formAttributes.get("asActiveSheet");
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
 
-            excelWriterStepMeta.setFileName(filename);
             excelWriterStepMeta.setExtension(suffix);
             excelWriterStepMeta.setSplitEvery(rowNumber);
             excelWriterStepMeta.setDateTimeFormat(dateFormat);
