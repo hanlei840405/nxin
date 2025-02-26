@@ -44,15 +44,8 @@ public class JobEntryFTPPutChain extends JobConvertChain {
             String proxyUsername = ftp.getProxyUsername();
             String proxyPassword = ftp.getProxyPassword();
             String proxyCategory = ftp.getProxyCategory();
-            Number shellId = (Number) formAttributes.get("shellId");
-            // 需要上传的文件目录，{环境目录}/工程ID/根目录ID/文件ID
-            Shell transformShell = getShellService().one(shellId.longValue());
-            String localDirectory;
-            if (transformShell.getExecutable()) {
-                localDirectory = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + transformShell.getProjectId() + File.separator + transformShell.getParentId() + File.separator + transformShell.getId();
-            } else {
-                throw new UnExecutableException();
-            }
+            String attachmentDir = (String) formAttributes.get("attachmentDir");
+            String filename = (String) formAttributes.get("filename");
             String wildcard = (String) formAttributes.get("wildcard");
             String remoteDirectory = (String) formAttributes.get("remoteDirectory");
             boolean binaryMode = (boolean) formAttributes.get("binaryMode");
@@ -82,7 +75,7 @@ public class JobEntryFTPPutChain extends JobConvertChain {
                 }
             }
 
-            jobEntryFTPPUT.setLocalDirectory(localDirectory);
+            jobEntryFTPPUT.setLocalDirectory(attachmentDir);
             jobEntryFTPPUT.setWildcard(wildcard);
             jobEntryFTPPUT.setRemoteDirectory(remoteDirectory);
             jobEntryFTPPUT.setBinaryMode(binaryMode);

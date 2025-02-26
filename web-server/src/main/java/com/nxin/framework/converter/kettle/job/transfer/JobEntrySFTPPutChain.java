@@ -53,16 +53,8 @@ public class JobEntrySFTPPutChain extends JobConvertChain {
             String compression = (String) formAttributes.get("compression");
             boolean successWhenNoFile = (boolean) formAttributes.get("successWhenNoFile");
             boolean createRemoteFolder = (boolean) formAttributes.get("createRemoteFolder");
+            String attachmentDir = (String) formAttributes.get("attachmentDir");
             String wildcard = (String) formAttributes.get("wildcard");
-            Number shellId = (Number) formAttributes.get("shellId");
-            // 需要上传的文件目录，{环境目录}/工程ID/根目录ID/文件ID
-            Shell transformShell = getShellService().one(shellId.longValue());
-            String localDirectory;
-            if (transformShell.getExecutable()) {
-                localDirectory = ConvertFactory.getVariable().get(Constant.VAR_ATTACHMENT_DIR).toString() + transformShell.getProjectId() + File.separator + transformShell.getParentId() + File.separator + transformShell.getId();
-            } else {
-                throw new UnExecutableException();
-            }
             JobEntrySFTPPUT jobEntrySFTPPUT = new JobEntrySFTPPUT();
             jobEntrySFTPPUT.setName(name);
             jobEntrySFTPPUT.setServerName(serverName);
@@ -89,7 +81,7 @@ public class JobEntrySFTPPutChain extends JobConvertChain {
                 jobEntrySFTPPUT.setProxyUsername(proxyUsername);
                 jobEntrySFTPPUT.setProxyPassword(proxyPassword);
             }
-            jobEntrySFTPPUT.setLocalDirectory(localDirectory);
+            jobEntrySFTPPUT.setLocalDirectory(attachmentDir);
             jobEntrySFTPPUT.setWildcard(wildcard);
             jobEntrySFTPPUT.setSuccessWhenNoFile(successWhenNoFile);
             jobEntrySFTPPUT.setAfterFTPS(JobEntrySFTPPUT.AFTER_FTPSPUT_DELETE);

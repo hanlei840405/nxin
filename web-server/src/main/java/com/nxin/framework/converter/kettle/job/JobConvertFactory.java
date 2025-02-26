@@ -31,13 +31,11 @@ public class JobConvertFactory extends ConvertFactory {
         JobConvertChain endChain = new EndChain();
         jobEntryTransChain.setShellService(shellService);
         jobEntryJobChain.setShellService(shellService);
-        jobEntryFTPPutChain.setShellService(shellService);
         jobEntryFTPPutChain.setFtpService(ftpService);
         jobEntryFTPChain.setFtpService(ftpService);
         jobEntryFTPChain.setAttachmentStorageService(attachmentStorageService);
         jobEntrySFTPChain.setFtpService(ftpService);
         jobEntrySFTPChain.setAttachmentStorageService(attachmentStorageService);
-        jobEntrySFTPPutChain.setShellService(shellService);
         jobEntrySFTPPutChain.setFtpService(ftpService);
         beginChain.setNext(jobEntrySpecialChain);
         jobEntrySpecialChain.setNext(jobEntryDummyChain);
