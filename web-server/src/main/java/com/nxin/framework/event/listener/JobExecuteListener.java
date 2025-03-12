@@ -2,18 +2,27 @@ package com.nxin.framework.event.listener;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nxin.framework.entity.basic.Ftp;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
-import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.event.JobExecuteEvent;
 import com.nxin.framework.service.basic.FtpService;
+import com.nxin.framework.service.kettle.AttachmentStorageService;
 import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellService;
-import com.nxin.framework.service.kettle.AttachmentStorageService;
 import lombok.extern.slf4j.Slf4j;
+import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.logging.*;
+import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.job.DelegationAdapter;
+import org.pentaho.di.trans.Trans;
+import org.pentaho.di.trans.TransAdapter;
+import org.pentaho.di.trans.TransExecutionConfiguration;
+import org.pentaho.di.trans.step.RowAdapter;
+import org.pentaho.di.trans.step.RowListener;
 import org.pentaho.di.www.CarteObjectEntry;
 import org.pentaho.di.www.CarteSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +35,10 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -53,9 +65,9 @@ public class JobExecuteListener {
     public void action(JobExecuteEvent jobExecuteEvent) {
         Shell shell = shellService.one(jobExecuteEvent.getShellId());
         List<Ftp> ftps = ftpService.all(shell.getProjectId(), "SFTP");
-        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.eq(AttachmentStorage::getShellId, jobExecuteEvent.getShellId());
-        List<AttachmentStorage> attachmentStorages = attachmentStorageService.list();
+        LambdaQueryWrapper<AttachmentStorage> attachmentStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        attachmentStorageLambdaQueryWrapper.eq(AttachmentStorage::getShellId, jobExecuteEvent.getShellId());
+        List<AttachmentStorage> attachmentStorages = attachmentStorageService.list(attachmentStorageLambdaQueryWrapper);
 
         RunningProcess runningProcess = (RunningProcess) jobExecuteEvent.getSource();
         LoggingRegistry loggingRegistry = LoggingRegistry.getInstance();
@@ -97,7 +109,38 @@ public class JobExecuteListener {
                 }
             };
             KettleLogStore.getAppender().addLoggingEventListener(kettleLoggingEventListener);
+
+            RowListener rowListener = new RowAdapter() {
+                /**
+                 * 输出每一行数据
+                 */
+                @Override
+                public void rowReadEvent(RowMetaInterface rowMeta, Object[] row) throws KettleStepException {
+//                    String[] names = rowMeta.getFieldNames();
+//                    for (int i = 0; i < names.length; i++) {
+//                        log.info("name: {}, value: {}", names[i], row[i]);
+//                    }
+                    super.rowReadEvent(rowMeta, row);
+                }
+            };
+            // 添加每个步骤的数据监听器，可以实现步骤数据的审计功能
+            TransAdapter transAdapter = new TransAdapter() {
+                @Override
+                public void transStarted(Trans trans) throws KettleException {
+                    trans.getSteps().forEach(stepMetaDataCombi -> {
+                        stepMetaDataCombi.step.addRowListener(rowListener);
+                    });
+                }
+            };
+            DelegationAdapter delegationAdapter = new DelegationAdapter() {
+                @Override
+                public void transformationDelegationStarted(Trans delegatedTrans, TransExecutionConfiguration transExecutionConfiguration) {
+                    delegatedTrans.addTransListener(transAdapter);
+                }
+            };
+            jobExecuteEvent.getJob().addDelegationListener(delegationAdapter);
             jobExecuteEvent.getJob().start();
+
             jobExecuteEvent.getJob().waitUntilFinished();
             KettleLogStore.getAppender().removeLoggingEventListener(kettleLoggingEventListener);
             CarteSingleton.getInstance().getJobMap().removeJob(new CarteObjectEntry(jobExecuteEvent.getJob().getName(), jobExecuteEvent.getInstanceId()));

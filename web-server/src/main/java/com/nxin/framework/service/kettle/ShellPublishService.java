@@ -270,9 +270,9 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             String name = shell.getId() + Constant.DOT + suffix;
             referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
         });
-        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.in(AttachmentStorage::getShellId, shellIdList);
-        List<AttachmentStorage> attachmentStorageList = attachmentStorageService.list(shellStorageLambdaQueryWrapper);
+        LambdaQueryWrapper<AttachmentStorage> attachmentStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        attachmentStorageLambdaQueryWrapper.in(AttachmentStorage::getShellId, shellIdList);
+        List<AttachmentStorage> attachmentStorageList = attachmentStorageService.list(attachmentStorageLambdaQueryWrapper);
         List<String> attachmentOrDownloadDirList = attachmentStorageList.stream().collect(Collectors.groupingBy(AttachmentStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(AttachmentStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", shellPublish.getId().toString());
@@ -399,9 +399,9 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             String name = shell.getId() + Constant.DOT + suffix;
             referencePathList.add(ImmutableMap.of(name, remotePath + "," + nativePath));
         });
-        LambdaQueryWrapper<AttachmentStorage> shellStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        shellStorageLambdaQueryWrapper.in(AttachmentStorage::getShellId, shellIdList);
-        List<AttachmentStorage> attachmentStorageList = attachmentStorageService.list(shellStorageLambdaQueryWrapper);
+        LambdaQueryWrapper<AttachmentStorage> attachmentStorageLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        attachmentStorageLambdaQueryWrapper.in(AttachmentStorage::getShellId, shellIdList);
+        List<AttachmentStorage> attachmentStorageList = attachmentStorageService.list(attachmentStorageLambdaQueryWrapper);
         List<String> attachmentOrDownloadDirList = attachmentStorageList.stream().collect(Collectors.groupingBy(AttachmentStorage::getShellId)).values().stream().map(value -> value.stream().max(Comparator.comparing(AttachmentStorage::getModifyTime)).orElse(null).getStorageDir()).collect(Collectors.toList());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", shellPublish.getId());

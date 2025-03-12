@@ -14,6 +14,7 @@ public class TransformExecuteEvent extends ApplicationEvent {
     public TransformExecuteEvent(RunningProcess runningProcess, String instanceId, Long shellId, Trans trans, TransConfiguration transConfiguration) {
         super(runningProcess);
         this.instanceId = instanceId;
+        this.shellId = shellId;
         this.trans = trans;
         this.transConfiguration = transConfiguration;
     }
