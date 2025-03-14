@@ -88,6 +88,8 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertChain sortRowsChain = new SortRowsChain();
         TransformConvertChain mergeJoinChain = new MergeJoinChain();
         TransformConvertChain filterRowsChain = new FilterRowsChain();
+        TransformConvertChain csvInputChain = new CsvInputChain();
+        TransformConvertChain parGzipCsvInputChain = new ParGzipCsvInputChain();
         TransformConvertChain endChain = new EndChain();
         tableInputChain.setDatasourceService(datasourceService);
         tableOutputChain.setDatasourceService(datasourceService);
@@ -156,7 +158,9 @@ public class TransformConvertFactory extends ConvertFactory {
         sortRowsChain.setNext(transHopChain);
         transHopChain.setNext(mergeJoinChain);
         mergeJoinChain.setNext(filterRowsChain);
-        filterRowsChain.setNext(endChain);
+        filterRowsChain.setNext(csvInputChain);
+        csvInputChain.setNext(parGzipCsvInputChain);
+        parGzipCsvInputChain.setNext(endChain);
         TransformConvertFactory.beginChain = beginChain;
     }
 

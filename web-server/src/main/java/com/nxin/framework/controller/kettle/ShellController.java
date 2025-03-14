@@ -128,7 +128,7 @@ public class ShellController {
             BeanUtils.copyProperties(shellDto, shell, "xml");
             try {
                 shellService.save(shell);
-                return ResponseEntity.ok().build();
+                return ResponseEntity.ok(shell);
             } catch (DuplicateKeyException e) {
                 return ResponseEntity.status(Constant.EXCEPTION_DUPLICATED).build();
             } catch (XmlParseException e) {

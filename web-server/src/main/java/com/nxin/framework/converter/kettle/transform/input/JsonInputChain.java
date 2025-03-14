@@ -34,6 +34,7 @@ public class JsonInputChain extends TransformConvertChain {
             String stepName = (String) formAttributes.get("name");
             String sourceFrom = (String) formAttributes.get("sourceFrom");
             String downloadDir = (String) formAttributes.get("downloadDir");
+            String filename = (String) formAttributes.get("filename");
             String wildcard = (String) formAttributes.get("wildcard");
             String valueField = (String) formAttributes.get("valueField");
             boolean ignoreEmptyFile = (boolean) formAttributes.get("ignoreEmptyFile");
@@ -51,7 +52,7 @@ public class JsonInputChain extends TransformConvertChain {
                 jsonInputMeta.setInFields(false);
                 jsonInputMeta.inputFiles = new JsonInputMeta.InputFiles();
                 jsonInputMeta.inputFiles.allocate(1);
-                jsonInputMeta.setFileName(new String[]{downloadDir});
+                jsonInputMeta.setFileName(new String[]{downloadDir.concat(Constant.FILE_SEPARATOR).concat(filename)});
                 jsonInputMeta.setFileMask(new String[]{wildcard});
                 jsonInputMeta.setExcludeFileMask(new String[]{null});
                 jsonInputMeta.setFileRequired(new String[]{"Y"});
