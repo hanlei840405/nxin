@@ -9,8 +9,11 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.di.core.plugins.StepPluginType;
 import org.pentaho.di.trans.steps.concatfields.ConcatFieldsMeta;
+import org.pentaho.di.trans.steps.csvinput.CsvInputMeta;
+import org.pentaho.di.trans.steps.excelinput.ExcelInputMeta;
 import org.pentaho.di.trans.steps.excelwriter.ExcelWriterStepMeta;
 import org.pentaho.di.trans.steps.jsoninput.JsonInputMeta;
+import org.pentaho.di.trans.steps.parallelgzipcsv.ParGzipCsvInputMeta;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
@@ -57,6 +60,10 @@ public class WebServerApplication {
         StepPluginType.getInstance().handlePluginAnnotation(
                 ExcelWriterStepMeta.class,
                 ExcelWriterStepMeta.class.getAnnotation(org.pentaho.di.core.annotations.Step.class),
+                Collections.emptyList(), false, null);
+        StepPluginType.getInstance().handlePluginAnnotation(
+                ExcelInputMeta.class,
+                ExcelInputMeta.class.getAnnotation(org.pentaho.di.core.annotations.Step.class),
                 Collections.emptyList(), false, null);
 //        StepPluginType.getInstance().handlePluginAnnotation(
 //                JmsProducerMeta.class,
