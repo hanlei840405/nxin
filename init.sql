@@ -732,3 +732,28 @@ CREATE TABLE `kettle_attachment_storage` (
   KEY `uni_component` (`shell_id`,`component`,`component_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='脚本运行时生成的文件存放在本地服务器的位置';
 
+CREATE TABLE `basic_ftp` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `category` varchar(255) DEFAULT NULL COMMENT 'FTP SFTP',
+  `project_id` bigint DEFAULT NULL,
+  `username` varchar(255) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `use_private_key` bit(1) DEFAULT NULL,
+  `private_key` text,
+  `private_key_password` varchar(255) DEFAULT NULL,
+  `host` varchar(255) DEFAULT NULL,
+  `port` int DEFAULT NULL,
+  `proxy_category` varchar(255) DEFAULT NULL,
+  `proxy_host` varchar(255) DEFAULT NULL,
+  `proxy_port` int DEFAULT NULL,
+  `proxy_username` varchar(255) DEFAULT NULL,
+  `proxy_password` varchar(255) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `creator` varchar(255) DEFAULT NULL,
+  `modifier` varchar(255) DEFAULT NULL,
+  `modify_time` datetime DEFAULT NULL,
+  `version` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='FTP服务器信息';
