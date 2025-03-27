@@ -35,7 +35,7 @@ public class MergeJoinChain extends TransformConvertChain {
             Map<String, Object> formAttributes = objectMapper.readValue(value.getAttribute("form"), new TypeReference<Map<String, Object>>() {
             });
             String stepName = (String) formAttributes.get("name");
-            String mergeType = (String) formAttributes.get("join_type");
+            String mergeType = (String) formAttributes.get("joinType");
             String step1 = (String) formAttributes.get("step1");
             String step2 = (String) formAttributes.get("step2");
             List<Map<String, Object>> fieldMappingData = (List<Map<String, Object>>) formAttributes.get("fieldMappingData");

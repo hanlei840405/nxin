@@ -2,6 +2,7 @@ package com.nxin.framework.converter.kettle.transform;
 
 import com.nxin.framework.converter.kettle.ConvertFactory;
 import com.nxin.framework.converter.kettle.transform.connect.MergeJoinChain;
+import com.nxin.framework.converter.kettle.transform.connect.MergeRowsChain;
 import com.nxin.framework.converter.kettle.transform.connect.MultiMergeJoinChain;
 import com.nxin.framework.converter.kettle.transform.convert.*;
 import com.nxin.framework.converter.kettle.transform.input.*;
@@ -91,6 +92,8 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertChain csvInputChain = new CsvInputChain();
         TransformConvertChain parGzipCsvInputChain = new ParGzipCsvInputChain();
         TransformConvertChain excelInputChain = new ExcelInputChain();
+        TransformConvertChain mergeRowChain = new MergeRowsChain();
+        TransformConvertChain synchronizeAfterMergeChain = new SynchronizeAfterMergeChain();
         TransformConvertChain endChain = new EndChain();
         tableInputChain.setDatasourceService(datasourceService);
         tableOutputChain.setDatasourceService(datasourceService);
@@ -100,6 +103,7 @@ public class TransformConvertFactory extends ConvertFactory {
         databaseLookupChain.setDatasourceService(datasourceService);
         databaseJoinChain.setDatasourceService(datasourceService);
         execSqlChain.setDatasourceService(datasourceService);
+        synchronizeAfterMergeChain.setDatasourceService(datasourceService);
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
         excelWriterChain.setAttachmentStorageService(attachmentStorageService);
@@ -162,7 +166,9 @@ public class TransformConvertFactory extends ConvertFactory {
         filterRowsChain.setNext(csvInputChain);
         csvInputChain.setNext(parGzipCsvInputChain);
         parGzipCsvInputChain.setNext(excelInputChain);
-        excelInputChain.setNext(endChain);
+        excelInputChain.setNext(mergeRowChain);
+        mergeRowChain.setNext(synchronizeAfterMergeChain);
+        synchronizeAfterMergeChain.setNext(endChain);
         TransformConvertFactory.beginChain = beginChain;
     }
 
