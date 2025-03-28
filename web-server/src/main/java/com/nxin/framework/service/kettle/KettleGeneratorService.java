@@ -139,7 +139,7 @@ public class KettleGeneratorService {
                 log.error(e.getMessage(), e);
                 DeferredElementImpl value = (DeferredElementImpl) cell.getValue();
                 Attr attr = value.getAttributeNode("title");
-                throw new ConvertException(attr.getValue());
+                throw new ConvertException(attr.getValue().concat("\r\n").concat(e.getMessage()));
             }
         }
         for (TransformConvertChain chain : TransformConvertFactory.getTransformConvertChains()) {
@@ -235,7 +235,7 @@ public class KettleGeneratorService {
                 log.error(e.getMessage(), e);
                 DeferredElementImpl value = (DeferredElementImpl) cell.getValue();
                 Attr attr = value.getAttributeNode("title");
-                throw new ConvertException(attr.getValue());
+                throw new ConvertException(attr.getValue().concat("\r\n").concat(e.getMessage()));
             }
         }
         if (!referenceIds.isEmpty()) {

@@ -8,6 +8,7 @@ import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.di.core.plugins.StepPluginType;
+import org.pentaho.di.trans.steps.combinationlookup.CombinationLookupMeta;
 import org.pentaho.di.trans.steps.concatfields.ConcatFieldsMeta;
 import org.pentaho.di.trans.steps.csvinput.CsvInputMeta;
 import org.pentaho.di.trans.steps.excelinput.ExcelInputMeta;
@@ -64,6 +65,14 @@ public class WebServerApplication {
         StepPluginType.getInstance().handlePluginAnnotation(
                 ExcelInputMeta.class,
                 ExcelInputMeta.class.getAnnotation(org.pentaho.di.core.annotations.Step.class),
+                Collections.emptyList(), false, null);
+        StepPluginType.getInstance().handlePluginAnnotation(
+                CombinationLookupMeta.class,
+                CombinationLookupMeta.class.getAnnotation(org.pentaho.di.core.annotations.Step.class),
+                Collections.emptyList(), false, null);
+        StepPluginType.getInstance().handlePluginAnnotation(
+                CombinationLookupMeta.class,
+                CombinationLookupMeta.class.getAnnotation(org.pentaho.di.core.annotations.Step.class),
                 Collections.emptyList(), false, null);
 //        StepPluginType.getInstance().handlePluginAnnotation(
 //                JmsProducerMeta.class,

@@ -13,9 +13,11 @@ import com.nxin.framework.converter.kettle.transform.output.*;
 import com.nxin.framework.converter.kettle.transform.process.*;
 import com.nxin.framework.converter.kettle.transform.shell.*;
 import com.nxin.framework.converter.kettle.transform.streaming.*;
+import com.nxin.framework.converter.kettle.transform.warehouse.CombinationLookupChain;
+import com.nxin.framework.converter.kettle.transform.warehouse.DimensionLookupChain;
 import com.nxin.framework.service.basic.DatasourceService;
-import com.nxin.framework.service.kettle.ShellService;
 import com.nxin.framework.service.kettle.AttachmentStorageService;
+import com.nxin.framework.service.kettle.ShellService;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -94,6 +96,8 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertChain excelInputChain = new ExcelInputChain();
         TransformConvertChain mergeRowChain = new MergeRowsChain();
         TransformConvertChain synchronizeAfterMergeChain = new SynchronizeAfterMergeChain();
+        TransformConvertChain combinationLookupChain = new CombinationLookupChain();
+        TransformConvertChain dimensionLookupChain = new DimensionLookupChain();
         TransformConvertChain endChain = new EndChain();
         tableInputChain.setDatasourceService(datasourceService);
         tableOutputChain.setDatasourceService(datasourceService);
@@ -104,6 +108,7 @@ public class TransformConvertFactory extends ConvertFactory {
         databaseJoinChain.setDatasourceService(datasourceService);
         execSqlChain.setDatasourceService(datasourceService);
         synchronizeAfterMergeChain.setDatasourceService(datasourceService);
+        combinationLookupChain.setDatasourceService(datasourceService);
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
         excelWriterChain.setAttachmentStorageService(attachmentStorageService);
@@ -168,7 +173,9 @@ public class TransformConvertFactory extends ConvertFactory {
         parGzipCsvInputChain.setNext(excelInputChain);
         excelInputChain.setNext(mergeRowChain);
         mergeRowChain.setNext(synchronizeAfterMergeChain);
-        synchronizeAfterMergeChain.setNext(endChain);
+        synchronizeAfterMergeChain.setNext(combinationLookupChain);
+        combinationLookupChain.setNext(dimensionLookupChain);
+        dimensionLookupChain.setNext(endChain);
         TransformConvertFactory.beginChain = beginChain;
     }
 

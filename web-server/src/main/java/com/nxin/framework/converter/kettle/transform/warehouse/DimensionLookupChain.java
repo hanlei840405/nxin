@@ -1,4 +1,4 @@
-package com.nxin.framework.converter.kettle.transform.output;
+package com.nxin.framework.converter.kettle.transform.warehouse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -15,7 +15,7 @@ import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.encryption.Encr;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.trans.steps.synchronizeaftermerge.SynchronizeAfterMergeMeta;
+import org.pentaho.di.trans.steps.dimensionlookup.DimensionLookupMeta;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -24,22 +24,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class SynchronizeAfterMergeChain extends TransformConvertChain {
+public class DimensionLookupChain extends TransformConvertChain {
     @Override
     public ResponseMeta parse(mxCell cell, TransMeta transMeta) throws JsonProcessingException {
-        if (cell.isVertex() && "SynchronizeAfterMergeMeta".equalsIgnoreCase(cell.getStyle())) {
+        if (cell.isVertex() && "DimensionLookupMeta".equalsIgnoreCase(cell.getStyle())) {
             DeferredElementImpl value = (DeferredElementImpl) cell.getValue();
             Map<String, Object> formAttributes = objectMapper.readValue(value.getAttribute("form"), new TypeReference<Map<String, Object>>() {
             });
-            SynchronizeAfterMergeMeta synchronizeAfterMergeMeta = new SynchronizeAfterMergeMeta();
+            DimensionLookupMeta dimensionLookupMeta = new DimensionLookupMeta();
             List<String> searchDbFields = new ArrayList<>(0);
-            List<String> searchStreamConditions = new ArrayList<>(0);
             List<String> searchStreamFields = new ArrayList<>(0);
-            List<String> searchStreamFields2 = new ArrayList<>(0);
             List<String> dbFields = new ArrayList<>(0);
             List<String> streamFields = new ArrayList<>(0);
-            List<Boolean> streamFieldUpdates = new ArrayList<>(0);
             String stepName = (String) formAttributes.get("name");
+            boolean update = (boolean) formAttributes.get("update");
             String schemaName = (String) formAttributes.get("schemaName");
             String tableName = (String) formAttributes.get("tableName");
             int databaseId = (int) formAttributes.get("datasource");
@@ -49,14 +47,51 @@ public class SynchronizeAfterMergeChain extends TransformConvertChain {
             } else {
                 commit = (int) formAttributes.get("commit");
             }
-            boolean batch = (boolean) formAttributes.get("batch");
-            boolean tableNameInField = (boolean) formAttributes.get("tableNameInField");
-            String tableField = (String) formAttributes.get("tableField");
-            String operationField = (String) formAttributes.get("operationField");
-            String orderInsert = (String) formAttributes.get("orderInsert");
-            String orderUpdate = (String) formAttributes.get("orderUpdate");
-            String orderDelete = (String) formAttributes.get("orderDelete");
-            boolean performLookup = (boolean) formAttributes.get("performLookup");
+            boolean preloadingCache = (boolean) formAttributes.get("preloadingCache");
+            int cacheSize;
+            if (ObjectUtils.isEmpty(formAttributes.get("cacheSize"))) {
+                cacheSize = -1;
+            } else {
+                cacheSize = (int) formAttributes.get("cacheSize");
+            }
+            String key = (String) formAttributes.get("key");
+            String keyRename = (String) formAttributes.get("keyRename");
+            String keyGenerateType = (String) formAttributes.get("keyGenerateType");
+            String sequence = (String) formAttributes.get("key");
+            String versionField = (String) formAttributes.get("replace");
+            String dateField = (String) formAttributes.get("dateField");
+            String dateFrom = (String) formAttributes.get("dateFrom");
+            String dateTo = (String) formAttributes.get("dateTo");
+            int minYear = (int) formAttributes.get("minYear");
+            boolean useAltStartDate = (boolean) formAttributes.get("useAltStartDate");
+            int altStartDate = (int) formAttributes.get("altStartDate");
+            String altStartDateField = (String) formAttributes.get("altStartDateField");
+            int maxYear = (int) formAttributes.get("maxYear");
+            dimensionLookupMeta.setUpdate(update);
+            dimensionLookupMeta.setPreloadingCache(preloadingCache);
+            dimensionLookupMeta.setCacheSize(cacheSize);
+            dimensionLookupMeta.setKeyField(key);
+            dimensionLookupMeta.setKeyRename(keyRename);
+            dimensionLookupMeta.setTechKeyCreation(keyGenerateType);
+            if (DimensionLookupMeta.CREATION_METHOD_AUTOINC.equals(keyGenerateType)) {
+                dimensionLookupMeta.setAutoIncrement(true);
+                dimensionLookupMeta.setSequenceName(null);
+            } else if (DimensionLookupMeta.CREATION_METHOD_SEQUENCE.equals(keyGenerateType)) {
+                dimensionLookupMeta.setAutoIncrement(false);
+                dimensionLookupMeta.setSequenceName(sequence);
+            } else if (DimensionLookupMeta.CREATION_METHOD_TABLEMAX.equals(keyGenerateType)) {
+                dimensionLookupMeta.setAutoIncrement(false);
+                dimensionLookupMeta.setSequenceName(null);
+            }
+            dimensionLookupMeta.setVersionField(versionField);
+            dimensionLookupMeta.setDateField(dateField);
+            dimensionLookupMeta.setDateFrom(dateFrom);
+            dimensionLookupMeta.setMinYear(minYear);
+            dimensionLookupMeta.setUsingStartDateAlternative(useAltStartDate);
+            dimensionLookupMeta.setStartDateAlternative(altStartDate);
+            dimensionLookupMeta.setStartDateFieldName(altStartDateField);
+            dimensionLookupMeta.setDateTo(dateTo);
+            dimensionLookupMeta.setMaxYear(maxYear);
 
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             Datasource datasource = datasourceService.one((long) databaseId);
@@ -101,45 +136,25 @@ public class SynchronizeAfterMergeChain extends TransformConvertChain {
                     databaseMeta.getConnectionPoolingProperties().put("maxWait", datasource.getPoolMaxWait());
                 }
             }
-            synchronizeAfterMergeMeta.setDatabaseMeta(databaseMeta);
-            synchronizeAfterMergeMeta.setTableName(tableName);
-            synchronizeAfterMergeMeta.setSchemaName(schemaName);
-            synchronizeAfterMergeMeta.setCommitSize(commit);
-            synchronizeAfterMergeMeta.setUseBatchUpdate(batch);
-            synchronizeAfterMergeMeta.settablenameInField(tableNameInField);
-            synchronizeAfterMergeMeta.settablenameField(tableField);
-            synchronizeAfterMergeMeta.setOperationOrderField(operationField);
-            synchronizeAfterMergeMeta.setOrderInsert(orderInsert);
-            synchronizeAfterMergeMeta.setOrderUpdate(orderUpdate);
-            synchronizeAfterMergeMeta.setOrderDelete(orderDelete);
-            synchronizeAfterMergeMeta.setPerformLookup(performLookup);
-
+            dimensionLookupMeta.setTableName(tableName);
+            dimensionLookupMeta.setSchemaName(schemaName);
+            dimensionLookupMeta.setCommitSize(commit);
+            dimensionLookupMeta.setDatabaseMeta(databaseMeta);
             List<Map<String, String>> searchMappingData = (List<Map<String, String>>) formAttributes.get("searchMappingData");
             for (Map<String, String> fieldMapping : searchMappingData) {
                 searchDbFields.add(fieldMapping.get("target"));
-                searchStreamConditions.add(fieldMapping.get("condition"));
                 searchStreamFields.add(fieldMapping.get("source"));
-                searchStreamFields2.add(fieldMapping.get("source2"));
             }
+            dimensionLookupMeta.setKeyLookup(searchDbFields.toArray(new String[0]));
+            dimensionLookupMeta.setKeyStream(searchStreamFields.toArray(new String[0]));
             List<Map<String, String>> fieldMappingData = (List<Map<String, String>>) formAttributes.get("fieldMappingData");
             for (Map<String, String> fieldMapping : fieldMappingData) {
                 dbFields.add(fieldMapping.get("target"));
                 streamFields.add(fieldMapping.get("source"));
-                if ("Y".equals(fieldMapping.get("update"))) {
-                    streamFieldUpdates.add(true);
-                } else {
-                    streamFieldUpdates.add(false);
-                }
             }
-            synchronizeAfterMergeMeta.setKeyLookup(searchDbFields.toArray(new String[0]));
-            synchronizeAfterMergeMeta.setKeyCondition(searchStreamConditions.toArray(new String[0]));
-            synchronizeAfterMergeMeta.setKeyStream(searchStreamFields.toArray(new String[0]));
-            synchronizeAfterMergeMeta.setKeyStream2(searchStreamFields2.toArray(new String[0]));
-
-            synchronizeAfterMergeMeta.setUpdateLookup(dbFields.toArray(new String[0]));
-            synchronizeAfterMergeMeta.setUpdateStream(streamFields.toArray(new String[0]));
-            synchronizeAfterMergeMeta.setUpdate(streamFieldUpdates.toArray(new Boolean[0]));
-            StepMeta stepMeta = new StepMeta(stepName, synchronizeAfterMergeMeta);
+            dimensionLookupMeta.setFieldLookup(dbFields.toArray(new String[0]));
+            dimensionLookupMeta.setFieldStream(streamFields.toArray(new String[0]));
+            StepMeta stepMeta = new StepMeta(stepName, dimensionLookupMeta);
             mxGeometry geometry = cell.getGeometry();
             if (formAttributes.containsKey("distribute")) {
                 boolean distribute = (boolean) formAttributes.get("distribute");
