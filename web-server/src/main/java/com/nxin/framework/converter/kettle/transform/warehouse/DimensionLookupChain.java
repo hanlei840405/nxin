@@ -11,6 +11,7 @@ import com.nxin.framework.enums.Constant;
 import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
+import org.pentaho.di.core.Const;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.encryption.Encr;
 import org.pentaho.di.trans.TransMeta;
@@ -36,16 +37,17 @@ public class DimensionLookupChain extends TransformConvertChain {
             List<String> searchStreamFields = new ArrayList<>(0);
             List<String> dbFields = new ArrayList<>(0);
             List<String> streamFields = new ArrayList<>(0);
+            List<Integer> updateFields = new ArrayList<>(0);
             String stepName = (String) formAttributes.get("name");
             boolean update = (boolean) formAttributes.get("update");
             String schemaName = (String) formAttributes.get("schemaName");
             String tableName = (String) formAttributes.get("tableName");
             int databaseId = (int) formAttributes.get("datasource");
-            int commit;
-            if (ObjectUtils.isEmpty(formAttributes.get("commit"))) {
-                commit = 0;
+            int commitSize;
+            if (ObjectUtils.isEmpty(formAttributes.get("commitSize"))) {
+                commitSize = 0;
             } else {
-                commit = (int) formAttributes.get("commit");
+                commitSize = (int) formAttributes.get("commitSize");
             }
             boolean preloadingCache = (boolean) formAttributes.get("preloadingCache");
             int cacheSize;
@@ -57,16 +59,26 @@ public class DimensionLookupChain extends TransformConvertChain {
             String key = (String) formAttributes.get("key");
             String keyRename = (String) formAttributes.get("keyRename");
             String keyGenerateType = (String) formAttributes.get("keyGenerateType");
-            String sequence = (String) formAttributes.get("key");
-            String versionField = (String) formAttributes.get("replace");
+            String sequence = (String) formAttributes.get("sequence");
+            String versionField = (String) formAttributes.get("versionField");
             String dateField = (String) formAttributes.get("dateField");
             String dateFrom = (String) formAttributes.get("dateFrom");
             String dateTo = (String) formAttributes.get("dateTo");
-            int minYear = (int) formAttributes.get("minYear");
+            int minYear;
+            if (ObjectUtils.isEmpty(formAttributes.get("minYear"))) {
+                minYear = 0;
+            } else {
+                minYear = (int) formAttributes.get("minYear");
+            }
             boolean useAltStartDate = (boolean) formAttributes.get("useAltStartDate");
-            int altStartDate = (int) formAttributes.get("altStartDate");
+            String altStartDate = (String) formAttributes.get("altStartDate");
             String altStartDateField = (String) formAttributes.get("altStartDateField");
-            int maxYear = (int) formAttributes.get("maxYear");
+            int maxYear;
+            if (ObjectUtils.isEmpty(formAttributes.get("maxYear"))) {
+                maxYear = 2199;
+            } else {
+                maxYear = (int) formAttributes.get("maxYear");
+            }
             dimensionLookupMeta.setUpdate(update);
             dimensionLookupMeta.setPreloadingCache(preloadingCache);
             dimensionLookupMeta.setCacheSize(cacheSize);
@@ -88,11 +100,12 @@ public class DimensionLookupChain extends TransformConvertChain {
             dimensionLookupMeta.setDateFrom(dateFrom);
             dimensionLookupMeta.setMinYear(minYear);
             dimensionLookupMeta.setUsingStartDateAlternative(useAltStartDate);
-            dimensionLookupMeta.setStartDateAlternative(altStartDate);
+            if (StringUtils.hasLength(altStartDate)) {
+                dimensionLookupMeta.setStartDateAlternative(Integer.parseInt(altStartDate));
+            }
             dimensionLookupMeta.setStartDateFieldName(altStartDateField);
             dimensionLookupMeta.setDateTo(dateTo);
             dimensionLookupMeta.setMaxYear(maxYear);
-
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             Datasource datasource = datasourceService.one((long) databaseId);
             DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
@@ -138,7 +151,7 @@ public class DimensionLookupChain extends TransformConvertChain {
             }
             dimensionLookupMeta.setTableName(tableName);
             dimensionLookupMeta.setSchemaName(schemaName);
-            dimensionLookupMeta.setCommitSize(commit);
+            dimensionLookupMeta.setCommitSize(commitSize);
             dimensionLookupMeta.setDatabaseMeta(databaseMeta);
             List<Map<String, String>> searchMappingData = (List<Map<String, String>>) formAttributes.get("searchMappingData");
             for (Map<String, String> fieldMapping : searchMappingData) {
@@ -147,14 +160,19 @@ public class DimensionLookupChain extends TransformConvertChain {
             }
             dimensionLookupMeta.setKeyLookup(searchDbFields.toArray(new String[0]));
             dimensionLookupMeta.setKeyStream(searchStreamFields.toArray(new String[0]));
-            List<Map<String, String>> fieldMappingData = (List<Map<String, String>>) formAttributes.get("fieldMappingData");
-            for (Map<String, String> fieldMapping : fieldMappingData) {
-                dbFields.add(fieldMapping.get("target"));
-                streamFields.add(fieldMapping.get("source"));
+            List<Map<String, Object>> fieldMappingData = (List<Map<String, Object>>) formAttributes.get("fieldMappingData");
+            for (Map<String, Object> fieldMapping : fieldMappingData) {
+                dbFields.add((String) fieldMapping.get("target"));
+                streamFields.add((String) fieldMapping.get("source"));
+                if (update) {
+                    updateFields.add((int)fieldMapping.get("updateType"));
+                }
             }
             dimensionLookupMeta.setFieldLookup(dbFields.toArray(new String[0]));
             dimensionLookupMeta.setFieldStream(streamFields.toArray(new String[0]));
+            dimensionLookupMeta.setFieldUpdate(updateFields.stream().mapToInt(Integer::intValue).toArray());
             StepMeta stepMeta = new StepMeta(stepName, dimensionLookupMeta);
+            dimensionLookupMeta.getXML();
             mxGeometry geometry = cell.getGeometry();
             if (formAttributes.containsKey("distribute")) {
                 boolean distribute = (boolean) formAttributes.get("distribute");

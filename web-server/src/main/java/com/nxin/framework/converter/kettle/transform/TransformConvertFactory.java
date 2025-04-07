@@ -109,6 +109,7 @@ public class TransformConvertFactory extends ConvertFactory {
         execSqlChain.setDatasourceService(datasourceService);
         synchronizeAfterMergeChain.setDatasourceService(datasourceService);
         combinationLookupChain.setDatasourceService(datasourceService);
+        dimensionLookupChain.setDatasourceService(datasourceService);
         kafkaConsumerInputChain.setShellService(shellService);
         jmsConsumerInputChain.setShellService(shellService);
         excelWriterChain.setAttachmentStorageService(attachmentStorageService);
