@@ -38,6 +38,7 @@ public class DatasourceService extends ServiceImpl<DatasourceMapper, Datasource>
             datasource.setModifier(LoginUtils.getUsername());
             upsert = datasourceMapper.updateById(persisted);
         } else {
+            datasource.setVersion(1);
             datasource.setStatus(Constant.ACTIVE);
             datasource.setCreator(LoginUtils.getUsername());
             upsert = datasourceMapper.insert(datasource);
