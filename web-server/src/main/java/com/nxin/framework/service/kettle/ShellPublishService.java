@@ -61,8 +61,6 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     @Value("${worker.schedule-create-streaming-uri}")
     private String createStreamingUri;
     @Autowired
-    private ShellPublishMapper shellPublishMapper;
-    @Autowired
     private KettleGeneratorService kettleGeneratorService;
     @Autowired
     private RunningProcessService runningProcessService;
@@ -83,7 +81,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
     private AttachmentStorageService attachmentStorageService;
 
     public ShellPublish one(Long id) {
-        return shellPublishMapper.selectById(id);
+        return getBaseMapper().selectById(id);
     }
 
 //    public ShellPublish online(Long shellId) {
@@ -91,7 +89,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //        queryWrapper.eq(ShellPublish.STATUS_COLUMN, Constant.ACTIVE);
 //        queryWrapper.eq(ShellPublish.SHELL_ID_COLUMN, shellId);
 //        queryWrapper.orderByDesc(ShellPublish.CREATE_TIME_COLUMN);
-//        List<ShellPublish> records = shellPublishMapper.selectList(queryWrapper);
+//        List<ShellPublish> records = getBaseMapper().selectList(queryWrapper);
 //        if (records.isEmpty()) {
 //            return null;
 //        }
@@ -106,7 +104,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             queryWrapper.likeRight(ShellPublish.NAME_COLUMN, name);
         }
         queryWrapper.eq(ShellPublish.STREAMING_COLUMN, streaming);
-        return shellPublishMapper.selectPage(page, queryWrapper);
+        return getBaseMapper().selectPage(page, queryWrapper);
     }
 
     public IPage<ShellPublish> findHistories(Long shellId, int pageNo, int pageSize) {
@@ -115,13 +113,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
         queryWrapper.eq(ShellPublish.STATUS_COLUMN, Constant.ACTIVE);
         queryWrapper.eq(ShellPublish.SHELL_ID_COLUMN, shellId);
         queryWrapper.orderByDesc(ShellPublish.CREATE_TIME_COLUMN);
-        return shellPublishMapper.selectPage(page, queryWrapper);
+        return getBaseMapper().selectPage(page, queryWrapper);
     }
 
 //    public List<ShellPublish> references(ShellPublish shellPublish, Long tenantId) {
 //        if (StringUtils.hasLength(shellPublish.getReference())) {
 //            long[] ids = Arrays.asList(shellPublish.getReference().split(",")).stream().mapToLong(Long::parseLong).toArray();
-//            return shellPublishMapper.findAllByIdInAndTenantId(ids, tenantId);
+//            return getBaseMapper().findAllByIdInAndTenantId(ids, tenantId);
 //        }
 //        return Collections.EMPTY_LIST;
 //    }
@@ -172,7 +170,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
             if (StringUtils.hasLength(reference)) {
                 String[] references = reference.split(",");
                 for (String referenceId : references) {
-                    ShellPublish latestReferenceShellPublish = shellPublishMapper.selectLatestByShellId(Long.parseLong(referenceId));
+                    ShellPublish latestReferenceShellPublish = getBaseMapper().selectLatestByShellId(Long.parseLong(referenceId));
                     if (latestReferenceShellPublish != null) {
                         referencedList.add(latestReferenceShellPublish);
                     }
@@ -183,13 +181,13 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                 }
                 shellPublish.setReference(referencedList.stream().map(item -> String.valueOf(item.getId())).collect(Collectors.joining(",")));
             }
-            shellPublishMapper.insert(shellPublish);
+            getBaseMapper().insert(shellPublish);
             try {
                 String md5Shell = fileService.createFile(Constant.ENV_PUBLISH, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + Constant.DOT + suffix, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + abstractMeta.getXML());
                 shellPublish.setMd5Xml(md5Shell);
                 String md5graph = fileService.createFile(Constant.ENV_PUBLISH, shell.getProjectId() + File.separator + shell.getParentId() + File.separator + shell.getId() + File.separator + shellPublish.getId() + Constant.DOT + Constant.GRAPH_SUFFIX, shell.getContent());
                 shellPublish.setMd5Graph(md5graph);
-                shellPublishMapper.updateById(shellPublish);
+                getBaseMapper().updateById(shellPublish);
             } catch (KettleException e) {
                 log.error(e.getMessage(), e);
                 throw new UnExecutableException();
@@ -204,7 +202,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
      */
     @Transactional
     public void deploySchedule(ShellPublish shellPublish, String cron, int misfire) {
-        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
+        ShellPublish deployedShellPublish = getBaseMapper().selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
         if (deployedShellPublish != null) {
             List<ShellPublish> deployedShellPublishes = new ArrayList<>(0);
             // 将关联脚本也一并下线
@@ -346,7 +344,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
      * @param shellPublish
      */
     public void deployStreaming(ShellPublish shellPublish) {
-        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
+        ShellPublish deployedShellPublish = getBaseMapper().selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
         if (deployedShellPublish != null) {
             RunningProcess runningProcess = runningProcessService.shellPublishId(deployedShellPublish.getId());
             if (runningProcess != null) {
@@ -458,7 +456,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //                throw new CreateJobException();
 //            }
 //        }
-//        ShellPublish deployedShellPublish = shellPublishMapper.selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
+//        ShellPublish deployedShellPublish = getBaseMapper().selectLatestByProdAndShellId(shellPublish.getShellId()); // 获取目前正在运行的发布
 //        // 找到已发行的版本，停止运行
 //        if (deployedShellPublish != null) {
 //            List<ShellPublish> deployedShellPublishes = new ArrayList<>(0);
@@ -507,7 +505,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //        reference = shellPublish.getReference();
 //        if (StringUtils.hasLength(reference)) {
 //            long[] ids = Arrays.stream(reference.split(",")).mapToLong(Long::parseLong).toArray();
-//            List<ShellPublish> existedList = shellPublishMapper.findAllByIdInAndTenantId(ids, shellPublish.getTenant().getId()).stream().peek(spr -> {
+//            List<ShellPublish> existedList = getBaseMapper().findAllByIdInAndTenantId(ids, shellPublish.getTenant().getId()).stream().peek(spr -> {
 //                spr.setProd(Constant.ACTIVE);
 //                try {
 //                    // 复制到生产环境
@@ -531,7 +529,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
 //        modifyFileName(files, direct);
 //        shellPublish.setProdPath(direct + fileName);
 //        referencedList.add(shellPublish);
-//        shellPublishMapper.saveAll(referencedList);
+//        getBaseMapper().saveAll(referencedList);
 //
 //        List<Map<String, String>> referencePathList = new ArrayList<>();
 //        // 将新关联的脚本启用上线

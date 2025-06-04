@@ -1,23 +1,22 @@
 package com.nxin.framework.entity.bi;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
 /**
  * <p>
- * 
+ * 模型元数据
  * </p>
  *
  * @author jesse han
- * @since 2024-07-25
+ * @since 2025-05-27
  */
 @TableName("bi_metadata")
-@ApiModel(value = "Metadata对象", description = "")
+@ApiModel(value = "Metadata对象", description = "模型元数据")
 public class Metadata implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -25,35 +24,52 @@ public class Metadata implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private Boolean autoIncrement;
-
-    private String columnCategory;
-
-    private String columnCode;
-
-    private Integer columnDecimal;
-
-    private Integer columnLength;
-
+    @ApiModelProperty("列名")
     private String columnName;
 
+    @ApiModelProperty("列编码")
+    private String columnCode;
+
+    @ApiModelProperty("列类型")
+    private String columnCategory;
+
+    @ApiModelProperty("列长度")
+    private Integer columnLength;
+
+    @ApiModelProperty("列小数长度")
+    private Integer columnDecimal;
+
+    @ApiModelProperty("是否为空")
+    private Boolean columnNotNull;
+
+    @ApiModelProperty("创建时间")
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
+    @ApiModelProperty("创建者")
+    @TableField(fill = FieldFill.INSERT)
     private String creator;
 
-    private String modifier;
-
+    @ApiModelProperty("修改时间")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime modifyTime;
 
-    private Boolean notNull;
+    @ApiModelProperty("修改者")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String modifier;
 
-    private Boolean primaryKey;
+    @ApiModelProperty("列绑定的外键模型ID")
+    private Long columnForeignModelId;
 
+    @ApiModelProperty("模型ID")
+    private Long modelId;
+
+    @ApiModelProperty("状态")
     private String status;
 
+    @ApiModelProperty("版本")
+    @Version
     private Integer version;
-
-    private Long modelId;
 
     public Long getId() {
         return id;
@@ -63,20 +79,12 @@ public class Metadata implements Serializable {
         this.id = id;
     }
 
-    public Boolean getAutoIncrement() {
-        return autoIncrement;
+    public String getColumnName() {
+        return columnName;
     }
 
-    public void setAutoIncrement(Boolean autoIncrement) {
-        this.autoIncrement = autoIncrement;
-    }
-
-    public String getColumnCategory() {
-        return columnCategory;
-    }
-
-    public void setColumnCategory(String columnCategory) {
-        this.columnCategory = columnCategory;
+    public void setColumnName(String columnName) {
+        this.columnName = columnName;
     }
 
     public String getColumnCode() {
@@ -87,12 +95,12 @@ public class Metadata implements Serializable {
         this.columnCode = columnCode;
     }
 
-    public Integer getColumnDecimal() {
-        return columnDecimal;
+    public String getColumnCategory() {
+        return columnCategory;
     }
 
-    public void setColumnDecimal(Integer columnDecimal) {
-        this.columnDecimal = columnDecimal;
+    public void setColumnCategory(String columnCategory) {
+        this.columnCategory = columnCategory;
     }
 
     public Integer getColumnLength() {
@@ -103,12 +111,20 @@ public class Metadata implements Serializable {
         this.columnLength = columnLength;
     }
 
-    public String getColumnName() {
-        return columnName;
+    public Integer getColumnDecimal() {
+        return columnDecimal;
     }
 
-    public void setColumnName(String columnName) {
-        this.columnName = columnName;
+    public void setColumnDecimal(Integer columnDecimal) {
+        this.columnDecimal = columnDecimal;
+    }
+
+    public Boolean getColumnNotNull() {
+        return columnNotNull;
+    }
+
+    public void setColumnNotNull(Boolean columnNotNull) {
+        this.columnNotNull = columnNotNull;
     }
 
     public LocalDateTime getCreateTime() {
@@ -127,14 +143,6 @@ public class Metadata implements Serializable {
         this.creator = creator;
     }
 
-    public String getModifier() {
-        return modifier;
-    }
-
-    public void setModifier(String modifier) {
-        this.modifier = modifier;
-    }
-
     public LocalDateTime getModifyTime() {
         return modifyTime;
     }
@@ -143,20 +151,28 @@ public class Metadata implements Serializable {
         this.modifyTime = modifyTime;
     }
 
-    public Boolean getNotNull() {
-        return notNull;
+    public String getModifier() {
+        return modifier;
     }
 
-    public void setNotNull(Boolean notNull) {
-        this.notNull = notNull;
+    public void setModifier(String modifier) {
+        this.modifier = modifier;
     }
 
-    public Boolean getPrimaryKey() {
-        return primaryKey;
+    public Long getColumnForeignModelId() {
+        return columnForeignModelId;
     }
 
-    public void setPrimaryKey(Boolean primaryKey) {
-        this.primaryKey = primaryKey;
+    public void setColumnForeignModelId(Long columnForeignModelId) {
+        this.columnForeignModelId = columnForeignModelId;
+    }
+
+    public Long getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(Long modelId) {
+        this.modelId = modelId;
     }
 
     public String getStatus() {
@@ -175,33 +191,24 @@ public class Metadata implements Serializable {
         this.version = version;
     }
 
-    public Long getModelId() {
-        return modelId;
-    }
-
-    public void setModelId(Long modelId) {
-        this.modelId = modelId;
-    }
-
     @Override
     public String toString() {
         return "Metadata{" +
-            "id = " + id +
-            ", autoIncrement = " + autoIncrement +
-            ", columnCategory = " + columnCategory +
-            ", columnCode = " + columnCode +
-            ", columnDecimal = " + columnDecimal +
-            ", columnLength = " + columnLength +
-            ", columnName = " + columnName +
-            ", createTime = " + createTime +
-            ", creator = " + creator +
-            ", modifier = " + modifier +
-            ", modifyTime = " + modifyTime +
-            ", notNull = " + notNull +
-            ", primaryKey = " + primaryKey +
-            ", status = " + status +
-            ", version = " + version +
-            ", modelId = " + modelId +
-        "}";
+                "id = " + id +
+                ", columnName = " + columnName +
+                ", columnCode = " + columnCode +
+                ", columnCategory = " + columnCategory +
+                ", columnLength = " + columnLength +
+                ", columnDecimal = " + columnDecimal +
+                ", columnNotNull = " + columnNotNull +
+                ", createTime = " + createTime +
+                ", creator = " + creator +
+                ", modifyTime = " + modifyTime +
+                ", modifier = " + modifier +
+                ", columnForeignModelId = " + columnForeignModelId +
+                ", modelId = " + modelId +
+                ", status = " + status +
+                ", version = " + version +
+                "}";
     }
 }

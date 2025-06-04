@@ -11,6 +11,7 @@ import lombok.EqualsAndHashCode;
 public class DatasourceDto extends CrudDto {
     private String name;
     private String category;
+    private Boolean generic;
     private String host;
     private Integer port;
     private String schemaName;
@@ -31,4 +32,5 @@ public class DatasourceDto extends CrudDto {
     private Long projectId;
     private String driver;
     private String url;
+    private String charset;
 }

@@ -8,10 +8,8 @@ import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.entity.basic.Datasource;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
-import org.pentaho.di.core.Const;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.encryption.Encr;
 import org.pentaho.di.trans.TransMeta;
@@ -108,7 +106,7 @@ public class DimensionLookupChain extends TransformConvertChain {
             dimensionLookupMeta.setMaxYear(maxYear);
             int parallel = (int) formAttributes.get(Constant.ETL_PARALLEL);
             Datasource datasource = datasourceService.one((long) databaseId);
-            DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
+            DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
             databaseMeta.setStreamingResults(datasource.getUseCursor());
             String parameters = datasource.getParameter();
             if (StringUtils.hasLength(parameters)) {
@@ -116,11 +114,9 @@ public class DimensionLookupChain extends TransformConvertChain {
                 });
                 Properties properties = new Properties();
                 for (Map<String, Object> param : params) {
-                    for (Map.Entry<String, Object> entry : param.entrySet()) {
-                        if (StringUtils.hasLength(entry.getKey()) && !ObjectUtils.isEmpty(entry.getValue())) {
-                            databaseMeta.addExtraOption(DatasourceType.getValue(datasource.getCategory()), entry.getKey(), (String) entry.getValue());
-                            properties.put(entry.getKey(), entry.getValue());
-                        }
+                    if (StringUtils.hasLength((String) param.get("name"))) {
+                        databaseMeta.addExtraOption(datasource.getCategory().toUpperCase(), (String) param.get("name"), (String) param.get("value"));
+                        properties.putAll(param);
                     }
                 }
                 databaseMeta.setConnectionPoolingProperties(properties);
@@ -165,7 +161,7 @@ public class DimensionLookupChain extends TransformConvertChain {
                 dbFields.add((String) fieldMapping.get("target"));
                 streamFields.add((String) fieldMapping.get("source"));
                 if (update) {
-                    updateFields.add((int)fieldMapping.get("updateType"));
+                    updateFields.add((int) fieldMapping.get("updateType"));
                 }
             }
             dimensionLookupMeta.setFieldLookup(dbFields.toArray(new String[0]));

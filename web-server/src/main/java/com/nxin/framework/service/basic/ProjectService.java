@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 @Service
 public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
     @Autowired
-    private ProjectMapper projectMapper;
-    @Autowired
     private DatasourceService datasourceService;
     @Autowired
     private UserService userService;
@@ -42,7 +40,7 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
     private FileService fileService;
 
     public Project one(Long id) {
-        return projectMapper.selectById(id);
+        return getBaseMapper().selectById(id);
     }
 
     public List<Project> search(String name, Long userId) {
@@ -58,7 +56,7 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
             }
             queryWrapper.in(Project.ID_COLUMN, resources.stream().map(resource -> Integer.valueOf(resource.getCode())).collect(Collectors.toList()));
         }
-        List<Project> projects = projectMapper.selectList(queryWrapper);
+        List<Project> projects = getBaseMapper().selectList(queryWrapper);
         List<Long> userIds = projects.stream().map(Project::getUserId).collect(Collectors.toList());
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
         userQueryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
@@ -75,18 +73,19 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
     public boolean save(Project project) {
         int upsert;
         if (project.getId() != null) {
-            Project existed = projectMapper.selectById(project.getId());
+            Project existed = getBaseMapper().selectById(project.getId());
             BeanUtils.copyProperties(project, existed, "version");
             existed.setModifier(LoginUtils.getUsername());
-            upsert = projectMapper.updateById(existed);
+            upsert = getBaseMapper().updateById(existed);
         } else {
             User user = userService.one(LoginUtils.getUsername());
             if (user != null) {
                 project.setUserId(user.getId());
             }
+            project.setVersion(1);
             project.setStatus(Constant.ACTIVE);
             project.setCreator(LoginUtils.getUsername());
-            upsert = projectMapper.insert(project);
+            upsert = getBaseMapper().insert(project);
             // 创建资源码
             Resource resource = new Resource();
             resource.setCode(project.getId().toString());
@@ -124,7 +123,7 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
         datasourceService.delete(project.getId(), Collections.emptyList());
         privilegeService.deletePrivilegesByResourceAndUser(project.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         resourceService.delete(project.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
-        projectMapper.deleteById(project);
+        getBaseMapper().deleteById(project);
     }
 
     public void deleteMember(Project project, List<Long> users) {

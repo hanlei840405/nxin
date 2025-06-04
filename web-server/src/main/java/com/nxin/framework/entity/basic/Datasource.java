@@ -30,6 +30,11 @@ public class Datasource implements Serializable {
 
     private String category;
 
+    /**
+     * 使用自定义(jbdc)方式连接
+     */
+    private Boolean generic;
+
     private Long projectId;
 
     private Boolean useCursor;
@@ -69,6 +74,8 @@ public class Datasource implements Serializable {
     private String driver;
 
     private String url;
+
+    private String charset;
 
     private String status;
 
@@ -119,6 +126,14 @@ public class Datasource implements Serializable {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public Boolean getGeneric() {
+        return generic;
+    }
+
+    public void setGeneric(Boolean generic) {
+        this.generic = generic;
     }
 
     public Long getProjectId() {
@@ -279,6 +294,14 @@ public class Datasource implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = charset;
     }
 
     public String getStatus() {

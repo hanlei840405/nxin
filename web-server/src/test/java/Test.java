@@ -29,8 +29,8 @@ public class Test {
                             .pathInfo(Collections.singletonMap(OutputFile.xml, "D:/coding/xml/")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("kettle_shell_storage") // 设置需要生成的表名
-                            .addTablePrefix("kettle_"); // 设置过滤表前缀
+                    builder.addInclude("basic_dictionary", "basic_dictionary_item") // 设置需要生成的表名
+                            .addTablePrefix("basic_"); // 设置过滤表前缀
                 })
                 .templateEngine(new FreemarkerTemplateEngine()) // 使用Freemarker引擎模板，默认的是Velocity引擎模板
                 .execute();

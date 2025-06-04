@@ -17,14 +17,12 @@ import java.util.List;
 
 @Service
 public class TaskHistoryService extends ServiceImpl<TaskHistoryMapper, TaskHistory> {
-    @Autowired
-    private TaskHistoryMapper taskHistoryMapper;
 
     public TaskHistory runningProcessId(Long runningProcessId) {
         QueryWrapper<TaskHistory> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(TaskHistory.RUNNING_PROCESS_ID_COLUMN, runningProcessId);
         queryWrapper.le(TaskHistory.STATUS_COLUMN, Constant.ACTIVE);
-        return taskHistoryMapper.selectOne(queryWrapper);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public IPage<TaskHistory> allByShellPublish(Long shellPublishId, LocalDate begin, LocalDate end, int pageNo, int pageSize) {
@@ -39,7 +37,7 @@ public class TaskHistoryService extends ServiceImpl<TaskHistoryMapper, TaskHisto
         }
         queryWrapper.le(TaskHistory.STATUS_COLUMN, Constant.ACTIVE);
         queryWrapper.orderByDesc(TaskHistory.BEGIN_TIME_COLUMN);
-        return taskHistoryMapper.selectPage(page, queryWrapper);
+        return getBaseMapper().selectPage(page, queryWrapper);
     }
 
     @Transactional

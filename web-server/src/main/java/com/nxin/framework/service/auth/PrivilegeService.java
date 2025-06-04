@@ -23,12 +23,10 @@ import java.util.stream.Collectors;
 public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
 
     @Autowired
-    private PrivilegeMapper privilegeMapper;
-    @Autowired
     private ResourceService resourceService;
 
     public List<Privilege> findByRwAndResource(String resourceCode, String resourceCategory, String resourceLevel, String rw) {
-        return privilegeMapper.findByRwAndResource(resourceCode, resourceCategory, resourceLevel, rw);
+        return getBaseMapper().findByRwAndResource(resourceCode, resourceCategory, resourceLevel, rw);
     }
 
     public IPage<Privilege> search(String name, Long userId, int pageNo, int pageSize) {
@@ -39,22 +37,22 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
             if (StringUtils.hasLength(name)) {
                 queryWrapper.likeRight(Privilege.NAME_COLUMN, name);
             }
-            return privilegeMapper.selectPage(page, queryWrapper);
+            return getBaseMapper().selectPage(page, queryWrapper);
         }
 
-        return privilegeMapper.selectByUserAndName(page, userId, name);
+        return getBaseMapper().selectByUserAndName(page, userId, name);
     }
 
     public List<Privilege> findByUserId(Long userId) {
-        return privilegeMapper.selectByUserId(userId);
+        return getBaseMapper().selectByUserId(userId);
     }
 
     public Privilege findByPrivilegeIdAndUserId(Long privilegeId, Long userId) {
-        return privilegeMapper.selectByPrivilegeIdAndUserId(privilegeId, userId);
+        return getBaseMapper().selectByPrivilegeIdAndUserId(privilegeId, userId);
     }
 
     public List<Privilege> findByUserAndResource(Long userId, String resourceCode, String resourceCategory, String resourceLevel, String rw) {
-        return privilegeMapper.selectByUserAndResource(userId, resourceCode, resourceCategory, resourceLevel, rw);
+        return getBaseMapper().selectByUserAndResource(userId, resourceCode, resourceCategory, resourceLevel, rw);
     }
 
     @Transactional
@@ -88,19 +86,19 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
         List<Long> copyPrivilegeIds = new ArrayList<>(privilegeIds);
         copyPrivilegeIds.removeIf(grantedList::contains);
         if (!copyPrivilegeIds.isEmpty()) {
-            privilegeMapper.grantPrivileges(userId, copyPrivilegeIds);
+            getBaseMapper().grantPrivileges(userId, copyPrivilegeIds);
         }
     }
 
     public void deleteGrantedPrivileges(Long userId, List<Long> privilegeIds) {
-        privilegeMapper.deleteGrantedPrivileges(userId, privilegeIds);
+        getBaseMapper().deleteGrantedPrivileges(userId, privilegeIds);
     }
 
     public void deletePrivilegesByUserId(Long userId) {
-        privilegeMapper.deletePrivilegesByUserId(userId);
+        getBaseMapper().deletePrivilegesByUserId(userId);
     }
 
     public void deletePrivilegesByResourceAndUser(String resourceCode, String resourceCategory, String resourceLevel, List<Long> users) {
-        privilegeMapper.deletePrivilegesByResourceAndUsers(resourceCode, resourceCategory, resourceLevel, users);
+        getBaseMapper().deletePrivilegesByResourceAndUsers(resourceCode, resourceCategory, resourceLevel, users);
     }
 }

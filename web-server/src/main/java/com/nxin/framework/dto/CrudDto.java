@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class CrudDto implements Serializable {
@@ -15,4 +16,5 @@ public class CrudDto implements Serializable {
     private Date createTime;
     private String creator;
     private String modifier;
+    private List<Long> idList;
 }

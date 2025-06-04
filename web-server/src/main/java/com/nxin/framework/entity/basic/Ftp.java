@@ -1,8 +1,7 @@
 package com.nxin.framework.entity.basic;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import io.swagger.annotations.ApiModel;
@@ -58,14 +57,19 @@ public class Ftp implements Serializable {
 
     private String status;
 
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
+    @TableField(fill = FieldFill.INSERT)
     private String creator;
 
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String modifier;
 
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime modifyTime;
 
+    @Version
     private Integer version;
 
     public Long getId() {

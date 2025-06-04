@@ -1,23 +1,20 @@
 package com.nxin.framework.vo.bi;
 
-import com.nxin.framework.dto.CrudDto;
+import com.nxin.framework.vo.BaseVo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-import java.util.Date;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class MetadataVo extends CrudDto implements Serializable {
+public class MetadataVo extends BaseVo {
 
-    private String columnCode;
     private String columnName;
+    private String columnCode;
     private String columnCategory;
-    private int columnLength;
-    private int columnDecimal;
-    private boolean primaryKey;
-    private boolean notNull;
-    private boolean autoIncrement;
+    private Integer columnLength;
+    private Integer columnDecimal;
+    private Boolean columnNotNull;
+    private Long columnForeignModelId;
     private Long modelId;
+    private Integer version;
 }

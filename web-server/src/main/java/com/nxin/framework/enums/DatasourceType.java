@@ -1,10 +1,7 @@
 package com.nxin.framework.enums;
 
 public enum DatasourceType {
-    MYSQL("mysql", Constant.MYSQL),
-    JDBC("jdbc", Constant.GENERIC),
-    POSTGRESQL("postgresql", Constant.POSTGRESQL),
-    ORACLE("oracle", Constant.ORACLE);
+    ;
 
     private String key;
 

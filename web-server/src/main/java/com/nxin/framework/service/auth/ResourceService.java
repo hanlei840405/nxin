@@ -16,38 +16,36 @@ import java.util.List;
 public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
 
     @Autowired
-    private ResourceMapper resourceMapper;
-    @Autowired
     private PrivilegeService privilegeService;
 
     public boolean isRoot(Long userId) {
-        Resource resource = resourceMapper.selectRootByUserId(userId, Constant.ACTIVE);
+        Resource resource = getBaseMapper().selectRootByUserId(userId, Constant.ACTIVE);
         return resource != null;
     }
 
     public List<Resource> all() {
         QueryWrapper<Resource> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
-        return resourceMapper.selectList(queryWrapper);
+        return getBaseMapper().selectList(queryWrapper);
     }
 
     public List<Resource> findAllByIdIn(List<Long> idList) {
         QueryWrapper<Resource> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
         queryWrapper.in(Resource.ID_COLUMN, idList);
-        return resourceMapper.selectList(queryWrapper);
+        return getBaseMapper().selectList(queryWrapper);
     }
 
     public List<Resource> findByUserId(Long userId) {
-        return resourceMapper.selectByUserId(userId, Constant.ACTIVE);
+        return getBaseMapper().selectByUserId(userId, Constant.ACTIVE);
     }
 
     public List<Resource> findByUserIdCategoryAndLevel(Long userId, String category, String level) {
-        return resourceMapper.selectByUserIdAndCategoryAndLevel(userId, category, level);
+        return getBaseMapper().selectByUserIdAndCategoryAndLevel(userId, category, level);
     }
 
     public List<Resource> findByPrivilegeId(Long privilegeId) {
-        return resourceMapper.findByPrivilegeId(privilegeId);
+        return getBaseMapper().findByPrivilegeId(privilegeId);
     }
 
     @Transactional
@@ -57,8 +55,8 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
         queryWrapper.eq(Resource.CATEGORY_COLUMN, category);
         queryWrapper.eq(Resource.LEVEL_COLUMN, level);
         queryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
-        Resource resource = resourceMapper.selectOne(queryWrapper);
-        resourceMapper.deleteById(resource);
+        Resource resource = getBaseMapper().selectOne(queryWrapper);
+        getBaseMapper().deleteById(resource);
         QueryWrapper<Privilege> privilegeQueryWrapper = new QueryWrapper<>();
         privilegeQueryWrapper.eq(Privilege.RESOURCE_ID_COLUMN, resource.getId());
         privilegeQueryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);

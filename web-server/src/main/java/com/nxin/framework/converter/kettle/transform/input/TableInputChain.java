@@ -9,7 +9,6 @@ import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.converter.kettle.transform.TransformConvertFactory;
 import com.nxin.framework.entity.basic.Datasource;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +21,12 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.errorhandling.Stream;
 import org.pentaho.di.trans.step.errorhandling.StreamInterface;
 import org.pentaho.di.trans.steps.tableinput.TableInputMeta;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class TableInputChain extends TransformConvertChain {
@@ -57,7 +54,7 @@ public class TableInputChain extends TransformConvertChain {
 
 
             Datasource datasource = datasourceService.one((long) databaseId);
-            DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
+            DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
             databaseMeta.setStreamingResults(datasource.getUseCursor());
             Properties properties = new Properties();
             if (datasource.getUsePool()) {
@@ -90,11 +87,9 @@ public class TableInputChain extends TransformConvertChain {
                 List<Map<String, Object>> params = objectMapper.readValue(parameters, new TypeReference<List<Map<String, Object>>>() {
                 });
                 for (Map<String, Object> param : params) {
-                    for (Map.Entry<String, Object> entry : param.entrySet()) {
-                        if (StringUtils.hasLength(entry.getKey()) && !ObjectUtils.isEmpty(entry.getValue())) {
-                            databaseMeta.addExtraOption(DatasourceType.getValue(datasource.getCategory()), entry.getKey(), (String) entry.getValue());
-                            properties.put(entry.getKey(), entry.getValue());
-                        }
+                    if (StringUtils.hasLength((String) param.get("name"))) {
+                        databaseMeta.addExtraOption(datasource.getCategory().toUpperCase(), (String) param.get("name"), (String) param.get("value"));
+                        properties.putAll(param);
                     }
                 }
                 databaseMeta.setConnectionPoolingProperties(properties);
@@ -128,7 +123,7 @@ public class TableInputChain extends TransformConvertChain {
             if (tableInputMetaMap.get("stepMetaInterface") instanceof TableInputMeta) {
                 TableInputMeta tableInputMeta = (TableInputMeta) tableInputMetaMap.get("stepMetaInterface");
                 String previousStep = idNameMapping.get((String) tableInputMetaMap.get("previousStep"));
-                StepIOMetaInterface stepIOMeta = new StepIOMeta( true, true, false, false, false, false );
+                StepIOMetaInterface stepIOMeta = new StepIOMeta(true, true, false, false, false, false);
                 List<StreamInterface> infoStreams = tableInputMeta.getStepIOMeta().getInfoStreams();
                 infoStreams.get(0).setSubject(previousStep);
                 stepIOMeta.addStream(new Stream(infoStreams.get(0)));

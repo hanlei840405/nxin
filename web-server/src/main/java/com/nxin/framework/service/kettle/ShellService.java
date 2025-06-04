@@ -40,8 +40,6 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
     @Autowired
     private ResourceService resourceService;
     @Autowired
-    private ShellMapper shellMapper;
-    @Autowired
     private PrivilegeService privilegeService;
     @Autowired
     private KettleGeneratorService kettleGeneratorService;
@@ -49,7 +47,7 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
     private FileService fileService;
 
     public Shell one(Long id) {
-        Shell shell = shellMapper.selectById(id);
+        Shell shell = getBaseMapper().selectById(id);
         if (!LoginUtils.DEFAULT_VALUE.equals(LoginUtils.getUsername())) {
             User loginUser = userService.one(LoginUtils.getUsername());
             if (resourceService.isRoot(loginUser.getId())) {
@@ -73,7 +71,7 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
             queryWrapper.isNull(Shell::getParentId);
         }
         queryWrapper.orderByDesc(Shell::getCreateTime);
-        return shellMapper.selectList(queryWrapper);
+        return getBaseMapper().selectList(queryWrapper);
     }
 
     @Transactional
@@ -135,12 +133,12 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
         int upsert;
         if (shell.getId() != null) {
             shell.setModifier(LoginUtils.getUsername());
-            upsert = shellMapper.updateById(shell);
+            upsert = getBaseMapper().updateById(shell);
         } else {
             shell.setStatus(Constant.ACTIVE);
             shell.setCreator(LoginUtils.getUsername());
             shell.setVersion(1);
-            upsert = shellMapper.insert(shell);
+            upsert = getBaseMapper().insert(shell);
         }
         return upsert > 0;
     }
@@ -151,7 +149,7 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
         updateWrapper.eq(Shell::getStatus, Constant.ACTIVE);
         updateWrapper.in(Shell::getId, idList);
         updateWrapper.set(Shell::getParentId, parentId > 0 ? parentId : null);
-        shellMapper.update(updateWrapper);
+        getBaseMapper().update(updateWrapper);
     }
 
     public void delete(Long projectId, List<Long> idList) {
@@ -161,6 +159,6 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
         if (!idList.isEmpty()) {
             queryWrapper.in(Shell::getId, idList);
         }
-        shellMapper.delete(queryWrapper);
+        getBaseMapper().delete(queryWrapper);
     }
 }

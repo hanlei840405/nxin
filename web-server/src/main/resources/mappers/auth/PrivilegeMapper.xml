@@ -71,7 +71,6 @@
         auth_privilege.version
         FROM auth_privilege
         inner join auth_resource on auth_resource.id=auth_privilege.resource_id
-        inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
         where auth_privilege.status='1' and auth_resource.status='1'
         and auth_resource.code=#{resourceCode}
         and auth_resource.category=#{resourceCategory}

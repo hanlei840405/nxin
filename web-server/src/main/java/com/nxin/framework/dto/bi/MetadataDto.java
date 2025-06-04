@@ -5,19 +5,18 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.util.Date;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class MetadataDto extends CrudDto implements Serializable {
 
-    private String columnCode;
     private String columnName;
+    private String columnCode;
     private String columnCategory;
-    private int columnLength;
-    private int columnDecimal;
-    private boolean primaryKey;
-    private boolean notNull;
-    private boolean autoIncrement;
+    private Integer columnLength;
+    private Integer columnDecimal;
+    private Boolean columnNotNull;
+    private Long columnForeignModelId;
     private Long modelId;
+    private Integer version;
 }

@@ -23,8 +23,6 @@ import java.util.List;
 public class UserService extends ServiceImpl<UserMapper, User> {
 
     @Autowired
-    private UserMapper userMapper;
-    @Autowired
     private PrivilegeService privilegeService;
     @Autowired
     private ResourceService resourceService;
@@ -35,27 +33,27 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private String password;
 
     public User one(Long id) {
-        return userMapper.selectById(id);
+        return getBaseMapper().selectById(id);
     }
 
     public User one(String email) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
         queryWrapper.eq(User.EMAIL_COLUMN, email);
-        return userMapper.selectOne(queryWrapper);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public List<User> findByResource(String resourceCode, String resourceCategory, String resourceLevel, String rw) {
-        List<User> users = userMapper.findByResource(resourceCode, resourceCategory, resourceLevel, rw);
+        List<User> users = getBaseMapper().findByResource(resourceCode, resourceCategory, resourceLevel, rw);
         User user = one(LoginUtils.getUsername());
-        if (resourceService.isRoot(user.getId())) {
+        if (resourceService.isRoot(user.getId()) && users.stream().noneMatch(item -> item.getId().equals(user.getId()))) {
             users.add(user);
         }
         return users;
     }
 
     public List<User> findByPrivilege(Long privilegeId) {
-        return userMapper.findByPrivilege(privilegeId);
+        return getBaseMapper().findByPrivilege(privilegeId);
     }
 
     public IPage<User> search(String name, int pageNo, int pageSize) {
@@ -65,7 +63,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (StringUtils.hasLength(name)) {
             queryWrapper.likeRight(User.NAME_COLUMN, name);
         }
-        return userMapper.selectPage(page, queryWrapper);
+        return getBaseMapper().selectPage(page, queryWrapper);
     }
 
     public User lock(User user) {
@@ -84,13 +82,13 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public boolean save(User user) {
         if (user.getId() != null) {
             user.setModifier(LoginUtils.getUsername());
-            return userMapper.updateById(user) > 0;
+            return getBaseMapper().updateById(user) > 0;
         }
         user.setCreator(LoginUtils.getUsername());
         user.setModifier(LoginUtils.getUsername());
         user.setPassword(bCryptPasswordEncoder.encode(password));
         user.setStatus(Constant.ACTIVE);
         user.setVersion(1);
-        return userMapper.insert(user) > 0;
+        return getBaseMapper().insert(user) > 0;
     }
 }

@@ -64,9 +64,11 @@ public class PrivilegeController {
     public ResponseEntity grantByResource(@RequestBody List<GrantDto> grantDtos) {
         User loginUser = userService.one(LoginUtils.getUsername());
         for (GrantDto grantDto : grantDtos) {
-            List<Privilege> records = privilegeService.findByUserAndResource(loginUser.getId(), grantDto.getResourceCode(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
-            if (records.isEmpty()) {
-                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            if (!resourceService.isRoot(loginUser.getId())) {
+                List<Privilege> records = privilegeService.findByUserAndResource(loginUser.getId(), grantDto.getResourceCode(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+                if (records.isEmpty()) {
+                    return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+                }
             }
             for (UserPrivilegeDto userPrivilegeDto : grantDto.getUserPrivileges()) {
                 User user = userService.getById(userPrivilegeDto.getUserId());
@@ -102,9 +104,11 @@ public class PrivilegeController {
             if (members.contains(user)) {
                 for (User member : members) {
                     List<Privilege> privileges = privilegeService.findByUserAndResource(member.getId(), resourceCode, resourceCategory, resourceLevel, null);
-                    UserVo userVo = userConverter.convert(member);
-                    userVo.setRw(privileges.get(0).getCategory());
-                    usersVo.add(userVo);
+                    for (Privilege privilege : privileges) {
+                        UserVo userVo = userConverter.convert(member);
+                        usersVo.add(userVo);
+                        userVo.setRw(privilege.getCategory());
+                    }
                 }
                 return ResponseEntity.ok(usersVo);
             }

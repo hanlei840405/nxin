@@ -9,9 +9,10 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class ModelVo extends BaseVo {
+
     private String code;
-    private String description;
     private String name;
+    private String description;
     private Long datasourceId;
     private Long projectId;
     private List<MetadataVo> metadataList;

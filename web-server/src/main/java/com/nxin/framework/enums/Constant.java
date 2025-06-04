@@ -74,10 +74,7 @@ public interface Constant {
     int EXCEPTION_FILE_NOT_EXIST = 10016;
     int EXCEPTION_XML_PARSE = 10017;
     int EXCEPTION_PLUGIN_CONVERT = 10018;
-    String MYSQL = "MySQL";
     String GENERIC = "Generic";
-    String POSTGRESQL = "POSTGRESQL";
-    String ORACLE = "ORACLE";
     String EXCEPTION_PLUGIN_CONVERT_NAME = "EXCEPTION_PLUGIN_CONVERT_NAME";
     String SHELL_INFO = "shellInfo";
     String FILE_SEPARATOR = "/";

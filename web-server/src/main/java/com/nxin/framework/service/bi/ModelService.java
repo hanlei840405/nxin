@@ -1,6 +1,8 @@
 package com.nxin.framework.service.bi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.bi.Metadata;
 import com.nxin.framework.entity.bi.Model;
@@ -11,6 +13,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -32,11 +35,15 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
         return getBaseMapper().selectById(id);
     }
 
-    public List<Model> all(Long projectId) {
+    public IPage<Model> search(Long projectId, String name, int pageNo, int pageSize) {
+        Page<Model> page = new Page<>(pageNo, pageSize);
         LambdaQueryWrapper<Model> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Model::getStatus, Constant.ACTIVE);
         queryWrapper.eq(Model::getProjectId, projectId);
-        return getBaseMapper().selectList(queryWrapper);
+        queryWrapper.eq(Model::getStatus, Constant.ACTIVE);
+        if (StringUtils.hasLength(name)) {
+            queryWrapper.likeRight(Model::getName, name);
+        }
+        return getBaseMapper().selectPage(page, queryWrapper);
     }
 
     @Transactional
@@ -49,13 +56,19 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
             upsert = getBaseMapper().updateById(persisted);
         } else {
             model.setStatus(Constant.ACTIVE);
+            model.setVersion(1);
             model.setCreator(LoginUtils.getUsername());
             upsert = getBaseMapper().insert(model);
         }
         LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Metadata::getModelId, model.getId());
         metadataService.remove(queryWrapper);
-        metadataList.forEach(metadata -> metadata.setModelId(model.getId()));
+        metadataList.forEach(metadata -> {
+            metadata.setModelId(model.getId());
+            if (metadata.getId() == null) {
+                metadata.setVersion(1);
+            }
+        });
         metadataService.saveBatch(metadataList);
         return upsert > 0;
     }

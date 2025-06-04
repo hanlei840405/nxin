@@ -8,7 +8,6 @@ import com.nxin.framework.converter.kettle.transform.ResponseMeta;
 import com.nxin.framework.converter.kettle.transform.TransformConvertChain;
 import com.nxin.framework.entity.basic.Datasource;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import com.sun.org.apache.xerces.internal.dom.DeferredElementImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,6 @@ import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.databasejoin.DatabaseJoinMeta;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -51,7 +49,7 @@ public class DatabaseJoinChain extends TransformConvertChain {
             databaseJoinMeta.setRowLimit(returnRows);
 
             Datasource datasource = datasourceService.one((long) databaseId);
-            DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
+            DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
             databaseMeta.setStreamingResults(datasource.getUseCursor());
             Properties properties = new Properties();
             if (datasource.getUsePool()) {
@@ -84,11 +82,9 @@ public class DatabaseJoinChain extends TransformConvertChain {
                 List<Map<String, Object>> params = objectMapper.readValue(parameters, new TypeReference<List<Map<String, Object>>>() {
                 });
                 for (Map<String, Object> param : params) {
-                    for (Map.Entry<String, Object> entry : param.entrySet()) {
-                        if (StringUtils.hasLength(entry.getKey()) && !ObjectUtils.isEmpty(entry.getValue())) {
-                            databaseMeta.addExtraOption(DatasourceType.getValue(datasource.getCategory()), entry.getKey(), (String) entry.getValue());
-                            properties.put(entry.getKey(), entry.getValue());
-                        }
+                    if (StringUtils.hasLength((String) param.get("name"))) {
+                        databaseMeta.addExtraOption(datasource.getCategory().toUpperCase(), (String) param.get("name"), (String) param.get("value"));
+                        properties.putAll(param);
                     }
                 }
                 databaseMeta.setConnectionPoolingProperties(properties);

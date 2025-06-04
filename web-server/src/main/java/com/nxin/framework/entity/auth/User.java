@@ -41,12 +41,14 @@ public class User implements Serializable {
 
     private String status;
 
-    private String creator;
-
-    private String modifier;
-
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+
+    @TableField(fill = FieldFill.INSERT)
+    private String creator;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String modifier;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime modifyTime;

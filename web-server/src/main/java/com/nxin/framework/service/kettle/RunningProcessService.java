@@ -14,36 +14,34 @@ import java.util.List;
 
 @Service
 public class RunningProcessService extends ServiceImpl<RunningProcessMapper, RunningProcess> {
-    @Autowired
-    private RunningProcessMapper runningProcessMapper;
 //
 //    public RunningProcess one(Long id) {
-//        return runningProcessMapper.selectById(id);
+//        return getBaseMapper().selectById(id);
 //    }
 
     public RunningProcess shellId(Long shellId) {
         QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(RunningProcess.SHELL_ID_COLUMN, shellId);
         queryWrapper.eq(RunningProcess.PROD_COLUMN, "1");
-        return runningProcessMapper.selectOne(queryWrapper);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public RunningProcess shellPublishId(Long shellPublishId) {
         QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(RunningProcess.SHELL_PUBLISH_ID_COLUMN, shellPublishId);
         queryWrapper.eq(RunningProcess.PROD_COLUMN, "1");
-        return runningProcessMapper.selectOne(queryWrapper);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public RunningProcess instanceId(String instanceId) {
         QueryWrapper<RunningProcess> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(RunningProcess.INSTANCE_ID_COLUMN, instanceId);
-        return runningProcessMapper.selectOne(queryWrapper);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public IPage<RunningProcess> page(List<Long> projectIds, String streamingOrBatch, int pageNo, int pageSize) {
         Page<RunningProcess> page = new Page<>(pageNo, pageSize);
-        return runningProcessMapper.selectStreamingRunningProcess(page, Constant.JOB, streamingOrBatch, projectIds);
+        return getBaseMapper().selectStreamingRunningProcess(page, Constant.JOB, streamingOrBatch, projectIds);
     }
 //
 //    public RunningProcess save(RunningProcess runningProcess, Tenant tenant) {
@@ -52,10 +50,10 @@ public class RunningProcessService extends ServiceImpl<RunningProcessMapper, Run
 //    }
 
     public void delete(RunningProcess runningProcess) {
-        runningProcessMapper.deleteById(runningProcess);
+        getBaseMapper().deleteById(runningProcess);
     }
 
     public void delete(List<Long> idList) {
-        runningProcessMapper.deleteBatchIds(idList);
+        getBaseMapper().deleteBatchIds(idList);
     }
 }

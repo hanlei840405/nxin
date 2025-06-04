@@ -2,12 +2,10 @@ package com.nxin.framework.controller.basic;
 
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.base.DatasourceConverter;
-import com.nxin.framework.dto.CrudDto;
 import com.nxin.framework.dto.basic.DatasourceDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Datasource;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.service.basic.ProjectService;
@@ -16,7 +14,6 @@ import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.basic.DatasourceVo;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.database.DatabaseTestResults;
-import org.pentaho.di.core.database.GenericDatabaseMeta;
 import org.pentaho.di.core.encryption.Encr;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 @PreAuthorize("hasAuthority('ROOT') or hasAuthority('DATASOURCE')")
 @RestController
@@ -79,7 +75,7 @@ public class DatasourceController {
 
     @PostMapping("/datasource/test")
     public ResponseEntity<Boolean> test(@RequestBody DatasourceDto datasourceDto) {
-        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasourceDto.getName(), datasourceDto.getCategory(), datasourceDto.getHost(), datasourceDto.getSchemaName(), String.valueOf(datasourceDto.getPort()), datasourceDto.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasourceDto.getPassword()), datasourceDto.getUrl(), datasourceDto.getDriver());
+        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasourceDto.getName(), datasourceDto.getGeneric() ? Constant.GENERIC : datasourceDto.getCategory(), datasourceDto.getHost(), datasourceDto.getSchemaName(), String.valueOf(datasourceDto.getPort()), datasourceDto.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasourceDto.getPassword()), datasourceDto.getUrl(), datasourceDto.getDriver());
         DatabaseTestResults databaseTestResults = databaseMeta.testConnectionSuccess();
         return ResponseEntity.ok(databaseTestResults.isSuccess());
     }

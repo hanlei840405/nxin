@@ -24,11 +24,9 @@ import java.util.List;
  */
 @Service
 public class FtpService extends ServiceImpl<FtpMapper, Ftp> {
-    @Autowired
-    private FtpMapper ftpMapper;
 
     public Ftp one(Long id) {
-        return ftpMapper.selectById(id);
+        return getBaseMapper().selectById(id);
     }
 
     public List<Ftp> all(Long projectId, String category) {
@@ -38,21 +36,22 @@ public class FtpService extends ServiceImpl<FtpMapper, Ftp> {
         if (StringUtils.hasLength(category)) {
             queryWrapper.eq(Ftp::getCategory, category);
         }
-        return ftpMapper.selectList(queryWrapper);
+        return getBaseMapper().selectList(queryWrapper);
     }
 
     @Transactional
-    public boolean save(Ftp datasource) {
+    public boolean save(Ftp ftp) {
         int upsert;
-        if (datasource.getId() != null) {
-            Ftp persisted = one(datasource.getId());
-            BeanUtils.copyProperties(datasource, persisted, "version");
-            datasource.setModifier(LoginUtils.getUsername());
-            upsert = ftpMapper.updateById(persisted);
+        if (ftp.getId() != null) {
+            Ftp persisted = one(ftp.getId());
+            BeanUtils.copyProperties(ftp, persisted, "version");
+            ftp.setModifier(LoginUtils.getUsername());
+            upsert = getBaseMapper().updateById(persisted);
         } else {
-            datasource.setStatus(Constant.ACTIVE);
-            datasource.setCreator(LoginUtils.getUsername());
-            upsert = ftpMapper.insert(datasource);
+            ftp.setStatus(Constant.ACTIVE);
+            ftp.setVersion(1);
+            ftp.setCreator(LoginUtils.getUsername());
+            upsert = getBaseMapper().insert(ftp);
         }
         return upsert > 0;
     }
@@ -64,6 +63,6 @@ public class FtpService extends ServiceImpl<FtpMapper, Ftp> {
         if (!idList.isEmpty()) {
             queryWrapper.in(Ftp::getId, idList);
         }
-        ftpMapper.delete(queryWrapper);
+        getBaseMapper().delete(queryWrapper);
     }
 }

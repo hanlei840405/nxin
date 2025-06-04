@@ -1,7 +1,6 @@
 package com.nxin.framework.service;
 
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.enums.DatasourceType;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import lombok.SneakyThrows;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.sql.ResultSet;
 import java.util.*;
 
 @Service
@@ -33,7 +31,7 @@ public class DynamicQueryDataService {
         Map<String, Object> result = new HashMap<>(0);
         List<String> headers = new ArrayList<>(0);
         List<Map<String, String>> records = new ArrayList<>(0);
-        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category,  host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
+        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category, host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
 //        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
         List<SqlScriptStatement> statements = databaseMeta.getDatabaseInterface().getSqlScriptStatements(sql + Const.CR);
         Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
@@ -69,7 +67,7 @@ public class DynamicQueryDataService {
     @SneakyThrows
     public List<Map<String, Object>> structure(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String type, String tableName) {
         List<Map<String, Object>> response = new ArrayList<>(0);
-        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category,  host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
+        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category, host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
 //        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
         Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
         try {
