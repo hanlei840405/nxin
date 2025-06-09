@@ -1,16 +1,14 @@
-package com.nxin.framework.dto.bi;
+package com.nxin.framework.vo.bi;
 
-import com.nxin.framework.dto.CrudDto;
-import com.nxin.framework.entity.bi.Model;
+import com.nxin.framework.vo.BaseVo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ReportDto extends CrudDto implements Serializable {
+public class ReportVo extends BaseVo {
 
     private String code;
     private String name;
@@ -19,5 +17,5 @@ public class ReportDto extends CrudDto implements Serializable {
     private String script;
     private String mapping;
     private String description;
-    private List<Model> modelList;
+    private List<ModelVo> modelList;
 }

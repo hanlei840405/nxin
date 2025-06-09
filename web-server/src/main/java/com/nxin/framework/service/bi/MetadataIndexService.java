@@ -14,6 +14,6 @@ import org.springframework.stereotype.Service;
  * @since 2025-05-27
  */
 @Service
-public class MetadataIndexServiceImpl extends ServiceImpl<MetadataIndexMapper, MetadataIndex> {
+public class MetadataIndexService extends ServiceImpl<MetadataIndexMapper, MetadataIndex> {
 
 }

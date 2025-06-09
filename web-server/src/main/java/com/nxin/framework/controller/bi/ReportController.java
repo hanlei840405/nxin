@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @PreAuthorize("hasAuthority('ROOT') or hasAuthority('MODEL')")
 @RestController
 @RequestMapping
-public class ModelController {
+public class ReportController {
     @Autowired
     private ModelService modelService;
     @Autowired
@@ -101,7 +101,7 @@ public class ModelController {
             LambdaQueryWrapper<Model> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Model::getProjectId, modelDto.getProjectId());
             queryWrapper.eq(Model::getStatus, Constant.ACTIVE);
-            return ResponseEntity.ok(modelConverter.convert(modelService.list(queryWrapper)));
+            return ResponseEntity.ok(modelConverter.convert(modelService.list()));
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
