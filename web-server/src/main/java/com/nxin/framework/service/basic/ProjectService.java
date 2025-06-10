@@ -57,6 +57,9 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
             queryWrapper.in(Project.ID_COLUMN, resources.stream().map(resource -> Integer.valueOf(resource.getCode())).collect(Collectors.toList()));
         }
         List<Project> projects = getBaseMapper().selectList(queryWrapper);
+        if (projects.isEmpty()) {
+            return projects;
+        }
         List<Long> userIds = projects.stream().map(Project::getUserId).collect(Collectors.toList());
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
         userQueryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);

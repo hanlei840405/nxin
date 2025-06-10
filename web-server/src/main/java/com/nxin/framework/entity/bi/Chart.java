@@ -31,8 +31,17 @@ public class Chart implements Serializable {
     @ApiModelProperty("名称")
     private String name;
 
+    @ApiModelProperty("类型")
+    private String category;
+
     @ApiModelProperty("选项")
     private String options;
+
+    @ApiModelProperty("样例数据")
+    private String data;
+
+    @ApiModelProperty("描述")
+    private String description;
 
     @ApiModelProperty("状态")
     private String status;
@@ -76,12 +85,36 @@ public class Chart implements Serializable {
         this.name = name;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
     public String getOptions() {
         return options;
     }
 
     public void setOptions(String options) {
         this.options = options;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getStatus() {
@@ -138,7 +171,9 @@ public class Chart implements Serializable {
             "id = " + id +
             ", code = " + code +
             ", name = " + name +
+            ", category = " + category +
             ", options = " + options +
+            ", description = " + description +
             ", status = " + status +
             ", createTime = " + createTime +
             ", creator = " + creator +

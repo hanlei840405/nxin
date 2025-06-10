@@ -85,7 +85,7 @@ public class DictionaryController {
         BeanUtils.copyProperties(dictionaryDto, dictionary);
         List<DictionaryItem> dictionaryItems = dictionaryDto.getDictionaryItemList().stream().map(dto -> {
             DictionaryItem dictionaryItem = new DictionaryItem();
-            BeanUtils.copyProperties(dto, dictionaryItem);
+            BeanUtils.copyProperties(dto, dictionaryItem, "id");
             return dictionaryItem;
         }).collect(Collectors.toList());
         dictionaryService.save(dictionary, dictionaryItems);

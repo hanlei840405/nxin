@@ -10,5 +10,8 @@ public class ChartVo extends BaseVo {
 
     private String code;
     private String name;
+    private String category;
     private String options;
+    private String data;
+    private String description;
 }

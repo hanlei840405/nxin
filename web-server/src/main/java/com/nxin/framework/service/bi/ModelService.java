@@ -65,9 +65,7 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
         metadataService.remove(queryWrapper);
         metadataList.forEach(metadata -> {
             metadata.setModelId(model.getId());
-            if (metadata.getId() == null) {
-                metadata.setVersion(1);
-            }
+            metadata.setVersion(1);
         });
         metadataService.saveBatch(metadataList);
         return upsert > 0;

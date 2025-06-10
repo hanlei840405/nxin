@@ -115,7 +115,7 @@ public class ModelController {
             BeanUtils.copyProperties(modelDto, model);
             List<Metadata> metadataList = modelDto.getMetadataList().stream().map(dto -> {
                 Metadata metadata = new Metadata();
-                BeanUtils.copyProperties(dto, metadata);
+                BeanUtils.copyProperties(dto, metadata, "id");
                 return metadata;
             }).collect(Collectors.toList());
             modelService.save(model, metadataList);

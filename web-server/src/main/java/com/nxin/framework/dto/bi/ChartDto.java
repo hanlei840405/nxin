@@ -12,5 +12,8 @@ public class ChartDto extends CrudDto implements Serializable {
 
     private String code;
     private String name;
+    private String category;
     private String option;
+    private String data;
+    private String description;
 }

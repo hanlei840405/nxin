@@ -62,9 +62,7 @@ public class DictionaryService extends ServiceImpl<DictionaryMapper, Dictionary>
             dictionaryItem.setDictionaryId(dictionary.getId());
             dictionaryItem.setStatus(Constant.ACTIVE);
             dictionaryItem.setCreator(LoginUtils.getUsername());
-            if (dictionaryItem.getId() == null) {
-                dictionaryItem.setVersion(1);
-            }
+            dictionaryItem.setVersion(1);
         });
         dictionaryItemService.saveBatch(dictionaryItems);
         return upsert > 0;

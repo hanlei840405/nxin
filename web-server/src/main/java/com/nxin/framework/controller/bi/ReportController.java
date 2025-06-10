@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * @since 2024-07-24
  */
 @Slf4j
-@PreAuthorize("hasAuthority('ROOT') or hasAuthority('MODEL')")
+@PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
 @RestController
 @RequestMapping
 public class ReportController {
@@ -63,7 +63,7 @@ public class ReportController {
     private BeanConverter<ModelVo, Model> modelConverter = new ModelConverter();
     private BeanConverter<MetadataVo, Metadata> metadataConverter = new MetadataConverter();
 
-    @GetMapping("/model/{id}")
+    @GetMapping("/report/{id}")
     public ResponseEntity<ModelVo> one(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
         Model model = modelService.one(id);
@@ -82,7 +82,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
-    @PostMapping("/modelPage")
+    @PostMapping("/reportPage")
     public ResponseEntity<PageVo<ModelVo>> page(@RequestBody ModelDto modelDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<User> members = userService.findByResource(modelDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
@@ -93,7 +93,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
-    @PostMapping("/modelList")
+    @PostMapping("/reportList")
     public ResponseEntity<List<ModelVo>> list(@RequestBody ModelDto modelDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<User> members = userService.findByResource(modelDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
@@ -106,7 +106,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
-    @PostMapping("/model")
+    @PostMapping("/report")
     public ResponseEntity save(@RequestBody ModelDto modelDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<User> members = userService.findByResource(modelDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
@@ -124,7 +124,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
-    @DeleteMapping("/model/{id}")
+    @DeleteMapping("/report/{id}")
     public ResponseEntity<ModelVo> delete(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
         Model persisted = modelService.one(id);
@@ -138,7 +138,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
-    @PostMapping("/model/sql")
+    @PostMapping("/report/sql")
     public ResponseEntity<String> one(@RequestBody ModelDto modelDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         Model model = modelService.one(modelDto.getId());
