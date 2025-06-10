@@ -350,6 +350,57 @@ CREATE TABLE `bi_metadata` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `bi_chart`
+--
+
+DROP TABLE IF EXISTS `bi_chart`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bi_chart` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) DEFAULT NULL COMMENT '编码',
+  `name` varchar(255) DEFAULT NULL COMMENT '名称',
+  `category` varchar(255) DEFAULT NULL COMMENT '图形类型',
+  `options` varchar(1000) DEFAULT NULL COMMENT '选项',
+  `data` varchar(255) DEFAULT NULL COMMENT '样例数据',
+  `description` varchar(255) DEFAULT NULL COMMENT '描述',
+  `status` varchar(255) DEFAULT NULL COMMENT '状态',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `creator` varchar(255) DEFAULT NULL COMMENT '创建者',
+  `modifier` varchar(255) DEFAULT NULL COMMENT '修改者',
+  `modify_time` datetime DEFAULT NULL COMMENT '最后修改时间',
+  `version` int NOT NULL COMMENT '版本',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='展示图标';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `bi_report`
+--
+
+DROP TABLE IF EXISTS `bi_report`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bi_report` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) DEFAULT NULL COMMENT '报表编码',
+  `name` varchar(255) DEFAULT NULL COMMENT '报表名称',
+  `project_id` bigint DEFAULT NULL COMMENT '工程ID',
+  `script` text COMMENT '报表脚本',
+  `chart_id` bigint DEFAULT NULL COMMENT '展示图表ID',
+  `mapping` varchar(1000) DEFAULT NULL COMMENT '图表结构映射字段',
+  `description` varchar(255) DEFAULT NULL COMMENT '描述',
+  `status` varchar(255) DEFAULT NULL COMMENT '状态',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `creator` varchar(255) DEFAULT NULL COMMENT '创建者',
+  `modifier` varchar(255) DEFAULT NULL COMMENT '修改者',
+  `modify_time` datetime DEFAULT NULL COMMENT '最后修改时间',
+  `version` int NOT NULL COMMENT '版本',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表设计';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `bi_model`
 --
 
