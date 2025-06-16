@@ -1,39 +1,41 @@
 package com.nxin.framework.controller.bi;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
-import com.nxin.framework.converter.bean.bi.MetadataConverter;
-import com.nxin.framework.converter.bean.bi.ModelConverter;
-import com.nxin.framework.dto.bi.ModelDto;
+import com.nxin.framework.converter.bean.bi.ReportConverter;
+import com.nxin.framework.dto.bi.ReportDto;
 import com.nxin.framework.entity.auth.User;
-import com.nxin.framework.entity.basic.Datasource;
-import com.nxin.framework.entity.bi.Metadata;
-import com.nxin.framework.entity.bi.Model;
+import com.nxin.framework.entity.bi.Chart;
+import com.nxin.framework.entity.bi.Report;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
-import com.nxin.framework.service.basic.DatasourceService;
-import com.nxin.framework.service.basic.ProjectService;
-import com.nxin.framework.service.bi.MetadataService;
-import com.nxin.framework.service.bi.ModelService;
+import com.nxin.framework.service.bi.ChartService;
+import com.nxin.framework.service.bi.ReportService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
-import com.nxin.framework.vo.bi.MetadataVo;
-import com.nxin.framework.vo.bi.ModelVo;
+import com.nxin.framework.vo.bi.ReportVo;
+import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -49,33 +51,25 @@ import java.util.stream.Collectors;
 @RequestMapping
 public class ReportController {
     @Autowired
-    private ModelService modelService;
+    private ReportService reportService;
     @Autowired
-    private ProjectService projectService;
+    private ChartService chartService;
     @Autowired
     private UserService userService;
     @Autowired
-    private MetadataService metadataService;
-    @Autowired
-    private DatasourceService datasourceService;
-    @Autowired
-    private Configuration configuration;
-    private BeanConverter<ModelVo, Model> modelConverter = new ModelConverter();
-    private BeanConverter<MetadataVo, Metadata> metadataConverter = new MetadataConverter();
+    private ResourceService resourceService;
+
+    private final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
 
     @GetMapping("/report/{id}")
-    public ResponseEntity<ModelVo> one(@PathVariable Long id) {
+    public ResponseEntity<ReportVo> one(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        Model model = modelService.one(id);
-        if (model != null && model.getProjectId() != null) {
-            List<User> members = userService.findByResource(model.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        Report report = reportService.one(id);
+        if (report != null && report.getProjectId() != null) {
+            List<User> members = userService.findByResource(report.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
-                ModelVo modelVo = modelConverter.convert(model);
-                LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.eq(Metadata::getModelId, id);
-                List<Metadata> metadataList = metadataService.list(queryWrapper);
-                modelVo.setMetadataList(metadataConverter.convert(metadataList));
-                return ResponseEntity.ok(modelVo);
+                ReportVo reportVo = reportConverter.convert(report);
+                return ResponseEntity.ok(reportVo);
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
@@ -83,87 +77,91 @@ public class ReportController {
     }
 
     @PostMapping("/reportPage")
-    public ResponseEntity<PageVo<ModelVo>> page(@RequestBody ModelDto modelDto) {
+    public ResponseEntity<PageVo<ReportVo>> page(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(modelDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        List<User> members = userService.findByResource(reportDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         if (members.contains(loginUser)) {
-            IPage<Model> modelIPage = modelService.search(modelDto.getProjectId(), modelDto.getPayload(), modelDto.getPageNo(), modelDto.getPageSize());
-            return ResponseEntity.ok(new PageVo<>(modelIPage.getTotal(), modelConverter.convert(modelIPage.getRecords())));
+            IPage<Report> reportIPage = reportService.search(reportDto.getProjectId(), reportDto.getPayload(), reportDto.getPageNo(), reportDto.getPageSize());
+            return ResponseEntity.ok(new PageVo<>(reportIPage.getTotal(), reportConverter.convert(reportIPage.getRecords())));
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
     @PostMapping("/reportList")
-    public ResponseEntity<List<ModelVo>> list(@RequestBody ModelDto modelDto) {
+    public ResponseEntity<List<ReportVo>> list(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(modelDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        List<User> members = userService.findByResource(reportDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         if (members.contains(loginUser)) {
-            LambdaQueryWrapper<Model> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Model::getProjectId, modelDto.getProjectId());
-            queryWrapper.eq(Model::getStatus, Constant.ACTIVE);
-            return ResponseEntity.ok(modelConverter.convert(modelService.list()));
+            LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Report::getProjectId, reportDto.getProjectId());
+            queryWrapper.eq(Report::getStatus, Constant.ACTIVE);
+            return ResponseEntity.ok(reportConverter.convert(reportService.list(queryWrapper)));
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
     @PostMapping("/report")
-    public ResponseEntity save(@RequestBody ModelDto modelDto) {
+    public ResponseEntity save(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(modelDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        List<User> members = userService.findByResource(reportDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
         if (members.contains(loginUser)) {
-            Model model = new Model();
-            BeanUtils.copyProperties(modelDto, model);
-            List<Metadata> metadataList = modelDto.getMetadataList().stream().map(dto -> {
-                Metadata metadata = new Metadata();
-                BeanUtils.copyProperties(dto, metadata);
-                return metadata;
-            }).collect(Collectors.toList());
-            modelService.save(model, metadataList);
+            Report report = new Report();
+            BeanUtils.copyProperties(reportDto, report);
+            reportService.save(report);
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
     @DeleteMapping("/report/{id}")
-    public ResponseEntity<ModelVo> delete(@PathVariable Long id) {
+    public ResponseEntity<ReportVo> delete(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        Model persisted = modelService.one(id);
+        Report persisted = reportService.one(id);
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
-                modelService.delete(Collections.singletonList(persisted.getId()));
+                reportService.removeById(persisted);
                 return ResponseEntity.ok().build();
             }
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
-    @PostMapping("/report/sql")
-    public ResponseEntity<String> one(@RequestBody ModelDto modelDto) {
+    @PostMapping("/report/view")
+    public ResponseEntity<String> view(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        Model model = modelService.one(modelDto.getId());
-        if (model != null && model.getProjectId() != null) {
-            List<User> members = userService.findByResource(model.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-            if (members.contains(loginUser)) {
-                LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.eq(Metadata::getModelId, modelDto.getId());
-                List<Metadata> metadataList = metadataService.list(queryWrapper);
-                Datasource datasource = datasourceService.one(model.getDatasourceId());
-                try {
-                    Template t = configuration.getTemplate(datasource.getCategory().toLowerCase(Locale.ROOT) + ".ftl");
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("code", model.getCode());
-                    params.put("name", model.getName());
-                    params.put("charset", datasource.getCharset());
-                    params.put("columns", metadataList);
-                    return ResponseEntity.ok(FreeMarkerTemplateUtils.processTemplateIntoString(t, params));
-                } catch (IOException | TemplateException e) {
-                    log.error(e.getMessage(), e);
-                    return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
-                }
-            }
+        List<User> members = userService.findByResource(reportDto.getId().toString(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ);
+        if (!members.contains(loginUser)) {
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        if (reportDto.getChartId() != null) {
+            Chart chart = chartService.one(reportDto.getChartId());
+            if (chart == null || !StringUtils.hasLength(chart.getOptions()) || !StringUtils.hasLength(reportDto.getMapping())) {
+                return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+            }
+            Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+            cfg.setClassLoaderForTemplateLoading(this.getClass().getClassLoader(), "/");
+            cfg.setDefaultEncoding("UTF-8");
+            cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+            cfg.setLogTemplateExceptions(false);
+            cfg.setWrapUncheckedExceptions(true);
+            try {
+                StringTemplateLoader stringLoader = new StringTemplateLoader();
+                stringLoader.putTemplate("chartTemplate", chart.getOptions());
+                cfg.setTemplateLoader(stringLoader);
+                Template template = cfg.getTemplate("chartTemplate");
+                Map<String, Object> params = new HashMap<>();
+                // todo 解析mapping内容为可执行参数
+                JSONObject source = JSON.parseObject(reportDto.getMapping());
+                for (Map.Entry<String, Object> entry : source.entrySet()) {
+                    params.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
+                }
+                return ResponseEntity.ok(FreeMarkerTemplateUtils.processTemplateIntoString(template, params));
+            } catch (IOException | TemplateException e) {
+                log.error(e.getMessage(), e);
+                return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+            }
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 }

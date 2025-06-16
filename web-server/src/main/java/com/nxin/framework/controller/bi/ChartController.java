@@ -1,5 +1,7 @@
 package com.nxin.framework.controller.bi;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
@@ -15,13 +17,21 @@ import com.nxin.framework.service.bi.ChartService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.bi.ChartVo;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,6 +54,7 @@ public class ChartController {
     private UserService userService;
     @Autowired
     private ResourceService resourceService;
+
     private final BeanConverter<ChartVo, Chart> chartConverter = new ChartConverter();
 
     @GetMapping("/chart/{id}")
@@ -60,7 +71,7 @@ public class ChartController {
     public ResponseEntity<PageVo<ChartVo>> page(@RequestBody ChartDto chartDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS);
-        List<Long> chartIdList = resources.stream().map(resource -> Long.getLong(resource.getCode())).collect(Collectors.toList());
+        List<Long> chartIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).collect(Collectors.toList());
         IPage<Chart> chartIPage = chartService.search(LoginUtils.getUsername(), chartIdList, chartDto.getPayload(), chartDto.getPageNo(), chartDto.getPageSize());
         return ResponseEntity.ok(new PageVo<>(chartIPage.getTotal(), chartConverter.convert(chartIPage.getRecords())));
     }
@@ -75,14 +86,16 @@ public class ChartController {
     @PostMapping("/chart")
     public ResponseEntity save(@RequestBody ChartDto chartDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(chartDto.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
-        if (members.contains(loginUser)) {
-            Chart chart = new Chart();
-            BeanUtils.copyProperties(chartDto, chart);
-            chartService.save(chart);
-            return ResponseEntity.ok().build();
+        if (chartDto.getId() != null) {
+            List<User> members = userService.findByResource(chartDto.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            }
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        Chart chart = new Chart();
+        BeanUtils.copyProperties(chartDto, chart);
+        chartService.save(chart);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/chart/{id}")
@@ -97,5 +110,43 @@ public class ChartController {
             }
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+    }
+
+    @PostMapping("/chart/preview")
+    public ResponseEntity<String> preview(@RequestBody ChartDto chartDto) {
+        if (!StringUtils.hasLength(chartDto.getOptions()) || !StringUtils.hasLength(chartDto.getData())) {
+            if (chartDto.getId() != null) {
+                Chart chart = chartService.one(chartDto.getId());
+                if (chart != null) {
+                    chartDto.setData(chart.getData());
+                    chartDto.setOptions(chart.getOptions());
+                } else {
+                    return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+                }
+            } else {
+                return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+            }
+        }
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+        cfg.setClassLoaderForTemplateLoading(this.getClass().getClassLoader(), "/");
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        cfg.setLogTemplateExceptions(false);
+        cfg.setWrapUncheckedExceptions(true);
+        try {
+            StringTemplateLoader stringLoader = new StringTemplateLoader();
+            stringLoader.putTemplate("chartTemplate", chartDto.getOptions());
+            cfg.setTemplateLoader(stringLoader);
+            Template template = cfg.getTemplate("chartTemplate");
+//            Map<String, Object> params = new HashMap<>();
+            JSONObject source = JSON.parseObject(chartDto.getData());
+//            for (Map.Entry<String, Object> entry : source.entrySet()) {
+//                params.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
+//            }
+            return ResponseEntity.ok(FreeMarkerTemplateUtils.processTemplateIntoString(template, source));
+        } catch (IOException | TemplateException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+        }
     }
 }

@@ -386,8 +386,11 @@ CREATE TABLE `bi_report` (
   `code` varchar(255) DEFAULT NULL COMMENT '报表编码',
   `name` varchar(255) DEFAULT NULL COMMENT '报表名称',
   `project_id` bigint DEFAULT NULL COMMENT '工程ID',
-  `script` text COMMENT '报表脚本',
+  `custom` bit(1) DEFAULT NULL COMMENT '是否自定义',
   `chart_id` bigint DEFAULT NULL COMMENT '展示图表ID',
+  `model_id` bigint DEFAULT NULL COMMENT '模型ID',
+  `datasource_id` bigint DEFAULT NULL COMMENT '数据源ID',
+  `script` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '报表脚本',
   `mapping` varchar(1000) DEFAULT NULL COMMENT '图表结构映射字段',
   `description` varchar(255) DEFAULT NULL COMMENT '描述',
   `status` varchar(255) DEFAULT NULL COMMENT '状态',
@@ -760,6 +763,25 @@ CREATE TABLE `task_history` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=265 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+CREATE TABLE `bi_chart_params` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `field` varchar(255) DEFAULT NULL COMMENT '字段',
+  `category` varchar(255) DEFAULT NULL COMMENT '字段类型',
+  `description` varchar(100) DEFAULT NULL COMMENT '字段描述',
+  `parent_id` bigint DEFAULT NULL COMMENT '上级字段ID',
+  `path` varchar(255) DEFAULT NULL COMMENT '字段路径',
+  `chart_id` bigint DEFAULT NULL COMMENT '报表图形ID',
+  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '状态',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `creator` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '创建者',
+  `modifier` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '修改者',
+  `modify_time` datetime DEFAULT NULL COMMENT '修改时间',
+  `version` int NOT NULL COMMENT '版本',
+  PRIMARY KEY (`id`),
+  KEY `idx_bi_chart_params` (`parent_id`) USING BTREE,
+  KEY `idx_bi_chart_chart_id` (`chart_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表图形参数';
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

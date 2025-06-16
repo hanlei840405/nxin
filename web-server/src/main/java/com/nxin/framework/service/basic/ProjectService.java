@@ -89,33 +89,7 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
             project.setStatus(Constant.ACTIVE);
             project.setCreator(LoginUtils.getUsername());
             upsert = getBaseMapper().insert(project);
-            // 创建资源码
-            Resource resource = new Resource();
-            resource.setCode(project.getId().toString());
-            resource.setCategory(Constant.RESOURCE_CATEGORY_PROJECT);
-            resource.setStatus(Constant.ACTIVE);
-            resource.setName(String.format("[%s]%s", project.getId(), project.getName()));
-            resource.setLevel(Constant.RESOURCE_LEVEL_BUSINESS);
-            resource.setVersion(1);
-            resourceService.save(resource);
-            // 创建默认权限
-            Privilege privilegeR = new Privilege();
-            privilegeR.setName(resource.getName());
-            privilegeR.setResourceId(resource.getId());
-            privilegeR.setCategory(Constant.PRIVILEGE_READ);
-            privilegeR.setStatus(Constant.ACTIVE);
-            privilegeR.setVersion(1);
-            Privilege privilegeRw = new Privilege();
-            privilegeRw.setName(resource.getName());
-            privilegeRw.setResourceId(resource.getId());
-            privilegeRw.setCategory(Constant.PRIVILEGE_READ_WRITE);
-            privilegeRw.setStatus(Constant.ACTIVE);
-            privilegeRw.setVersion(1);
-            privilegeService.saveBatch(Arrays.asList(privilegeR, privilegeRw));
-            // 为创建者分配R+W级别权限
-            if (user != null) {
-                privilegeService.grant(Collections.singletonList(privilegeRw.getId()), user.getId(), false);
-            }
+            resourceService.registryBusinessResource(String.valueOf(project.getId()), project.getName(), Constant.RESOURCE_CATEGORY_PROJECT, user);
         }
         Arrays.stream(Constant.ENV_BUCKET).forEach(env -> fileService.createFolder(env, project.getId() + File.separator));
         return upsert > 0;

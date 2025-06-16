@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.bi.Metadata;
 import com.nxin.framework.entity.bi.Model;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.mapper.bi.ModelMapper;
+import com.nxin.framework.service.auth.ResourceService;
+import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.utils.LoginUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,10 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
 
     @Autowired
     private MetadataService metadataService;
+    @Autowired
+    private ResourceService resourceService;
+    @Autowired
+    private UserService userService;
 
     public Model one(Long id) {
         return getBaseMapper().selectById(id);
@@ -59,6 +66,8 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
             model.setVersion(1);
             model.setCreator(LoginUtils.getUsername());
             upsert = getBaseMapper().insert(model);
+            User user = userService.one(LoginUtils.getUsername());
+            resourceService.registryBusinessResource(String.valueOf(model.getId()), model.getName(), Constant.RESOURCE_CATEGORY_MODEL, user);
         }
         LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Metadata::getModelId, model.getId());
