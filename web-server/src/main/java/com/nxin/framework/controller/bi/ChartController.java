@@ -6,16 +6,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.bi.ChartConverter;
+import com.nxin.framework.converter.bean.bi.ChartParamsConverter;
 import com.nxin.framework.dto.bi.ChartDto;
 import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.bi.Chart;
+import com.nxin.framework.entity.bi.ChartParams;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
+import com.nxin.framework.service.bi.ChartParamsService;
 import com.nxin.framework.service.bi.ChartService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
+import com.nxin.framework.vo.bi.ChartParamsVo;
 import com.nxin.framework.vo.bi.ChartVo;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
@@ -54,14 +58,21 @@ public class ChartController {
     private UserService userService;
     @Autowired
     private ResourceService resourceService;
+    @Autowired
+    private ChartParamsService chartParamsService;
 
     private final BeanConverter<ChartVo, Chart> chartConverter = new ChartConverter();
+    private final BeanConverter<ChartParamsVo, ChartParams> chartParamsConverter = new ChartParamsConverter();
 
     @GetMapping("/chart/{id}")
     public ResponseEntity<ChartVo> one(@PathVariable Long id) {
         Chart chart = chartService.one(id);
         if (chart != null) {
             ChartVo chartVo = chartConverter.convert(chart);
+            LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ChartParams::getChartId, id);
+            List<ChartParams> chartParams = chartParamsService.list(queryWrapper);
+            chartVo.setChartParamsList(chartParamsConverter.convert(chartParams));
             return ResponseEntity.ok(chartVo);
         }
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
@@ -86,15 +97,21 @@ public class ChartController {
     @PostMapping("/chart")
     public ResponseEntity save(@RequestBody ChartDto chartDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
+        Chart chart = new Chart();
         if (chartDto.getId() != null) {
             List<User> members = userService.findByResource(chartDto.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
             if (!members.contains(loginUser)) {
                 return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
         }
-        Chart chart = new Chart();
         BeanUtils.copyProperties(chartDto, chart);
-        chartService.save(chart);
+
+        List<ChartParams> chartParamsList = chartDto.getChartParamsList().stream().map(dto -> {
+            ChartParams chartParams = new ChartParams();
+            BeanUtils.copyProperties(dto, chartParams, "id");
+            return chartParams;
+        }).collect(Collectors.toList());
+        chartService.save(chart, chartParamsList);
         return ResponseEntity.ok().build();
     }
 

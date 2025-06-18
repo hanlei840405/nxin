@@ -2,6 +2,7 @@ package com.nxin.framework.dto.bi;
 
 import com.nxin.framework.dto.CrudDto;
 import com.nxin.framework.entity.bi.Model;
+import com.nxin.framework.entity.bi.ReportChartParams;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -16,8 +17,9 @@ public class ReportDto extends CrudDto implements Serializable {
     private String name;
     private Long projectId;
     private Long chartId;
+    private Long modelId;
     private String script;
     private String mapping;
     private String description;
-    private List<Model> modelList;
+    private List<ReportChartParamsDto> reportChartParamsList;
 }

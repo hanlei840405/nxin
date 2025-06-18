@@ -14,8 +14,9 @@ public class ReportVo extends BaseVo {
     private String name;
     private Long projectId;
     private Long chartId;
+    private Long modelId;
     private String script;
     private String mapping;
     private String description;
-    private List<ModelVo> modelList;
+    private List<ReportChartParamsVo> reportChartParamsList;
 }

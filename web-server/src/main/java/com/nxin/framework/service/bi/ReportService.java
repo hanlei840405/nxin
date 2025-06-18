@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.auth.User;
+import com.nxin.framework.entity.bi.Model;
 import com.nxin.framework.entity.bi.Report;
+import com.nxin.framework.entity.bi.ReportChartParams;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.mapper.bi.ReportMapper;
 import com.nxin.framework.service.auth.ResourceService;
@@ -16,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * <p>
@@ -31,6 +35,10 @@ public class ReportService extends ServiceImpl<ReportMapper, Report> {
     private ResourceService resourceService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ReportChartParamsService reportChartParamsService;
+    @Autowired
+    private ModelService modelService;
 
     public Report one(Long id) {
         return getBaseMapper().selectById(id);
@@ -48,7 +56,7 @@ public class ReportService extends ServiceImpl<ReportMapper, Report> {
     }
 
     @Transactional
-    public boolean save(Report report) {
+    public boolean save(Report report, List<ReportChartParams> reportChartParamsList) {
         int upsert;
         if (report.getId() != null) {
             Report persisted = one(report.getId());
@@ -63,6 +71,17 @@ public class ReportService extends ServiceImpl<ReportMapper, Report> {
             User user = userService.one(LoginUtils.getUsername());
             resourceService.registryBusinessResource(String.valueOf(report.getId()), report.getName(), Constant.RESOURCE_CATEGORY_REPORT, user);
         }
+
+        LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ReportChartParams::getReportId, report.getId());
+        reportChartParamsService.remove(queryWrapper);
+        Model model = modelService.one(report.getModelId());
+        reportChartParamsList.forEach(reportChartParams -> {
+            reportChartParams.setReportId(report.getId());
+            reportChartParams.setDatasourceId(model.getDatasourceId());
+            reportChartParams.setVersion(1);
+        });
+        reportChartParamsService.saveBatch(reportChartParamsList);
         return upsert > 0;
     }
 

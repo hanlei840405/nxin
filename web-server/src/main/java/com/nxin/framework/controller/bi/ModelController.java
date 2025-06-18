@@ -79,7 +79,7 @@ public class ModelController {
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
     @PostMapping("/modelPage")

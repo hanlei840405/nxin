@@ -43,6 +43,9 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
 
     public IPage<Chart> search(String username, List<Long> chartIdList, String name, int pageNo, int pageSize) {
         Page<Chart> page = new Page<>(pageNo, pageSize);
+        if (chartIdList.isEmpty()) {
+            return page;
+        }
         LambdaQueryWrapper<Chart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(Chart::getId, chartIdList);
         queryWrapper.eq(Chart::getCreator, username);
@@ -54,7 +57,7 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
     }
 
     @Transactional
-    public boolean save(Chart chart, List<ChartParams> chartParams) {
+    public boolean save(Chart chart, List<ChartParams> chartParamsList) {
         int upsert;
         if (chart.getId() != null) {
             Chart persisted = one(chart.getId());
@@ -72,11 +75,11 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
         LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChartParams::getChartId, chart.getId());
         chartParamsService.remove(queryWrapper);
-        chartParams.forEach(metadata -> {
-            metadata.setChartId(chart.getId());
-            metadata.setVersion(1);
+        chartParamsList.forEach(chartParams -> {
+            chartParams.setChartId(chart.getId());
+            chartParams.setVersion(1);
         });
-        chartParamsService.saveBatch(chartParams);
+        chartParamsService.saveBatch(chartParamsList);
         return upsert > 0;
     }
 

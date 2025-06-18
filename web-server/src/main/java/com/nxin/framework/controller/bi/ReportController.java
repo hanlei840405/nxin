@@ -5,18 +5,22 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
+import com.nxin.framework.converter.bean.bi.ReportChartParamsConverter;
 import com.nxin.framework.converter.bean.bi.ReportConverter;
 import com.nxin.framework.dto.bi.ReportDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.bi.Chart;
 import com.nxin.framework.entity.bi.Report;
+import com.nxin.framework.entity.bi.ReportChartParams;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.bi.ChartService;
+import com.nxin.framework.service.bi.ReportChartParamsService;
 import com.nxin.framework.service.bi.ReportService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
+import com.nxin.framework.vo.bi.ReportChartParamsVo;
 import com.nxin.framework.vo.bi.ReportVo;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
@@ -36,6 +40,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -58,8 +63,11 @@ public class ReportController {
     private UserService userService;
     @Autowired
     private ResourceService resourceService;
+    @Autowired
+    private ReportChartParamsService reportChartParamsService;
 
     private final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
+    private final BeanConverter<ReportChartParamsVo, ReportChartParams> reportChartParamsConverter = new ReportChartParamsConverter();
 
     @GetMapping("/report/{id}")
     public ResponseEntity<ReportVo> one(@PathVariable Long id) {
@@ -69,11 +77,15 @@ public class ReportController {
             List<User> members = userService.findByResource(report.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
                 ReportVo reportVo = reportConverter.convert(report);
+                LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(ReportChartParams::getReportId, id);
+                List<ReportChartParams> chartParams = reportChartParamsService.list(queryWrapper);
+                reportVo.setReportChartParamsList(reportChartParamsConverter.convert(chartParams));
                 return ResponseEntity.ok(reportVo);
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
     @PostMapping("/reportPage")
@@ -103,14 +115,22 @@ public class ReportController {
     @PostMapping("/report")
     public ResponseEntity save(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(reportDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (members.contains(loginUser)) {
-            Report report = new Report();
-            BeanUtils.copyProperties(reportDto, report);
-            reportService.save(report);
-            return ResponseEntity.ok().build();
+        Report report = new Report();
+        if (reportDto.getId() != null) {
+            List<User> members = userService.findByResource(reportDto.getId().toString(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            }
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        BeanUtils.copyProperties(reportDto, report);
+
+        List<ReportChartParams> reportChartParamsList = reportDto.getReportChartParamsList().stream().map(dto -> {
+            ReportChartParams reportChartParams = new ReportChartParams();
+            BeanUtils.copyProperties(dto, reportChartParams, "id");
+            return reportChartParams;
+        }).collect(Collectors.toList());
+        reportService.save(report, reportChartParamsList);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/report/{id}")

@@ -5,17 +5,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ChartDto extends CrudDto implements Serializable {
-
-    private String code;
-    private String name;
+public class ChartParamsDto extends CrudDto implements Serializable {
+    private String field;
     private String category;
-    private String options;
-    private String data;
     private String description;
-    private List<ChartParamsDto> chartParamsList;
+    private Long parentId;
+    private String path;
+    private Long chartId;
 }

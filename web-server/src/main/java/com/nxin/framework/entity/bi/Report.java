@@ -3,10 +3,11 @@ package com.nxin.framework.entity.bi;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.time.LocalDateTime;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -14,7 +15,7 @@ import io.swagger.annotations.ApiModelProperty;
  * </p>
  *
  * @author jesse han
- * @since 2025-06-06
+ * @since 2025-06-16
  */
 @TableName("bi_report")
 @ApiModel(value = "Report对象", description = "报表设计")
@@ -31,14 +32,17 @@ public class Report implements Serializable {
     @ApiModelProperty("报表名称")
     private String name;
 
-    @ApiModelProperty("报表脚本")
-    private String script;
-
     @ApiModelProperty("工程ID")
     private Long projectId;
 
     @ApiModelProperty("展示图表ID")
     private Long chartId;
+
+    @ApiModelProperty("模型ID")
+    private Long modelId;
+
+    @ApiModelProperty("报表脚本")
+    private String script;
 
     @ApiModelProperty("图表结构映射字段")
     private String mapping;
@@ -96,20 +100,28 @@ public class Report implements Serializable {
         this.projectId = projectId;
     }
 
-    public String getScript() {
-        return script;
-    }
-
-    public void setScript(String script) {
-        this.script = script;
-    }
-
     public Long getChartId() {
         return chartId;
     }
 
     public void setChartId(Long chartId) {
         this.chartId = chartId;
+    }
+
+    public Long getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(Long modelId) {
+        this.modelId = modelId;
+    }
+
+    public String getScript() {
+        return script;
+    }
+
+    public void setScript(String script) {
+        this.script = script;
     }
 
     public String getMapping() {
@@ -179,20 +191,21 @@ public class Report implements Serializable {
     @Override
     public String toString() {
         return "Report{" +
-            "id = " + id +
-            ", code = " + code +
-            ", name = " + name +
-            ", script = " + script +
-            ", projectId = " + projectId +
-            ", chartId = " + chartId +
-            ", mapping = " + mapping +
-            ", description = " + description +
-            ", status = " + status +
-            ", createTime = " + createTime +
-            ", creator = " + creator +
-            ", modifier = " + modifier +
-            ", modifyTime = " + modifyTime +
-            ", version = " + version +
-        "}";
+                "id = " + id +
+                ", code = " + code +
+                ", name = " + name +
+                ", projectId = " + projectId +
+                ", chartId = " + chartId +
+                ", modelId = " + modelId +
+                ", script = " + script +
+                ", mapping = " + mapping +
+                ", description = " + description +
+                ", status = " + status +
+                ", createTime = " + createTime +
+                ", creator = " + creator +
+                ", modifier = " + modifier +
+                ", modifyTime = " + modifyTime +
+                ", version = " + version +
+                "}";
     }
 }
