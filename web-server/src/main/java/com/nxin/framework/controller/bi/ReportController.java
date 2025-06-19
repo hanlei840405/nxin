@@ -93,9 +93,9 @@ public class ReportController {
                 ReportVo reportVo = reportConverter.convert(report);
                 LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(ReportChartParams::getReportId, id);
-                List<ReportChartParams> reportChartParams = reportChartParamsService.list(queryWrapper);
-                List<Long> chartParamsIdList = reportChartParams.stream().map(ReportChartParams::getChartParamsId).collect(Collectors.toList());
-                List<ReportChartParamsVo> reportChartParamsVos = reportChartParamsConverter.convert(reportChartParams);
+                List<ReportChartParams> reportChartParamsList = reportChartParamsService.list(queryWrapper);
+                List<Long> chartParamsIdList = reportChartParamsList.stream().map(ReportChartParams::getChartParamsId).collect(Collectors.toList());
+                List<ReportChartParamsVo> reportChartParamsVos = reportChartParamsConverter.convert(reportChartParamsList);
                 if (!chartParamsIdList.isEmpty()) {
                     LambdaQueryWrapper<ChartParams> chartParamsQueryWrapper = new LambdaQueryWrapper<>();
                     chartParamsQueryWrapper.in(ChartParams::getId, chartParamsIdList);
@@ -248,6 +248,63 @@ public class ReportController {
             }
         }
         Chart chart = chartService.one(reportDto.getChartId());
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+        cfg.setClassLoaderForTemplateLoading(this.getClass().getClassLoader(), "/");
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        cfg.setLogTemplateExceptions(false);
+        cfg.setWrapUncheckedExceptions(true);
+        try {
+            StringTemplateLoader stringLoader = new StringTemplateLoader();
+            stringLoader.putTemplate("chartTemplate", chart.getOptions());
+            cfg.setTemplateLoader(stringLoader);
+            Template template = cfg.getTemplate("chartTemplate");
+            return ResponseEntity.ok(FreeMarkerTemplateUtils.processTemplateIntoString(template, source));
+        } catch (IOException | TemplateException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+        }
+    }
+
+    @GetMapping("/report/paint/{id}")
+    public ResponseEntity<String> paint(@PathVariable Long id) {
+        User loginUser = userService.one(LoginUtils.getUsername());
+        Report report = reportService.one(id);
+        List<User> members = userService.findByResource(report.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        if (!members.contains(loginUser)) {
+            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        }
+        Model model = modelService.one(report.getModelId());
+        Datasource datasource = datasourceService.one(model.getDatasourceId());
+        LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ReportChartParams::getReportId, id);
+        List<ReportChartParams> reportChartParamsList = reportChartParamsService.list(queryWrapper);
+
+        LambdaQueryWrapper<ChartParams> chartParamsQueryWrapper = new LambdaQueryWrapper<>();
+        chartParamsQueryWrapper.in(ChartParams::getId, reportChartParamsList.stream().map(ReportChartParams::getChartParamsId).collect(Collectors.toList()));
+        List<ChartParams> chartParamsList = chartParamsService.list(chartParamsQueryWrapper);
+        Map<Long, ChartParams> chartParamsMap = chartParamsList.stream().collect(Collectors.toMap(ChartParams::getId, v -> v));
+        Map<String, Object> source = new HashMap<>();
+        for (ReportChartParams item : reportChartParamsList) {
+            if (CATEGORY_SQL.equals(item.getCategory())) {
+                try {
+                    Map<String, Object> result = dynamicQueryDataService.query(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), item.getScript());
+                    source.put(chartParamsMap.get(item.getChartParamsId()).getField(), result.get("records"));
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+                }
+            } else if (FIELD_CATEGORY_NUMBER.equals(chartParamsMap.get(item.getChartParamsId()).getCategory())) {
+                source.put(chartParamsMap.get(item.getChartParamsId()).getField(), NumberUtils.parseNumber(item.getScript(), Integer.class));
+            } else if (FIELD_CATEGORY_ARRAY.equals(chartParamsMap.get(item.getChartParamsId()).getCategory())) {
+                source.put(chartParamsMap.get(item.getChartParamsId()).getField(), JSON.parseArray(item.getScript()));
+            } else if (FIELD_CATEGORY_OBJECT.equals(chartParamsMap.get(item.getChartParamsId()).getCategory())) {
+                source.put(chartParamsMap.get(item.getChartParamsId()).getField(), JSON.parseObject(item.getScript()));
+            } else {
+                source.put(chartParamsMap.get(item.getChartParamsId()).getField(), item.getScript());
+            }
+        }
+        Chart chart = chartService.one(report.getChartId());
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
         cfg.setClassLoaderForTemplateLoading(this.getClass().getClassLoader(), "/");
         cfg.setDefaultEncoding("UTF-8");

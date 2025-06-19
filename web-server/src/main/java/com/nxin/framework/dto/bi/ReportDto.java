@@ -22,4 +22,7 @@ public class ReportDto extends CrudDto implements Serializable {
     private String mapping;
     private String description;
     private List<ReportChartParamsDto> reportChartParamsList;
+
+    // 拓展参数，用于在列表页面直接预览报表时的控制参数
+    private Boolean edit;
 }
