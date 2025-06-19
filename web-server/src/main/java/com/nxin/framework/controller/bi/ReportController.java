@@ -10,11 +10,13 @@ import com.nxin.framework.converter.bean.bi.ReportConverter;
 import com.nxin.framework.dto.bi.ReportDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.bi.Chart;
+import com.nxin.framework.entity.bi.ChartParams;
 import com.nxin.framework.entity.bi.Report;
 import com.nxin.framework.entity.bi.ReportChartParams;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
+import com.nxin.framework.service.bi.ChartParamsService;
 import com.nxin.framework.service.bi.ChartService;
 import com.nxin.framework.service.bi.ReportChartParamsService;
 import com.nxin.framework.service.bi.ReportService;
@@ -65,6 +67,8 @@ public class ReportController {
     private ResourceService resourceService;
     @Autowired
     private ReportChartParamsService reportChartParamsService;
+    @Autowired
+    private ChartParamsService chartParamsService;
 
     private final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
     private final BeanConverter<ReportChartParamsVo, ReportChartParams> reportChartParamsConverter = new ReportChartParamsConverter();
@@ -79,8 +83,21 @@ public class ReportController {
                 ReportVo reportVo = reportConverter.convert(report);
                 LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(ReportChartParams::getReportId, id);
-                List<ReportChartParams> chartParams = reportChartParamsService.list(queryWrapper);
-                reportVo.setReportChartParamsList(reportChartParamsConverter.convert(chartParams));
+                List<ReportChartParams> reportChartParams = reportChartParamsService.list(queryWrapper);
+                List<Long> chartParamsIdList = reportChartParams.stream().map(ReportChartParams::getChartParamsId).collect(Collectors.toList());
+                List<ReportChartParamsVo> reportChartParamsVos = reportChartParamsConverter.convert(reportChartParams);
+                if (!chartParamsIdList.isEmpty()) {
+                    LambdaQueryWrapper<ChartParams> chartParamsQueryWrapper = new LambdaQueryWrapper<>();
+                    chartParamsQueryWrapper.in(ChartParams::getId, chartParamsIdList);
+                    List<ChartParams> chartParamsList = chartParamsService.list(chartParamsQueryWrapper);
+                    Map<Long, ChartParams> chartParamsMap = chartParamsList.stream().collect(Collectors.toMap(ChartParams::getId, v -> v));
+                    reportChartParamsVos.forEach(item -> {
+                        item.setField(chartParamsMap.get(item.getChartParamsId()).getField());
+                        item.setFieldCategory(chartParamsMap.get(item.getChartParamsId()).getCategory());
+                        item.setDescription(chartParamsMap.get(item.getChartParamsId()).getDescription());
+                    });
+                }
+                reportVo.setReportChartParamsList(reportChartParamsVos);
                 return ResponseEntity.ok(reportVo);
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();

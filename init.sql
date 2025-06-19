@@ -767,6 +767,7 @@ CREATE TABLE `bi_report_chart_params` (
   `report_id` bigint DEFAULT NULL COMMENT '报表ID',
   `chart_params_id` bigint DEFAULT NULL COMMENT '参数ID',
   `datasource_id` bigint DEFAULT NULL COMMENT '数据源ID',
+  `category` varchar(255) DEFAULT NULL COMMENT '类型',
   `script` text COMMENT '脚本',
   `status` varchar(255) DEFAULT NULL COMMENT '状态',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',

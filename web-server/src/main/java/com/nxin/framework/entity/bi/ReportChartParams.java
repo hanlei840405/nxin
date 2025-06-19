@@ -34,6 +34,9 @@ public class ReportChartParams implements Serializable {
     @ApiModelProperty("数据源ID")
     private Long datasourceId;
 
+    @ApiModelProperty("类型")
+    private String category;
+
     @ApiModelProperty("脚本")
     private String script;
 
@@ -85,6 +88,14 @@ public class ReportChartParams implements Serializable {
 
     public void setDatasourceId(Long datasourceId) {
         this.datasourceId = datasourceId;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public String getScript() {
@@ -150,6 +161,7 @@ public class ReportChartParams implements Serializable {
             ", reportId = " + reportId +
             ", chartParamsId = " + chartParamsId +
             ", datasourceId = " + datasourceId +
+            ", category = " + category +
             ", script = " + script +
             ", status = " + status +
             ", createTime = " + createTime +
