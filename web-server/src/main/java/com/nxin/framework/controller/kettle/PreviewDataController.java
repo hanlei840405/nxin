@@ -9,8 +9,6 @@ import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.utils.LoginUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.pentaho.di.core.exception.KettleDatabaseException;
-import org.pentaho.di.core.exception.KettleValueException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +30,6 @@ public class PreviewDataController {
     private DatasourceService datasourceService;
     @Autowired
     private DynamicQueryDataService dynamicQueryDataService;
-    public static final int MAX_BINARY_STRING_PREVIEW_SIZE = 1000000;
 
     @PostMapping("/preview")
     public ResponseEntity<Map<String, Object>> preview(@RequestBody Payload payload) {
@@ -44,7 +41,7 @@ public class PreviewDataController {
                 try {
                     Map<String, Object> result = dynamicQueryDataService.preview(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), payload.sql);
                     return ResponseEntity.ok(result);
-                } catch (KettleDatabaseException | KettleValueException e) {
+                } catch (Exception e) {
                     return ResponseEntity.status(Constant.EXCEPTION_SQL_GRAMMAR).build();
                 }
             }
@@ -59,8 +56,12 @@ public class PreviewDataController {
         if (datasource != null && datasource.getProjectId() != null) {
             List<User> members = userService.findByResource(datasource.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
-                List<Map<String, Object>> response = dynamicQueryDataService.structure(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), payload.category, payload.name);
-                return ResponseEntity.ok(response);
+                try {
+                    List<Map<String, Object>> response = dynamicQueryDataService.structure(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), payload.category, payload.name);
+                    return ResponseEntity.ok(response);
+                } catch (Exception e) {
+                    return ResponseEntity.status(Constant.EXCEPTION_SQL_GRAMMAR).build();
+                }
             }
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();

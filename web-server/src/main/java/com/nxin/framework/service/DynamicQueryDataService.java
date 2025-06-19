@@ -4,6 +4,7 @@ import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.DatasourceService;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.database.Database;
 import org.pentaho.di.core.database.DatabaseMeta;
@@ -20,14 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.ResultSet;
 import java.util.*;
 
+@Slf4j
 @Service
 public class DynamicQueryDataService {
     @Autowired
     private DatasourceService datasourceService;
 
-    public Map<String, Object> preview(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String sql) throws KettleDatabaseException, KettleValueException {
+    public Map<String, Object> preview(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String sql) throws Exception {
         Map<String, Object> result = new HashMap<>(0);
         List<String> headers = new ArrayList<>(0);
         List<Map<String, String>> records = new ArrayList<>(0);
@@ -57,15 +60,14 @@ public class DynamicQueryDataService {
             result.put("records", records);
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            log.error(e.getMessage(), e);
+            throw e;
         } finally {
             db.close();
         }
     }
 
-    @SneakyThrows
-    public List<Map<String, Object>> structure(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String type, String tableName) {
+    public List<Map<String, Object>> structure(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String type, String tableName) throws Exception {
         List<Map<String, Object>> response = new ArrayList<>(0);
         DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category, host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
 //        DatabaseMeta databaseMeta = new DatabaseMeta(name, DatasourceType.getValue(category), "JDBC", host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password));
@@ -140,6 +142,41 @@ public class DynamicQueryDataService {
                 }
             }
             return response;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        } finally {
+            db.close();
+        }
+    }
+
+    public Map<String, Object> query(String name, String category, String host, String schemaName, String port, String username, String password, String url, String driver, String sql) throws Exception {
+        Map<String, Object> result = new HashMap<>(0);
+        List<String> headers = new ArrayList<>(0);
+        List<Map<String, Object>> records = new ArrayList<>(0);
+        DatabaseMeta databaseMeta = DatabaseMetaUtils.init(name, category, host, schemaName, port, username, Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(password), url, driver);
+        Database db = new Database(new SimpleLoggingObject("Spoon", LoggingObjectType.SPOON, null), databaseMeta);
+        try {
+            db.connect();
+            ResultSet rs = db.openQuery(sql + Const.CR);
+            RowMetaInterface rowMeta = db.getReturnRowMeta();
+            for (int i = 0; i < rowMeta.size(); i++) {
+                ValueMetaInterface v = rowMeta.getValueMeta(i);
+                headers.add(v.getName());
+            }
+            while (rs.next()) {
+                Map<String, Object> record = new HashMap<>(0);
+                for (String header : headers) {
+                    record.put(header, rs.getObject(header));
+                }
+                records.add(record);
+            }
+            result.put("headers", headers);
+            result.put("records", records);
+            return result;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
         } finally {
             db.close();
         }

@@ -14,4 +14,8 @@ public class ReportChartParamsDto extends CrudDto implements Serializable {
     private Long chartParamsId;
     private String category;
     private String script;
+
+    // chart
+    private String field;
+    private String fieldCategory;
 }

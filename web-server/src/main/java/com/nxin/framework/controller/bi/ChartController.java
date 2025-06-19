@@ -1,7 +1,7 @@
 package com.nxin.framework.controller.bi;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
@@ -132,17 +132,7 @@ public class ChartController {
     @PostMapping("/chart/preview")
     public ResponseEntity<String> preview(@RequestBody ChartDto chartDto) {
         if (!StringUtils.hasLength(chartDto.getOptions()) || !StringUtils.hasLength(chartDto.getData())) {
-            if (chartDto.getId() != null) {
-                Chart chart = chartService.one(chartDto.getId());
-                if (chart != null) {
-                    chartDto.setData(chart.getData());
-                    chartDto.setOptions(chart.getOptions());
-                } else {
-                    return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
-                }
-            } else {
-                return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
-            }
+            return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
         }
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
         cfg.setClassLoaderForTemplateLoading(this.getClass().getClassLoader(), "/");

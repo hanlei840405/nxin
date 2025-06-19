@@ -1,25 +1,23 @@
 package com.nxin.framework.controller.bi;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.bi.ReportChartParamsConverter;
 import com.nxin.framework.converter.bean.bi.ReportConverter;
+import com.nxin.framework.dto.bi.ReportChartParamsDto;
 import com.nxin.framework.dto.bi.ReportDto;
 import com.nxin.framework.entity.auth.User;
-import com.nxin.framework.entity.bi.Chart;
-import com.nxin.framework.entity.bi.ChartParams;
-import com.nxin.framework.entity.bi.Report;
-import com.nxin.framework.entity.bi.ReportChartParams;
+import com.nxin.framework.entity.basic.Datasource;
+import com.nxin.framework.entity.bi.*;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.service.DynamicQueryDataService;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
-import com.nxin.framework.service.bi.ChartParamsService;
-import com.nxin.framework.service.bi.ChartService;
-import com.nxin.framework.service.bi.ReportChartParamsService;
-import com.nxin.framework.service.bi.ReportService;
+import com.nxin.framework.service.basic.DatasourceService;
+import com.nxin.framework.service.bi.*;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.bi.ReportChartParamsVo;
@@ -35,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.springframework.util.NumberUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,9 +68,20 @@ public class ReportController {
     private ReportChartParamsService reportChartParamsService;
     @Autowired
     private ChartParamsService chartParamsService;
+    @Autowired
+    private DynamicQueryDataService dynamicQueryDataService;
+    @Autowired
+    private DatasourceService datasourceService;
+    @Autowired
+    private ModelService modelService;
 
     private final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
     private final BeanConverter<ReportChartParamsVo, ReportChartParams> reportChartParamsConverter = new ReportChartParamsConverter();
+    private static final String DICT_REPORT_CHART_CATEGORY = "REPORT-CHART-CATEGORY";
+    private static final String CATEGORY_SQL = "sql";
+    private static final String FIELD_CATEGORY_NUMBER = "number";
+    private static final String FIELD_CATEGORY_ARRAY = "array";
+    private static final String FIELD_CATEGORY_OBJECT = "object";
 
     @GetMapping("/report/{id}")
     public ResponseEntity<ReportVo> one(@PathVariable Long id) {
@@ -200,5 +210,59 @@ public class ReportController {
             }
         }
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+    }
+
+    @PostMapping("/report/paint")
+    public ResponseEntity<String> paint(@RequestBody ReportDto reportDto) {
+        if (reportDto.getId() != null) {
+            User loginUser = userService.one(LoginUtils.getUsername());
+            Report report = reportService.one(reportDto.getId());
+            List<User> members = userService.findByResource(report.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            }
+        }
+        if (reportDto.getModelId() == null) {
+            return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+        }
+        Model model = modelService.one(reportDto.getModelId());
+        Datasource datasource = datasourceService.one(model.getDatasourceId());
+        Map<String, Object> source = new HashMap<>();
+        for (ReportChartParamsDto item : reportDto.getReportChartParamsList()) {
+            if (CATEGORY_SQL.equals(item.getCategory())) {
+                try {
+                    Map<String, Object> result = dynamicQueryDataService.query(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), datasource.getPassword(), datasource.getUrl(), datasource.getDriver(), item.getScript());
+                    source.put(item.getField(), result.get("records"));
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+                }
+            } else if (FIELD_CATEGORY_NUMBER.equals(item.getFieldCategory())) {
+                source.put(item.getField(), NumberUtils.parseNumber(item.getScript(), Integer.class));
+            } else if (FIELD_CATEGORY_ARRAY.equals(item.getFieldCategory())) {
+                source.put(item.getField(), JSON.parseArray(item.getScript()));
+            } else if (FIELD_CATEGORY_OBJECT.equals(item.getFieldCategory())) {
+                source.put(item.getField(), JSON.parseObject(item.getScript()));
+            } else {
+                source.put(item.getField(), item.getScript());
+            }
+        }
+        Chart chart = chartService.one(reportDto.getChartId());
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+        cfg.setClassLoaderForTemplateLoading(this.getClass().getClassLoader(), "/");
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        cfg.setLogTemplateExceptions(false);
+        cfg.setWrapUncheckedExceptions(true);
+        try {
+            StringTemplateLoader stringLoader = new StringTemplateLoader();
+            stringLoader.putTemplate("chartTemplate", chart.getOptions());
+            cfg.setTemplateLoader(stringLoader);
+            Template template = cfg.getTemplate("chartTemplate");
+            return ResponseEntity.ok(FreeMarkerTemplateUtils.processTemplateIntoString(template, source));
+        } catch (IOException | TemplateException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+        }
     }
 }
