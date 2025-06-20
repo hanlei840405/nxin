@@ -4,6 +4,7 @@ import com.nxin.framework.vo.BaseVo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -16,5 +17,7 @@ public class ChartVo extends BaseVo {
     private String options;
     private String data;
     private String description;
+    private Boolean publish;
+    private LocalDateTime publishTime;
     private List<ChartParamsVo> chartParamsList;
 }

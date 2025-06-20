@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -41,14 +43,13 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
         return getBaseMapper().selectById(id);
     }
 
-    public IPage<Chart> search(String username, List<Long> chartIdList, String name, int pageNo, int pageSize) {
+    public IPage<Chart> search(List<Long> chartIdList, String name, int pageNo, int pageSize) {
         Page<Chart> page = new Page<>(pageNo, pageSize);
         if (chartIdList.isEmpty()) {
             return page;
         }
         LambdaQueryWrapper<Chart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(Chart::getId, chartIdList);
-        queryWrapper.eq(Chart::getCreator, username);
         queryWrapper.eq(Chart::getStatus, Constant.ACTIVE);
         if (StringUtils.hasLength(name)) {
             queryWrapper.likeRight(Chart::getName, name);
@@ -62,24 +63,28 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
         if (chart.getId() != null) {
             Chart persisted = one(chart.getId());
             BeanUtils.copyProperties(chart, persisted, "version");
-            chart.setModifier(LoginUtils.getUsername());
             upsert = getBaseMapper().updateById(persisted);
         } else {
             chart.setStatus(Constant.ACTIVE);
             chart.setVersion(1);
-            chart.setCreator(LoginUtils.getUsername());
             upsert = getBaseMapper().insert(chart);
             User user = userService.one(LoginUtils.getUsername());
             resourceService.registryBusinessResource(String.valueOf(chart.getId()), chart.getName(), Constant.RESOURCE_CATEGORY_CHART, user);
         }
         LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChartParams::getChartId, chart.getId());
-        chartParamsService.remove(queryWrapper);
+        queryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);
         chartParamsList.forEach(chartParams -> {
             chartParams.setChartId(chart.getId());
-            chartParams.setVersion(1);
+            if (chartParams.getId() == null) {
+                chartParams.setVersion(1);
+                chartParams.setStatus(Constant.ACTIVE);
+            }
         });
-        chartParamsService.saveBatch(chartParamsList);
+        List<ChartParams> afterPublishCreateList = chartParamsService.list(queryWrapper).stream().filter(item -> Objects.isNull(chart.getPublishTime()) || item.getCreateTime().isAfter(chart.getPublishTime())).collect(Collectors.toList());
+        List<ChartParams> deletedList = afterPublishCreateList.stream().filter(item -> chartParamsList.stream().noneMatch(i -> Objects.equals(i.getId(), item.getId()))).peek(item -> item.setStatus(Constant.INACTIVE)).collect(Collectors.toList());
+        chartParamsList.addAll(deletedList);
+        chartParamsService.saveOrUpdateBatch(chartParamsList);
         return upsert > 0;
     }
 

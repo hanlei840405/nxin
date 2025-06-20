@@ -36,7 +36,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +74,7 @@ public class ChartController {
             ChartVo chartVo = chartConverter.convert(chart);
             LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(ChartParams::getChartId, id);
+            queryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);
             List<ChartParams> chartParams = chartParamsService.list(queryWrapper);
             chartVo.setChartParamsList(chartParamsConverter.convert(chartParams));
             return ResponseEntity.ok(chartVo);
@@ -83,7 +87,20 @@ public class ChartController {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> chartIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).collect(Collectors.toList());
-        IPage<Chart> chartIPage = chartService.search(LoginUtils.getUsername(), chartIdList, chartDto.getPayload(), chartDto.getPageNo(), chartDto.getPageSize());
+        IPage<Chart> chartIPage = chartService.search(chartIdList, chartDto.getPayload(), chartDto.getPageNo(), chartDto.getPageSize());
+        if (chartIPage.getSize() > 0) {
+            LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ChartParams::getChartId, chartIPage.getRecords().stream().map(Chart::getId).collect(Collectors.toList()));
+            queryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);
+            List<ChartParams> chartParamsList = chartParamsService.list(queryWrapper);
+            Map<Long, List<ChartParams>> chartChartParamsListMap = chartParamsList.stream().collect(Collectors.groupingBy(ChartParams::getChartId));
+            chartIPage.getRecords().forEach(record -> {
+                boolean unpublish = chartChartParamsListMap.get(record.getId()).stream().anyMatch(item -> Objects.isNull(record.getPublishTime()) || item.getCreateTime().isAfter(record.getPublishTime()));
+                if (unpublish) {
+                    record.setPublish(false);
+                }
+            });
+        }
         return ResponseEntity.ok(new PageVo<>(chartIPage.getTotal(), chartConverter.convert(chartIPage.getRecords())));
     }
 
@@ -105,14 +122,30 @@ public class ChartController {
             }
         }
         BeanUtils.copyProperties(chartDto, chart);
-
         List<ChartParams> chartParamsList = chartDto.getChartParamsList().stream().map(dto -> {
             ChartParams chartParams = new ChartParams();
-            BeanUtils.copyProperties(dto, chartParams, "id");
+            BeanUtils.copyProperties(dto, chartParams);
             return chartParams;
         }).collect(Collectors.toList());
         chartService.save(chart, chartParamsList);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/chart/publish")
+    public ResponseEntity publish(@RequestBody ChartDto chartDto) {
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<User> members = userService.findByResource(chartDto.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+        if (!members.contains(loginUser)) {
+            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        }
+        Chart chart = chartService.one(chartDto.getId());
+        if (chart != null) {
+            chart.setPublish(true);
+            chart.setPublishTime(LocalDateTime.now());
+            chartService.updateById(chart);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
     @DeleteMapping("/chart/{id}")
@@ -145,11 +178,7 @@ public class ChartController {
             stringLoader.putTemplate("chartTemplate", chartDto.getOptions());
             cfg.setTemplateLoader(stringLoader);
             Template template = cfg.getTemplate("chartTemplate");
-//            Map<String, Object> params = new HashMap<>();
             JSONObject source = JSON.parseObject(chartDto.getData());
-//            for (Map.Entry<String, Object> entry : source.entrySet()) {
-//                params.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
-//            }
             return ResponseEntity.ok(FreeMarkerTemplateUtils.processTemplateIntoString(template, source));
         } catch (IOException | TemplateException e) {
             log.error(e.getMessage(), e);

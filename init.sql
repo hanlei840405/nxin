@@ -415,6 +415,8 @@ CREATE TABLE `bi_model` (
   `description` varchar(255) DEFAULT NULL COMMENT '模型描述',
   `datasource_id` bigint DEFAULT NULL COMMENT '数据源ID',
   `project_id` bigint DEFAULT NULL COMMENT '工程ID',
+  `publish` bit(1) DEFAULT NULL COMMENT '是否发布',
+  `publish_time` datetime DEFAULT NULL COMMENT '发布时间',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `creator` varchar(255) DEFAULT NULL COMMENT '创建者',
   `modify_time` datetime DEFAULT NULL COMMENT '修改时间',

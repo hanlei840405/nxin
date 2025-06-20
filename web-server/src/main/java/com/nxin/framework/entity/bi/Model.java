@@ -39,6 +39,12 @@ public class Model implements Serializable {
     @ApiModelProperty("工程ID")
     private Long projectId;
 
+    @ApiModelProperty("是否发布")
+    private Boolean publish;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime publishTime;
+
     @ApiModelProperty("创建时间")
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
@@ -110,12 +116,28 @@ public class Model implements Serializable {
         this.projectId = projectId;
     }
 
+    public LocalDateTime getPublishTime() {
+        return publishTime;
+    }
+
+    public void setPublishTime(LocalDateTime publishTime) {
+        this.publishTime = publishTime;
+    }
+
     public LocalDateTime getCreateTime() {
         return createTime;
     }
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public Boolean getPublish() {
+        return publish;
+    }
+
+    public void setPublish(Boolean publish) {
+        this.publish = publish;
     }
 
     public String getCreator() {
@@ -167,6 +189,8 @@ public class Model implements Serializable {
             ", description = " + description +
             ", datasourceId = " + datasourceId +
             ", projectId = " + projectId +
+            ", publish = " + publish +
+            ", publishTime = " + publishTime +
             ", createTime = " + createTime +
             ", creator = " + creator +
             ", modifyTime = " + modifyTime +

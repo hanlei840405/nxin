@@ -1,8 +1,7 @@
 package com.nxin.framework.entity.bi;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import io.swagger.annotations.ApiModel;
@@ -43,20 +42,30 @@ public class Chart implements Serializable {
     @ApiModelProperty("描述")
     private String description;
 
+    @ApiModelProperty("是否发布")
+    private Boolean publish;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime publishTime;
+
     @ApiModelProperty("状态")
     private String status;
 
     @ApiModelProperty("创建时间")
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     @ApiModelProperty("创建者")
+    @TableField(fill = FieldFill.INSERT)
     private String creator;
 
-    @ApiModelProperty("修改者")
-    private String modifier;
-
-    @ApiModelProperty("最后修改时间")
+    @ApiModelProperty("修改时间")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime modifyTime;
+
+    @ApiModelProperty("修改者")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String modifier;
 
     @ApiModelProperty("版本")
     private Integer version;
@@ -117,6 +126,22 @@ public class Chart implements Serializable {
         this.description = description;
     }
 
+    public Boolean getPublish() {
+        return publish;
+    }
+
+    public void setPublish(Boolean publish) {
+        this.publish = publish;
+    }
+
+    public LocalDateTime getPublishTime() {
+        return publishTime;
+    }
+
+    public void setPublishTime(LocalDateTime publishTime) {
+        this.publishTime = publishTime;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -174,6 +199,8 @@ public class Chart implements Serializable {
             ", category = " + category +
             ", options = " + options +
             ", description = " + description +
+            ", publish = " + publish +
+            ", publishTime = " + publishTime +
             ", status = " + status +
             ", createTime = " + createTime +
             ", creator = " + creator +
