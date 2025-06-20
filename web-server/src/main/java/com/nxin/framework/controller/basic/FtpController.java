@@ -138,7 +138,7 @@ public class FtpController {
             return ResponseEntity.ok(Boolean.TRUE);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return ResponseEntity.ok(Boolean.FALSE);
+            return ResponseEntity.status(Constant.EXCEPTION_FTP_CONNECTION).build();
         }
     }
 

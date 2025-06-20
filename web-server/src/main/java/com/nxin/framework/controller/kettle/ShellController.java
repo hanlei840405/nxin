@@ -130,7 +130,7 @@ public class ShellController {
                 shellService.save(shell);
                 return ResponseEntity.ok(shell);
             } catch (DuplicateKeyException e) {
-                return ResponseEntity.status(Constant.EXCEPTION_DUPLICATED).build();
+                return ResponseEntity.status(Constant.EXCEPTION_DUPLICATED).body(shellDto.getName());
             } catch (XmlParseException e) {
                 return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
             } catch (ConvertException e) {
