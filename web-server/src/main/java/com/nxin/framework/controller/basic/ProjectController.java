@@ -3,6 +3,7 @@ package com.nxin.framework.controller.basic;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.base.ProjectConverter;
 import com.nxin.framework.dto.basic.ProjectDto;
+import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Project;
 import com.nxin.framework.enums.Constant;
@@ -22,6 +23,7 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PROJECT')")
 @RestController
@@ -36,7 +38,7 @@ public class ProjectController {
     @Autowired
     private ResourceService resourceService;
 
-    private BeanConverter<ProjectVo, Project> projectConverter = new ProjectConverter();
+    private static final BeanConverter<ProjectVo, Project> projectConverter = new ProjectConverter();
 
     @GetMapping("/project/{id}")
     public ResponseEntity<ProjectVo> one(@PathVariable Long id, Principal principal) {
@@ -51,7 +53,10 @@ public class ProjectController {
     @PostMapping("/projects")
     public ResponseEntity<List<ProjectVo>> projects(@RequestBody ProjectDto projectDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<ProjectVo> projectsVo = projectConverter.convert(projectService.search(projectDto.getPayload(), loginUser.getId()));
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> projectIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        List<Project> projects = projectService.search(projectIdList, projectDto.getPayload());
+        List<ProjectVo> projectsVo = projectConverter.convert(projects);
         return ResponseEntity.ok(projectsVo);
     }
 
@@ -77,7 +82,7 @@ public class ProjectController {
         if (persisted != null && Objects.equals(loginUser.getId(), persisted.getUserId())) { // 登陆人为工程拥有人
             List<User> members = userService.findByResource(persisted.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.size() == 1 && Objects.equals(members.get(0).getId(), loginUser.getId())) { // 项目成员仅剩负责人自己
-                projectService.deleteProject(persisted);
+                projectService.delete(persisted);
                 return ResponseEntity.ok().build();
             }
             return ResponseEntity.status(Constant.EXCEPTION_OWNER).build();

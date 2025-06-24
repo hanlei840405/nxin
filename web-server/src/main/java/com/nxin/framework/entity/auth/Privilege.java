@@ -47,16 +47,6 @@ public class Privilege implements Serializable {
     @Version
     private Integer version;
 
-    public static String NAME_COLUMN = "name";
-
-    public static String RESOURCE_ID_COLUMN = "resource_id";
-
-    public static String CATEGORY_COLUMN = "category";
-
-    public static String STATUS_COLUMN = "status";
-
-    public static String MODIFIER_COLUMN = "modifier";
-
     public Long getId() {
         return id;
     }

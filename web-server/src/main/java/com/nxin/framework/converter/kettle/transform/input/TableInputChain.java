@@ -52,7 +52,6 @@ public class TableInputChain extends TransformConvertChain {
             tableInputMeta.setVariableReplacementActive(variableReplacementActive);
             tableInputMeta.setRowLimit(String.valueOf(rowLimit));
 
-
             Datasource datasource = datasourceService.one((long) databaseId);
             DatabaseMeta databaseMeta = DatabaseMetaUtils.init(datasource.getName(), datasource.getGeneric() ? Constant.GENERIC : datasource.getCategory(), datasource.getHost(), datasource.getSchemaName(), String.valueOf(datasource.getPort()), datasource.getUsername(), Constant.PASSWORD_ENCRYPTED_PREFIX + Encr.encryptPassword(datasource.getPassword()), datasource.getUrl(), datasource.getDriver());
             databaseMeta.setStreamingResults(datasource.getUseCursor());

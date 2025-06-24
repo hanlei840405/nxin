@@ -1,6 +1,7 @@
 package com.nxin.framework.service.bi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -40,7 +41,10 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
     private ChartParamsService chartParamsService;
 
     public Chart one(Long id) {
-        return getBaseMapper().selectById(id);
+        LambdaQueryWrapper<Chart> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Chart::getId, id);
+        queryWrapper.eq(Chart::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public IPage<Chart> search(List<Long> chartIdList, String name, int pageNo, int pageSize) {
@@ -62,7 +66,7 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
         int upsert;
         if (chart.getId() != null) {
             Chart persisted = one(chart.getId());
-            BeanUtils.copyProperties(chart, persisted, "version");
+            BeanUtils.copyProperties(chart, persisted, "publish", "publishTime", "version");
             upsert = getBaseMapper().updateById(persisted);
         } else {
             chart.setStatus(Constant.ACTIVE);
@@ -75,8 +79,8 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
         queryWrapper.eq(ChartParams::getChartId, chart.getId());
         queryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);
         chartParamsList.forEach(chartParams -> {
-            chartParams.setChartId(chart.getId());
             if (chartParams.getId() == null) {
+                chartParams.setChartId(chart.getId());
                 chartParams.setVersion(1);
                 chartParams.setStatus(Constant.ACTIVE);
             }
@@ -86,6 +90,16 @@ public class ChartService extends ServiceImpl<ChartMapper, Chart> {
         chartParamsList.addAll(deletedList);
         chartParamsService.saveOrUpdateBatch(chartParamsList);
         return upsert > 0;
+    }
+
+    @Transactional
+    public void delete(Chart persisted) {
+        persisted.setStatus(Constant.INACTIVE);
+        getBaseMapper().updateById(persisted);
+        LambdaUpdateWrapper<ChartParams> chartParamsLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        chartParamsLambdaUpdateWrapper.eq(ChartParams::getChartId, persisted.getId());
+        chartParamsLambdaUpdateWrapper.set(ChartParams::getStatus, Constant.INACTIVE);
+        chartParamsService.update(chartParamsLambdaUpdateWrapper);
     }
 
 }

@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class ModelConverter extends BeanConverter<ModelVo, Model> {
 
     @Override
-    public ModelVo convert(Model model) {
+    public ModelVo convert(Model model, String... ignores) {
         ModelVo modelVo = new ModelVo();
-        BeanUtils.copyProperties(model, modelVo);
+        BeanUtils.copyProperties(model, modelVo, ignores);
         return modelVo;
     }
 
     @Override
-    public List<ModelVo> convert(List<Model> modelList) {
-        return modelList.stream().map(this::convert).collect(Collectors.toList());
+    public List<ModelVo> convert(List<Model> modelList, String... ignores) {
+        return modelList.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

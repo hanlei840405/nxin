@@ -1,16 +1,21 @@
 package com.nxin.framework.controller.basic;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.enterprisedt.net.ftp.FTPClient;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.base.FtpConverter;
+import com.nxin.framework.dto.basic.DatasourceDto;
 import com.nxin.framework.dto.basic.FtpDto;
+import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.utils.LoginUtils;
+import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.basic.FtpVo;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.util.Utils;
@@ -28,9 +33,9 @@ import java.io.File;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @PreAuthorize("hasAuthority('ROOT') or hasAuthority('FTP')")
@@ -43,23 +48,38 @@ public class FtpController {
     private ProjectService projectService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ResourceService resourceService;
     @Value("${dev.dir}")
     private String devDir;
-    private final BeanConverter<FtpVo, Ftp> ftpConverter = new FtpConverter();
+    private static final BeanConverter<FtpVo, Ftp> ftpConverter = new FtpConverter();
     private final static String FTP = "FTP";
 
     @GetMapping("/ftp/{id}")
     public ResponseEntity<FtpVo> one(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
         Ftp ftp = ftpService.one(id);
-        if (ftp != null && ftp.getProjectId() != null) {
-            List<User> members = userService.findByResource(ftp.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        if (ftp != null) {
+            List<User> members = userService.findByResource(id.toString(), Constant.RESOURCE_CATEGORY_FTP, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
                 return ResponseEntity.ok(ftpConverter.convert(ftp));
             }
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
+    }
+
+    @PostMapping("/ftpPage")
+    public ResponseEntity<PageVo<FtpVo>> page(@RequestBody DatasourceDto ftpDto) {
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<User> members = userService.findByResource(ftpDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        if (!members.contains(loginUser)) {
+            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        }
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_FTP, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> ftpIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        IPage<Ftp> ftpIPage = ftpService.search(ftpDto.getProjectId(), ftpIdList, ftpDto.getPayload(), ftpDto.getPageNo(), ftpDto.getPageSize());
+        return ResponseEntity.ok(new PageVo<>(ftpIPage.getTotal(), ftpConverter.convert(ftpIPage.getRecords())));
     }
 
     @PostMapping("/ftpList")
@@ -75,14 +95,16 @@ public class FtpController {
     @PostMapping("/ftp")
     public ResponseEntity save(@RequestBody FtpDto ftpDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(ftpDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (members.contains(loginUser)) {
-            Ftp ftp = new Ftp();
-            BeanUtils.copyProperties(ftpDto, ftp);
-            ftpService.save(ftp);
-            return ResponseEntity.ok().build();
+        Ftp ftp = new Ftp();
+        if (ftp.getId() != null) {
+            List<User> members = userService.findByResource(ftp.getId().toString(), Constant.RESOURCE_CATEGORY_FTP, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            }
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        BeanUtils.copyProperties(ftpDto, ftp);
+        ftpService.save(ftp);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/ftp/test")
@@ -147,12 +169,14 @@ public class FtpController {
         User loginUser = userService.one(LoginUtils.getUsername());
         Ftp persisted = ftpService.one(id);
         if (persisted != null) {
-            List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-            if (members.contains(loginUser)) {
-                ftpService.delete(persisted.getProjectId(), Collections.singletonList(persisted.getId()));
-                return ResponseEntity.ok().build();
+            List<User> members = userService.findByResource(id.toString(), Constant.RESOURCE_CATEGORY_FTP, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
+            persisted.setStatus(Constant.INACTIVE);
+            ftpService.updateById(persisted);
+            return ResponseEntity.ok().build();
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 }

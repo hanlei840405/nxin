@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class ReportConverter extends BeanConverter<ReportVo, Report> {
 
     @Override
-    public ReportVo convert(Report report) {
+    public ReportVo convert(Report report, String... ignores) {
         ReportVo reportVo = new ReportVo();
-        BeanUtils.copyProperties(report, reportVo);
+        BeanUtils.copyProperties(report, reportVo, ignores);
         return reportVo;
     }
 
     @Override
-    public List<ReportVo> convert(List<Report> reportList) {
-        return reportList.stream().map(this::convert).collect(Collectors.toList());
+    public List<ReportVo> convert(List<Report> reportList, String... ignores) {
+        return reportList.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

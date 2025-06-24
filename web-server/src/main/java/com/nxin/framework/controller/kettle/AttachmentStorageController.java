@@ -35,7 +35,7 @@ public class AttachmentStorageController {
     @Autowired
     private UserService userService;
 
-    private final BeanConverter<AttachmentStorageVo, AttachmentStorage> attachmentStorageConverter = new AttachmentStorageConverter();
+    private static final BeanConverter<AttachmentStorageVo, AttachmentStorage> attachmentStorageConverter = new AttachmentStorageConverter();
 
 
     @PostMapping("/attachmentStorageList")

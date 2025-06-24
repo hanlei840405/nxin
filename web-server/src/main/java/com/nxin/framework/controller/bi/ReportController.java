@@ -9,6 +9,7 @@ import com.nxin.framework.converter.bean.bi.ReportChartParamsConverter;
 import com.nxin.framework.converter.bean.bi.ReportConverter;
 import com.nxin.framework.dto.bi.ReportChartParamsDto;
 import com.nxin.framework.dto.bi.ReportDto;
+import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Datasource;
 import com.nxin.framework.entity.bi.*;
@@ -38,9 +39,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -75,9 +78,8 @@ public class ReportController {
     @Autowired
     private ModelService modelService;
 
-    private final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
-    private final BeanConverter<ReportChartParamsVo, ReportChartParams> reportChartParamsConverter = new ReportChartParamsConverter();
-    private static final String DICT_REPORT_CHART_CATEGORY = "REPORT-CHART-CATEGORY";
+    private static final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
+    private static final BeanConverter<ReportChartParamsVo, ReportChartParams> reportChartParamsConverter = new ReportChartParamsConverter();
     private static final String CATEGORY_SQL = "sql";
     private static final String FIELD_CATEGORY_NUMBER = "number";
     private static final String FIELD_CATEGORY_ARRAY = "array";
@@ -99,6 +101,7 @@ public class ReportController {
                 if (!chartParamsIdList.isEmpty()) {
                     LambdaQueryWrapper<ChartParams> chartParamsQueryWrapper = new LambdaQueryWrapper<>();
                     chartParamsQueryWrapper.in(ChartParams::getId, chartParamsIdList);
+                    chartParamsQueryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);
                     List<ChartParams> chartParamsList = chartParamsService.list(chartParamsQueryWrapper);
                     Map<Long, ChartParams> chartParamsMap = chartParamsList.stream().collect(Collectors.toMap(ChartParams::getId, v -> v));
                     reportChartParamsVos.forEach(item -> {
@@ -118,12 +121,25 @@ public class ReportController {
     @PostMapping("/reportPage")
     public ResponseEntity<PageVo<ReportVo>> page(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(reportDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (members.contains(loginUser)) {
-            IPage<Report> reportIPage = reportService.search(reportDto.getProjectId(), reportDto.getPayload(), reportDto.getPageNo(), reportDto.getPageSize());
-            return ResponseEntity.ok(new PageVo<>(reportIPage.getTotal(), reportConverter.convert(reportIPage.getRecords())));
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> reportIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        IPage<Report> reportIPage = reportService.search(reportDto.getProjectId(), reportIdList, reportDto.getPayload(), reportDto.getPageNo(), reportDto.getPageSize());
+        if (reportIPage.getSize() > 0) {
+            LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ReportChartParams::getReportId, reportIPage.getRecords().stream().map(Report::getId).collect(Collectors.toList()));
+            queryWrapper.eq(ReportChartParams::getStatus, Constant.ACTIVE);
+            List<ReportChartParams> reportChartParamsList = reportChartParamsService.list(queryWrapper);
+            if (!reportChartParamsList.isEmpty()) {
+                Map<Long, List<ReportChartParams>> reportChartParamsListMap = reportChartParamsList.stream().collect(Collectors.groupingBy(ReportChartParams::getReportId));
+                reportIPage.getRecords().forEach(record -> {
+                    boolean unpublish = reportChartParamsListMap.get(record.getId()).stream().anyMatch(item -> Objects.isNull(record.getPublishTime()) || item.getCreateTime().isAfter(record.getPublishTime()));
+                    if (unpublish) {
+                        record.setPublish(false);
+                    }
+                });
+            }
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        return ResponseEntity.ok(new PageVo<>(reportIPage.getTotal(), reportConverter.convert(reportIPage.getRecords())));
     }
 
     @PostMapping("/reportList")
@@ -134,6 +150,7 @@ public class ReportController {
             LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Report::getProjectId, reportDto.getProjectId());
             queryWrapper.eq(Report::getStatus, Constant.ACTIVE);
+            queryWrapper.eq(Report::getPublish, Boolean.TRUE);
             return ResponseEntity.ok(reportConverter.convert(reportService.list(queryWrapper)));
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
@@ -153,11 +170,28 @@ public class ReportController {
 
         List<ReportChartParams> reportChartParamsList = reportDto.getReportChartParamsList().stream().map(dto -> {
             ReportChartParams reportChartParams = new ReportChartParams();
-            BeanUtils.copyProperties(dto, reportChartParams, "id");
+            BeanUtils.copyProperties(dto, reportChartParams);
             return reportChartParams;
         }).collect(Collectors.toList());
         reportService.save(report, reportChartParamsList);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/report/publish")
+    public ResponseEntity publish(@RequestBody ReportDto reportDto) {
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<User> members = userService.findByResource(reportDto.getId().toString(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+        if (!members.contains(loginUser)) {
+            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        }
+        Report report = reportService.one(reportDto.getId());
+        if (report != null) {
+            report.setPublish(true);
+            report.setPublishTime(LocalDateTime.now());
+            reportService.updateById(report);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
     @DeleteMapping("/report/{id}")
@@ -165,9 +199,9 @@ public class ReportController {
         User loginUser = userService.one(LoginUtils.getUsername());
         Report persisted = reportService.one(id);
         if (persisted != null) {
-            List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+            List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
-                reportService.removeById(persisted);
+                reportService.delete(persisted);
                 return ResponseEntity.ok().build();
             }
         }

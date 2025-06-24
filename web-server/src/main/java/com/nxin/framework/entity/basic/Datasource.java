@@ -1,17 +1,15 @@
 package com.nxin.framework.entity.basic;
 
 import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.annotations.ApiModel;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author jesse han
@@ -93,16 +91,6 @@ public class Datasource implements Serializable {
 
     @Version
     private Integer version;
-
-    public static String ID_COLUMN = "id";
-
-    public static String STATUS_COLUMN = "status";
-
-    public static String NAME_COLUMN = "name";
-
-    public static String PROJECT_ID_COLUMN = "project_id";
-
-    public static String MODIFIER_COLUMN = "modifier";
 
     public Long getId() {
         return id;
@@ -355,36 +343,36 @@ public class Datasource implements Serializable {
     @Override
     public String toString() {
         return "Datasource{" +
-            "id = " + id +
-            ", name = " + name +
-            ", category = " + category +
-            ", projectId = " + projectId +
-            ", useCursor = " + useCursor +
-            ", usePool = " + usePool +
-            ", username = " + username +
+                "id = " + id +
+                ", name = " + name +
+                ", category = " + category +
+                ", projectId = " + projectId +
+                ", useCursor = " + useCursor +
+                ", usePool = " + usePool +
+                ", username = " + username +
 //            ", password = " + password +
-            ", parameter = " + parameter +
-            ", poolInitial = " + poolInitial +
-            ", poolInitialSize = " + poolInitialSize +
-            ", poolMaxActive = " + poolMaxActive +
-            ", poolMaxIdle = " + poolMaxIdle +
-            ", poolMaxSize = " + poolMaxSize +
-            ", poolMaxWait = " + poolMaxWait +
-            ", poolMinIdle = " + poolMinIdle +
-            ", schemaName = " + schemaName +
-            ", host = " + host +
-            ", port = " + port +
-            ", dataSpace = " + dataSpace +
-            ", indexSpace = " + indexSpace +
-            ", driver = " + driver +
-            ", url = " + url +
-            ", status = " + status +
-            ", createTime = " + createTime +
-            ", creator = " + creator +
-            ", modifier = " + modifier +
-            ", modifyTime = " + modifyTime +
-            ", version = " + version +
-        "}";
+                ", parameter = " + parameter +
+                ", poolInitial = " + poolInitial +
+                ", poolInitialSize = " + poolInitialSize +
+                ", poolMaxActive = " + poolMaxActive +
+                ", poolMaxIdle = " + poolMaxIdle +
+                ", poolMaxSize = " + poolMaxSize +
+                ", poolMaxWait = " + poolMaxWait +
+                ", poolMinIdle = " + poolMinIdle +
+                ", schemaName = " + schemaName +
+                ", host = " + host +
+                ", port = " + port +
+                ", dataSpace = " + dataSpace +
+                ", indexSpace = " + indexSpace +
+                ", driver = " + driver +
+                ", url = " + url +
+                ", status = " + status +
+                ", createTime = " + createTime +
+                ", creator = " + creator +
+                ", modifier = " + modifier +
+                ", modifyTime = " + modifyTime +
+                ", version = " + version +
+                "}";
     }
 
     @Override

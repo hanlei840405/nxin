@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nxin.framework.mapper.auth.ApplyMapper">
+    <select id="selectUnAudit" resultType="com.nxin.framework.entity.auth.Apply">
+        SELECT auth_apply.privilege_id,
+        auth_apply.reason,
+        auth_apply.creator,
+        auth_apply.expire_date,
+        auth_apply.audit_status
+        FROM auth_apply
+        inner join auth_privilege p1 on auth_apply.privilege_id=p1.id
+        inner join auth_user_privilege on auth_user_privilege.privilege_id=p1.id
+        inner join auth_privilege p2 on auth_user_privilege.privilege_id=p2.id and p1.id=p2.id
+        where auth_apply.status='1' and auth_apply.audit_status=0 and p1.status='1' and p2.status='1' and p2.category='RW' and auth_user_privilege.user_id=#{auditor}
+        <if test="creator != null and creator != ''">
+            and auth_apply.creator=#{creator}
+        </if>
+        order by auth_apply.id desc
+    </select>
+</mapper>

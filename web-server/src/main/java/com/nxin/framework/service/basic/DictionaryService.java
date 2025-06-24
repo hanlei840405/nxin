@@ -1,6 +1,7 @@
 package com.nxin.framework.service.basic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -30,6 +31,20 @@ public class DictionaryService extends ServiceImpl<DictionaryMapper, Dictionary>
 
     @Autowired
     private DictionaryItemService dictionaryItemService;
+
+    public Dictionary one(Long id) {
+        LambdaQueryWrapper<Dictionary> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Dictionary::getId, id);
+        queryWrapper.eq(Dictionary::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
+    }
+
+    public Dictionary one(String code) {
+        LambdaQueryWrapper<Dictionary> dictionaryLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        dictionaryLambdaQueryWrapper.eq(Dictionary::getStatus, Constant.ACTIVE);
+        dictionaryLambdaQueryWrapper.eq(Dictionary::getCode, code);
+        return getBaseMapper().selectOne(dictionaryLambdaQueryWrapper);
+    }
 
     public IPage<Dictionary> search(String payload, int pageNo, int pageSize) {
         Page<Dictionary> page = new Page<>(pageNo, pageSize);
@@ -69,12 +84,12 @@ public class DictionaryService extends ServiceImpl<DictionaryMapper, Dictionary>
     }
 
     @Transactional
-    public void delete(Long id) {
-        LambdaQueryWrapper<Dictionary> dictionaryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        dictionaryLambdaQueryWrapper.eq(Dictionary::getId, id);
-        getBaseMapper().delete(dictionaryLambdaQueryWrapper);
-        LambdaQueryWrapper<DictionaryItem> dictionaryItemLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        dictionaryItemLambdaQueryWrapper.eq(DictionaryItem::getDictionaryId, id);
-        dictionaryItemService.remove(dictionaryItemLambdaQueryWrapper);
+    public void delete(Dictionary persisted) {
+        persisted.setStatus(Constant.INACTIVE);
+        getBaseMapper().updateById(persisted);
+        LambdaUpdateWrapper<DictionaryItem> dictionaryItemLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        dictionaryItemLambdaUpdateWrapper.eq(DictionaryItem::getDictionaryId, persisted.getId());
+        dictionaryItemLambdaUpdateWrapper.set(DictionaryItem::getStatus, Constant.INACTIVE);
+        dictionaryItemService.update(dictionaryItemLambdaUpdateWrapper);
     }
 }

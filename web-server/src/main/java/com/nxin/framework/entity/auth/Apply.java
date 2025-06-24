@@ -1,4 +1,4 @@
-package com.nxin.framework.entity.bi;
+package com.nxin.framework.entity.auth;
 
 import com.baomidou.mybatisplus.annotation.*;
 
@@ -9,32 +9,36 @@ import io.swagger.annotations.ApiModelProperty;
 
 /**
  * <p>
- * 元数据字段索引
+ * 权限申请
  * </p>
  *
  * @author jesse han
- * @since 2025-05-27
+ * @since 2025-06-23
  */
-@TableName("bi_metadata_index")
-@ApiModel(value = "MetadataIndex对象", description = "元数据字段索引")
-public class MetadataIndex implements Serializable {
+@TableName("auth_apply")
+@ApiModel(value = "Apply对象", description = "权限申请")
+public class Apply implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("主键")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty("索引系统名")
-    private String indexCode;
+    @ApiModelProperty("权限ID")
+    private Long privilegeId;
 
-    @ApiModelProperty("索引展示名")
-    private String indexName;
+    @ApiModelProperty("申请原因")
+    private String reason;
 
-    @ApiModelProperty("索引类型")
-    private String indexCategory;
+    @ApiModelProperty("失效日期")
+    private LocalDateTime expireDate;
 
-    @ApiModelProperty("索引对应元数据ID集合")
-    private String metadataIdArray;
+    @ApiModelProperty("审核状态")
+    private String auditStatus;
+
+    @ApiModelProperty("状态")
+    private String status;
 
     @ApiModelProperty("创建时间")
     @TableField(fill = FieldFill.INSERT)
@@ -52,9 +56,7 @@ public class MetadataIndex implements Serializable {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String modifier;
 
-    @ApiModelProperty("状态")
-    private String status;
-
+    @ApiModelProperty("版本")
     @Version
     private Integer version;
 
@@ -66,36 +68,44 @@ public class MetadataIndex implements Serializable {
         this.id = id;
     }
 
-    public String getIndexCode() {
-        return indexCode;
+    public Long getPrivilegeId() {
+        return privilegeId;
     }
 
-    public void setIndexCode(String indexCode) {
-        this.indexCode = indexCode;
+    public void setPrivilegeId(Long privilegeId) {
+        this.privilegeId = privilegeId;
     }
 
-    public String getIndexName() {
-        return indexName;
+    public String getReason() {
+        return reason;
     }
 
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
-    public String getIndexCategory() {
-        return indexCategory;
+    public LocalDateTime getExpireDate() {
+        return expireDate;
     }
 
-    public void setIndexCategory(String indexCategory) {
-        this.indexCategory = indexCategory;
+    public void setExpireDate(LocalDateTime expireDate) {
+        this.expireDate = expireDate;
     }
 
-    public String getMetadataIdArray() {
-        return metadataIdArray;
+    public String getAuditStatus() {
+        return auditStatus;
     }
 
-    public void setMetadataIdArray(String metadataIdArray) {
-        this.metadataIdArray = metadataIdArray;
+    public void setAuditStatus(String auditStatus) {
+        this.auditStatus = auditStatus;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreateTime() {
@@ -114,14 +124,6 @@ public class MetadataIndex implements Serializable {
         this.creator = creator;
     }
 
-    public LocalDateTime getModifyTime() {
-        return modifyTime;
-    }
-
-    public void setModifyTime(LocalDateTime modifyTime) {
-        this.modifyTime = modifyTime;
-    }
-
     public String getModifier() {
         return modifier;
     }
@@ -130,12 +132,12 @@ public class MetadataIndex implements Serializable {
         this.modifier = modifier;
     }
 
-    public String getStatus() {
-        return status;
+    public LocalDateTime getModifyTime() {
+        return modifyTime;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setModifyTime(LocalDateTime modifyTime) {
+        this.modifyTime = modifyTime;
     }
 
     public Integer getVersion() {
@@ -148,17 +150,17 @@ public class MetadataIndex implements Serializable {
 
     @Override
     public String toString() {
-        return "MetadataIndex{" +
+        return "Apply{" +
             "id = " + id +
-            ", indexCode = " + indexCode +
-            ", indexName = " + indexName +
-            ", indexCategory = " + indexCategory +
-            ", metadataIdArray = " + metadataIdArray +
+            ", privilegeId = " + privilegeId +
+            ", reason = " + reason +
+            ", expireDate = " + expireDate +
+            ", auditStatus = " + auditStatus +
+            ", status = " + status +
             ", createTime = " + createTime +
             ", creator = " + creator +
-            ", modifyTime = " + modifyTime +
             ", modifier = " + modifier +
-            ", status = " + status +
+            ", modifyTime = " + modifyTime +
             ", version = " + version +
         "}";
     }

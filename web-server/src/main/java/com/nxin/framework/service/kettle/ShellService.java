@@ -1,9 +1,7 @@
 package com.nxin.framework.service.kettle;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.auth.Privilege;
 import com.nxin.framework.entity.auth.User;
@@ -153,12 +151,13 @@ public class ShellService extends ServiceImpl<ShellMapper, Shell> {
     }
 
     public void delete(Long projectId, List<Long> idList) {
-        LambdaQueryWrapper<Shell> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Shell::getStatus, Constant.ACTIVE);
-        queryWrapper.eq(Shell::getProjectId, projectId);
+        LambdaUpdateWrapper<Shell> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Shell::getStatus, Constant.ACTIVE);
+        updateWrapper.eq(Shell::getProjectId, projectId);
         if (!idList.isEmpty()) {
-            queryWrapper.in(Shell::getId, idList);
+            updateWrapper.in(Shell::getId, idList);
         }
-        getBaseMapper().delete(queryWrapper);
+        updateWrapper.set(Shell::getStatus, Constant.INACTIVE);
+        getBaseMapper().update(updateWrapper);
     }
 }

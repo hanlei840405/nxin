@@ -80,7 +80,7 @@
         </if>
     </select>
 
-    <select id="selectByUserAndName" resultType="com.nxin.framework.entity.auth.Privilege">
+    <select id="selectBusinessPrivilegeByUserAndName" resultType="com.nxin.framework.entity.auth.Privilege">
         SELECT auth_privilege.id,
         auth_privilege.name,
         auth_privilege.category,
@@ -95,7 +95,11 @@
         inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
         inner join auth_user on auth_user.id=auth_user_privilege.user_id
         where auth_privilege.status='1' and auth_resource.status='1'
-        and auth_user.id=#{userId} and auth_privilege.name like concat(#{userId}, '%') and auth_resource.level<![CDATA[<>]]>'1'
+        and auth_user.id=#{userId}
+        <if test="name != null and name !=''">
+            and auth_privilege.name like concat(#{name}, '%')
+        </if>
+        and auth_resource.level='2'
     </select>
 
     <select id="selectByResourceIds" resultType="com.nxin.framework.entity.auth.Privilege">
@@ -133,6 +137,9 @@
             inner join auth_resource on auth_privilege.resource_id=auth_resource.id
             where auth_resource.code=#{resourceCode} and auth_resource.category=#{resourceCategory}
             and auth_resource.level=#{resourceLevel} and auth_resource.status='1'
+            <if test="privilegeCategory != null and privilegeCategory != ''">
+                and auth_privilege.category = #{privilegeCategory}
+            </if>
         )
         <if test="users != null and users.size() > 0">
             and user_id in

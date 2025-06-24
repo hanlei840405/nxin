@@ -1,6 +1,7 @@
 package com.nxin.framework.service.auth;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.auth.Privilege;
 import com.nxin.framework.entity.auth.Resource;
@@ -27,15 +28,15 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
     }
 
     public List<Resource> all() {
-        QueryWrapper<Resource> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
+        LambdaQueryWrapper<Resource> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Resource::getStatus, Constant.ACTIVE);
         return getBaseMapper().selectList(queryWrapper);
     }
 
     public List<Resource> findAllByIdIn(List<Long> idList) {
-        QueryWrapper<Resource> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
-        queryWrapper.in(Resource.ID_COLUMN, idList);
+        LambdaQueryWrapper<Resource> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Resource::getStatus, Constant.ACTIVE);
+        queryWrapper.in(Resource::getId, idList);
         return getBaseMapper().selectList(queryWrapper);
     }
 
@@ -44,6 +45,9 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
     }
 
     public List<Resource> findByUserIdCategoryAndLevel(Long userId, String category, String level) {
+        if (isRoot(userId)) {
+            return getBaseMapper().selectByCategoryAndLevel(category, level);
+        }
         return getBaseMapper().selectByUserIdAndCategoryAndLevel(userId, category, level);
     }
 
@@ -53,17 +57,20 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
 
     @Transactional
     public void delete(String code, String category, String level) {
-        QueryWrapper<Resource> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(Resource.CODE_COLUMN, code);
-        queryWrapper.eq(Resource.CATEGORY_COLUMN, category);
-        queryWrapper.eq(Resource.LEVEL_COLUMN, level);
-        queryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
-        Resource resource = getBaseMapper().selectOne(queryWrapper);
-        getBaseMapper().deleteById(resource);
-        QueryWrapper<Privilege> privilegeQueryWrapper = new QueryWrapper<>();
-        privilegeQueryWrapper.eq(Privilege.RESOURCE_ID_COLUMN, resource.getId());
-        privilegeQueryWrapper.eq(Resource.STATUS_COLUMN, Constant.ACTIVE);
-        privilegeService.remove(privilegeQueryWrapper);
+        LambdaQueryWrapper<Resource> resourceLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        resourceLambdaQueryWrapper.eq(Resource::getCode, code);
+        resourceLambdaQueryWrapper.eq(Resource::getCategory, category);
+        resourceLambdaQueryWrapper.eq(Resource::getLevel, level);
+        resourceLambdaQueryWrapper.eq(Resource::getStatus, Constant.ACTIVE);
+        Resource resource = getBaseMapper().selectOne(resourceLambdaQueryWrapper);
+        getBaseMapper().updateById(resource);
+        // 将权限数据更新为无效
+        LambdaUpdateWrapper<Privilege> privilegeLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        privilegeLambdaUpdateWrapper.eq(Privilege::getResourceId, resource.getId());
+        privilegeLambdaUpdateWrapper.set(Privilege::getStatus, Constant.INACTIVE);
+        privilegeService.update(privilegeLambdaUpdateWrapper);
+        // 删除权限与用户的关联关系
+        privilegeService.deletePrivilegesByResourceAndUser(code, category, Constant.RESOURCE_LEVEL_BUSINESS, Collections.EMPTY_LIST, null);
     }
 
     @Transactional
@@ -71,7 +78,7 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
         // 创建资源码
         Resource resource = new Resource();
         resource.setCode(code);
-        resource.setName(String.format("[%s]%s", code, name));
+        resource.setName(name);
         resource.setCategory(category);
         resource.setStatus(Constant.ACTIVE);
         resource.setLevel(Constant.RESOURCE_LEVEL_BUSINESS);

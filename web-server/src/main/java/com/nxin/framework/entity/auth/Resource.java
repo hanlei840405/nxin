@@ -1,17 +1,15 @@
 package com.nxin.framework.entity.auth;
 
 import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.annotations.ApiModel;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author jesse han
@@ -50,16 +48,6 @@ public class Resource implements Serializable {
 
     @Version
     private Integer version;
-
-    public static String ID_COLUMN = "id";
-
-    public static String CODE_COLUMN = "code";
-
-    public static String CATEGORY_COLUMN = "category";
-
-    public static String LEVEL_COLUMN = "level";
-
-    public static String STATUS_COLUMN = "status";
 
     public Long getId() {
         return id;
@@ -152,18 +140,18 @@ public class Resource implements Serializable {
     @Override
     public String toString() {
         return "Resource{" +
-            "id = " + id +
-            ", code = " + code +
-            ", name = " + name +
-            ", category = " + category +
-            ", level = " + level +
-            ", status = " + status +
-            ", createTime = " + createTime +
-            ", creator = " + creator +
-            ", modifier = " + modifier +
-            ", modifyTime = " + modifyTime +
-            ", version = " + version +
-        "}";
+                "id = " + id +
+                ", code = " + code +
+                ", name = " + name +
+                ", category = " + category +
+                ", level = " + level +
+                ", status = " + status +
+                ", createTime = " + createTime +
+                ", creator = " + creator +
+                ", modifier = " + modifier +
+                ", modifyTime = " + modifyTime +
+                ", version = " + version +
+                "}";
     }
 
     @Override

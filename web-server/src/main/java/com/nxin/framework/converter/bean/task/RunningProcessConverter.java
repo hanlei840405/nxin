@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class RunningProcessConverter extends BeanConverter<RunningProcessVo, RunningProcess> {
 
     @Override
-    public RunningProcessVo convert(RunningProcess runningProcess) {
+    public RunningProcessVo convert(RunningProcess runningProcess, String... ignores) {
         RunningProcessVo runningProcessVo = new RunningProcessVo();
-        BeanUtils.copyProperties(runningProcess, runningProcessVo);
+        BeanUtils.copyProperties(runningProcess, runningProcessVo, ignores);
         return runningProcessVo;
     }
 
     @Override
-    public List<RunningProcessVo> convert(List<RunningProcess> runningProcesses) {
-        return runningProcesses.stream().map(this::convert).collect(Collectors.toList());
+    public List<RunningProcessVo> convert(List<RunningProcess> runningProcesses, String... ignores) {
+        return runningProcesses.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

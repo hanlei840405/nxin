@@ -1,9 +1,7 @@
 package com.nxin.framework.service.basic;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.nxin.framework.entity.auth.Privilege;
-import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Project;
 import com.nxin.framework.enums.Constant;
@@ -40,34 +38,33 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
     private FileService fileService;
 
     public Project one(Long id) {
-        return getBaseMapper().selectById(id);
+        LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Project::getId, id);
+        queryWrapper.eq(Project::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
-    public List<Project> search(String name, Long userId) {
-        QueryWrapper<Project> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(Privilege.STATUS_COLUMN, Constant.ACTIVE);
+    public List<Project> search(List<Long> projectIdList, String name) {
+        if (projectIdList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<Project> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(Project::getStatus, Constant.ACTIVE);
+        lambdaQueryWrapper.in(Project::getId, projectIdList);
         if (StringUtils.hasLength(name)) {
-            queryWrapper.likeRight(Privilege.NAME_COLUMN, name);
+            lambdaQueryWrapper.likeRight(Project::getName, name);
         }
-        if (!resourceService.isRoot(userId)) {
-            List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(userId, Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
-            if (resources.isEmpty()) {
-                return Collections.emptyList();
-            }
-            queryWrapper.in(Project.ID_COLUMN, resources.stream().map(resource -> Integer.valueOf(resource.getCode())).collect(Collectors.toList()));
-        }
-        List<Project> projects = getBaseMapper().selectList(queryWrapper);
-        if (projects.isEmpty()) {
-            return projects;
-        }
+        List<Project> projects = getBaseMapper().selectList(lambdaQueryWrapper);
         List<Long> userIds = projects.stream().map(Project::getUserId).collect(Collectors.toList());
-        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        userQueryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
-        userQueryWrapper.in(User.ID_COLUMN, userIds);
-        List<User> users = userService.list(userQueryWrapper);
-        Map<Long, User> userMap = users.stream().collect((Collectors.toMap(User::getId, user -> user)));
-        for (Project project : projects) {
-            project.setManager(userMap.get(project.getUserId()));
+        if (!userIds.isEmpty()) {
+            LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
+            userQueryWrapper.eq(User::getStatus, Constant.ACTIVE);
+            userQueryWrapper.in(User::getId, userIds);
+            List<User> users = userService.list(userQueryWrapper);
+            Map<Long, User> userMap = users.stream().collect((Collectors.toMap(User::getId, user -> user)));
+            for (Project project : projects) {
+                project.setManager(userMap.get(project.getUserId()));
+            }
         }
         return projects;
     }
@@ -96,16 +93,15 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
     }
 
     @Transactional
-    public void deleteProject(Project project) {
-        datasourceService.delete(project.getId(), Collections.emptyList());
-        privilegeService.deletePrivilegesByResourceAndUser(project.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        resourceService.delete(project.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
-        getBaseMapper().deleteById(project);
+    public void delete(Project persisted) {
+        persisted.setStatus(Constant.INACTIVE);
+        getBaseMapper().updateById(persisted);
+        resourceService.delete(persisted.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
     }
 
     public void deleteMember(Project project, List<Long> users) {
         if (!users.isEmpty()) {
-            privilegeService.deletePrivilegesByResourceAndUser(project.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, users);
+            privilegeService.deletePrivilegesByResourceAndUser(project.getId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, users, null);
         }
     }
 }

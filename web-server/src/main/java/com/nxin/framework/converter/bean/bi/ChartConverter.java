@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class ChartConverter extends BeanConverter<ChartVo, Chart> {
 
     @Override
-    public ChartVo convert(Chart chart) {
+    public ChartVo convert(Chart chart, String... ignores) {
         ChartVo chartVo = new ChartVo();
-        BeanUtils.copyProperties(chart, chartVo);
+        BeanUtils.copyProperties(chart, chartVo, ignores);
         return chartVo;
     }
 
     @Override
-    public List<ChartVo> convert(List<Chart> chartList) {
-        return chartList.stream().map(this::convert).collect(Collectors.toList());
+    public List<ChartVo> convert(List<Chart> chartList, String... ignores) {
+        return chartList.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

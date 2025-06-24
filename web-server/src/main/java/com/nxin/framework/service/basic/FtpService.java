@@ -1,10 +1,15 @@
 package com.nxin.framework.service.basic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Ftp;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.mapper.basic.FtpMapper;
+import com.nxin.framework.service.auth.ResourceService;
+import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.utils.LoginUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +29,31 @@ import java.util.List;
  */
 @Service
 public class FtpService extends ServiceImpl<FtpMapper, Ftp> {
+    @Autowired
+    private ResourceService resourceService;
+    @Autowired
+    private UserService userService;
 
     public Ftp one(Long id) {
-        return getBaseMapper().selectById(id);
+        LambdaQueryWrapper<Ftp> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Ftp::getId, id);
+        queryWrapper.eq(Ftp::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
+    }
+
+    public IPage<Ftp> search(Long projectId, List<Long> ftpIdList, String name, int pageNo, int pageSize) {
+        Page<Ftp> page = new Page<>(pageNo, pageSize);
+        if (ftpIdList.isEmpty()) {
+            return page;
+        }
+        LambdaQueryWrapper<Ftp> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Ftp::getId, ftpIdList);
+        queryWrapper.eq(Ftp::getProjectId, projectId);
+        queryWrapper.eq(Ftp::getStatus, Constant.ACTIVE);
+        if (StringUtils.hasLength(name)) {
+            queryWrapper.likeRight(Ftp::getName, name);
+        }
+        return getBaseMapper().selectPage(page, queryWrapper);
     }
 
     public List<Ftp> all(Long projectId, String category) {
@@ -52,17 +79,9 @@ public class FtpService extends ServiceImpl<FtpMapper, Ftp> {
             ftp.setVersion(1);
             ftp.setCreator(LoginUtils.getUsername());
             upsert = getBaseMapper().insert(ftp);
+            User user = userService.one(LoginUtils.getUsername());
+            resourceService.registryBusinessResource(String.valueOf(ftp.getId()), ftp.getName(), Constant.RESOURCE_CATEGORY_FTP, user);
         }
         return upsert > 0;
-    }
-
-    public void delete(Long projectId, List<Long> idList) {
-        LambdaQueryWrapper<Ftp> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Ftp::getStatus, Constant.ACTIVE);
-        queryWrapper.eq(Ftp::getProjectId, projectId);
-        if (!idList.isEmpty()) {
-            queryWrapper.in(Ftp::getId, idList);
-        }
-        getBaseMapper().delete(queryWrapper);
     }
 }

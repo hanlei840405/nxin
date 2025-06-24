@@ -10,14 +10,14 @@ import java.util.stream.Collectors;
 
 public class ResourceConverter extends BeanConverter<ResourceVo, Resource> {
     @Override
-    public ResourceVo convert(Resource resource) {
+    public ResourceVo convert(Resource resource, String... ignores) {
         ResourceVo resourceVo = new ResourceVo();
-        BeanUtils.copyProperties(resource, resourceVo);
+        BeanUtils.copyProperties(resource, resourceVo, ignores);
         return resourceVo;
     }
 
     @Override
-    public List<ResourceVo> convert(List<Resource> resources) {
-        return resources.stream().map(this::convert).collect(Collectors.toList());
+    public List<ResourceVo> convert(List<Resource> resources, String... ignores) {
+        return resources.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

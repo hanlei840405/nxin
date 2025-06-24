@@ -1,6 +1,6 @@
 package com.nxin.framework.service.auth;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -32,15 +32,15 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
     public IPage<Privilege> search(String name, Long userId, int pageNo, int pageSize) {
         Page<Privilege> page = new Page<>(pageNo, pageSize);
         if (resourceService.isRoot(userId)) {
-            QueryWrapper<Privilege> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq(Privilege.STATUS_COLUMN, Constant.ACTIVE);
+            LambdaQueryWrapper<Privilege> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Privilege::getStatus, Constant.ACTIVE);
             if (StringUtils.hasLength(name)) {
-                queryWrapper.likeRight(Privilege.NAME_COLUMN, name);
+                queryWrapper.likeRight(Privilege::getName, name);
             }
             return getBaseMapper().selectPage(page, queryWrapper);
         }
 
-        return getBaseMapper().selectByUserAndName(page, userId, name);
+        return getBaseMapper().selectBusinessPrivilegeByUserAndName(page, userId, name);
     }
 
     public List<Privilege> findByUserId(Long userId) {
@@ -48,6 +48,12 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
     }
 
     public Privilege findByPrivilegeIdAndUserId(Long privilegeId, Long userId) {
+        if (resourceService.isRoot(userId)) {
+            LambdaQueryWrapper<Privilege> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Privilege::getId, privilegeId);
+            queryWrapper.eq(Privilege::getStatus, Constant.ACTIVE);
+            return getBaseMapper().selectOne(queryWrapper);
+        }
         return getBaseMapper().selectByPrivilegeIdAndUserId(privilegeId, userId);
     }
 
@@ -68,9 +74,7 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
     @Transactional
     public void grant(List<GrantDto> grantDtos) {
         Map<Long, List<Long>> records = grantDtos.stream().collect(Collectors.groupingBy(GrantDto::getUserId, Collectors.mapping(GrantDto::getPrivilegeId, Collectors.toList())));
-        records.forEach((k, v) -> {
-            grant(v, k, false);
-        });
+        records.forEach((k, v) -> grant(v, k, false));
     }
 
     @Transactional
@@ -98,7 +102,7 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
         getBaseMapper().deletePrivilegesByUserId(userId);
     }
 
-    public void deletePrivilegesByResourceAndUser(String resourceCode, String resourceCategory, String resourceLevel, List<Long> users) {
-        getBaseMapper().deletePrivilegesByResourceAndUsers(resourceCode, resourceCategory, resourceLevel, users);
+    public void deletePrivilegesByResourceAndUser(String resourceCode, String resourceCategory, String resourceLevel, List<Long> users, String privilegeCategory) {
+        getBaseMapper().deletePrivilegesByResourceAndUsers(resourceCode, resourceCategory, resourceLevel, users, privilegeCategory);
     }
 }

@@ -9,6 +9,7 @@ import com.nxin.framework.dto.bi.ModelDto;
 import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.basic.Datasource;
+import com.nxin.framework.entity.bi.Chart;
 import com.nxin.framework.entity.bi.Metadata;
 import com.nxin.framework.entity.bi.Model;
 import com.nxin.framework.enums.Constant;
@@ -66,8 +67,8 @@ public class ModelController {
     @Autowired
     private ResourceService resourceService;
 
-    private BeanConverter<ModelVo, Model> modelConverter = new ModelConverter();
-    private BeanConverter<MetadataVo, Metadata> metadataConverter = new MetadataConverter();
+    private static final BeanConverter<ModelVo, Model> modelConverter = new ModelConverter();
+    private static final BeanConverter<MetadataVo, Metadata> metadataConverter = new MetadataConverter();
 
     @GetMapping("/model/{id}")
     public ResponseEntity<ModelVo> one(@PathVariable Long id) {
@@ -93,20 +94,22 @@ public class ModelController {
     public ResponseEntity<PageVo<ModelVo>> page(@RequestBody ModelDto modelDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_MODEL, Constant.RESOURCE_LEVEL_BUSINESS);
-        List<Long> modelIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).collect(Collectors.toList());
+        List<Long> modelIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Model> modelIPage = modelService.search(modelDto.getProjectId(), modelIdList, modelDto.getPayload(), modelDto.getPageNo(), modelDto.getPageSize());
         if (modelIPage.getSize() > 0) {
             LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(Metadata::getModelId, modelIPage.getRecords().stream().map(Model::getId).collect(Collectors.toList()));
             queryWrapper.eq(Metadata::getStatus, Constant.ACTIVE);
             List<Metadata> metadataList = metadataService.list(queryWrapper);
-            Map<Long, List<Metadata>> modelMetadataListMap = metadataList.stream().collect(Collectors.groupingBy(Metadata::getModelId));
-            modelIPage.getRecords().forEach(record -> {
-                boolean unpublish = modelMetadataListMap.get(record.getId()).stream().anyMatch(item -> Objects.isNull(record.getPublishTime()) || item.getCreateTime().isAfter(record.getPublishTime()));
-                if (unpublish) {
-                    record.setPublish(false);
-                }
-            });
+            if (!metadataList.isEmpty()) {
+                Map<Long, List<Metadata>> modelMetadataListMap = metadataList.stream().collect(Collectors.groupingBy(Metadata::getModelId));
+                modelIPage.getRecords().forEach(record -> {
+                    boolean unpublish = modelMetadataListMap.get(record.getId()).stream().anyMatch(item -> Objects.isNull(record.getPublishTime()) || item.getCreateTime().isAfter(record.getPublishTime()));
+                    if (unpublish) {
+                        record.setPublish(false);
+                    }
+                });
+            }
         }
         return ResponseEntity.ok(new PageVo<>(modelIPage.getTotal(), modelConverter.convert(modelIPage.getRecords())));
     }
@@ -115,7 +118,7 @@ public class ModelController {
     public ResponseEntity<List<ModelVo>> list(@RequestBody ModelDto modelDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_MODEL, Constant.RESOURCE_LEVEL_BUSINESS);
-        List<Long> modelIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).collect(Collectors.toList());
+        List<Long> modelIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         if (modelIdList.isEmpty()) {
             return ResponseEntity.ok(Collections.emptyList());
         }
@@ -123,6 +126,7 @@ public class ModelController {
         queryWrapper.in(Model::getId, modelIdList);
         queryWrapper.eq(Model::getProjectId, modelDto.getProjectId());
         queryWrapper.eq(Model::getStatus, Constant.ACTIVE);
+        queryWrapper.eq(Model::getPublish, Boolean.TRUE);
         return ResponseEntity.ok(modelConverter.convert(modelService.list(queryWrapper)));
     }
 
@@ -169,12 +173,16 @@ public class ModelController {
         Model persisted = modelService.one(id);
         if (persisted != null) {
             List<User> members = userService.findByResource(id.toString(), Constant.RESOURCE_CATEGORY_MODEL, Constant.RESOURCE_LEVEL_BUSINESS, null);
-            if (members.contains(loginUser)) {
-                modelService.delete(Collections.singletonList(persisted.getId()));
-                return ResponseEntity.ok().build();
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
+            if (persisted.getPublish()) {
+                return ResponseEntity.status(Constant.EXCEPTION_PUBLISHED).build();
+            }
+            modelService.delete(persisted);
+            return ResponseEntity.ok().build();
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
     @PostMapping("/model/sql")

@@ -45,7 +45,7 @@ public class ShellController {
     private FileService fileService;
     @Autowired
     private ShellPublishService shellPublishService;
-    private BeanConverter<ShellVo, Shell> shellConverter = new ShellConverter();
+    private static final BeanConverter<ShellVo, Shell> shellConverter = new ShellConverter();
 
     @GetMapping("/shell/{id}")
     public ResponseEntity<ShellVo> one(@PathVariable Long id) {

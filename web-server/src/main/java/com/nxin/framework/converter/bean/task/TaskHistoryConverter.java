@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class TaskHistoryConverter extends BeanConverter<TaskHistoryVo, TaskHistory> {
 
     @Override
-    public TaskHistoryVo convert(TaskHistory taskHistory) {
+    public TaskHistoryVo convert(TaskHistory taskHistory, String... ignores) {
         TaskHistoryVo taskHistoryVo = new TaskHistoryVo();
-        BeanUtils.copyProperties(taskHistory, taskHistoryVo);
+        BeanUtils.copyProperties(taskHistory, taskHistoryVo, ignores);
         return taskHistoryVo;
     }
 
     @Override
-    public List<TaskHistoryVo> convert(List<TaskHistory> taskHistories) {
-        return taskHistories.stream().map(this::convert).collect(Collectors.toList());
+    public List<TaskHistoryVo> convert(List<TaskHistory> taskHistories, String... ignores) {
+        return taskHistories.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

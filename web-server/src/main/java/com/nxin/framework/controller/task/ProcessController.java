@@ -4,14 +4,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.task.RunningProcessConverter;
 import com.nxin.framework.dto.CrudDto;
+import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
-import com.nxin.framework.entity.basic.Project;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
-import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellPublishService;
 import com.nxin.framework.service.task.TaskHistoryService;
@@ -47,16 +47,17 @@ public class ProcessController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
-    private ProjectService projectService;
+    private ResourceService resourceService;
 
-    private BeanConverter<RunningProcessVo, RunningProcess> runningProcessConverter = new RunningProcessConverter();
+    private static final BeanConverter<RunningProcessVo, RunningProcess> runningProcessConverter = new RunningProcessConverter();
 
     @PostMapping("/process/running")
     public ResponseEntity<PageVo<RunningProcessVo>> running(@RequestBody CrudDto crudDto) {
-        User user = userService.one(LoginUtils.getUsername());
-        List<Project> projects = projectService.search(null, user.getId());
-        if (!projects.isEmpty()) {
-            IPage<RunningProcess> runningProcessIPage = runningProcessService.page(projects.stream().map(Project::getId).collect(Collectors.toList()), null, crudDto.getPageNo(), crudDto.getPageSize());
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> projectIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        if (!projectIdList.isEmpty()) {
+            IPage<RunningProcess> runningProcessIPage = runningProcessService.page(projectIdList, null, crudDto.getPageNo(), crudDto.getPageSize());
             List<RunningProcessVo> runningProcessVos = runningProcessConverter.convert(runningProcessIPage.getRecords());
             PageVo<RunningProcessVo> pageVo = new PageVo<>(runningProcessIPage.getTotal(), runningProcessVos);
             return ResponseEntity.ok(pageVo);

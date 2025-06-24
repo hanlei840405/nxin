@@ -64,8 +64,8 @@ public class ChartController {
     @Autowired
     private ChartParamsService chartParamsService;
 
-    private final BeanConverter<ChartVo, Chart> chartConverter = new ChartConverter();
-    private final BeanConverter<ChartParamsVo, ChartParams> chartParamsConverter = new ChartParamsConverter();
+    private static final BeanConverter<ChartVo, Chart> chartConverter = new ChartConverter();
+    private static final BeanConverter<ChartParamsVo, ChartParams> chartParamsConverter = new ChartParamsConverter();
 
     @GetMapping("/chart/{id}")
     public ResponseEntity<ChartVo> one(@PathVariable Long id) {
@@ -86,20 +86,22 @@ public class ChartController {
     public ResponseEntity<PageVo<ChartVo>> page(@RequestBody ChartDto chartDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS);
-        List<Long> chartIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).collect(Collectors.toList());
+        List<Long> chartIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Chart> chartIPage = chartService.search(chartIdList, chartDto.getPayload(), chartDto.getPageNo(), chartDto.getPageSize());
         if (chartIPage.getSize() > 0) {
             LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ChartParams::getChartId, chartIPage.getRecords().stream().map(Chart::getId).collect(Collectors.toList()));
             queryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);
             List<ChartParams> chartParamsList = chartParamsService.list(queryWrapper);
-            Map<Long, List<ChartParams>> chartChartParamsListMap = chartParamsList.stream().collect(Collectors.groupingBy(ChartParams::getChartId));
-            chartIPage.getRecords().forEach(record -> {
-                boolean unpublish = chartChartParamsListMap.get(record.getId()).stream().anyMatch(item -> Objects.isNull(record.getPublishTime()) || item.getCreateTime().isAfter(record.getPublishTime()));
-                if (unpublish) {
-                    record.setPublish(false);
-                }
-            });
+            if (!chartParamsList.isEmpty()) {
+                Map<Long, List<ChartParams>> chartChartParamsListMap = chartParamsList.stream().collect(Collectors.groupingBy(ChartParams::getChartId));
+                chartIPage.getRecords().forEach(record -> {
+                    boolean unpublish = chartChartParamsListMap.get(record.getId()).stream().anyMatch(item -> Objects.isNull(record.getPublishTime()) || item.getCreateTime().isAfter(record.getPublishTime()));
+                    if (unpublish) {
+                        record.setPublish(false);
+                    }
+                });
+            }
         }
         return ResponseEntity.ok(new PageVo<>(chartIPage.getTotal(), chartConverter.convert(chartIPage.getRecords())));
     }
@@ -108,6 +110,7 @@ public class ChartController {
     public ResponseEntity<List<ChartVo>> list() {
         LambdaQueryWrapper<Chart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Chart::getStatus, Constant.ACTIVE);
+        queryWrapper.eq(Chart::getPublish, Boolean.TRUE);
         return ResponseEntity.ok(chartConverter.convert(chartService.list(queryWrapper)));
     }
 
@@ -155,7 +158,7 @@ public class ChartController {
         if (persisted != null) {
             List<User> members = userService.findByResource(persisted.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
             if (members.contains(loginUser)) {
-                chartService.removeById(persisted);
+                chartService.delete(persisted);
                 return ResponseEntity.ok().build();
             }
         }

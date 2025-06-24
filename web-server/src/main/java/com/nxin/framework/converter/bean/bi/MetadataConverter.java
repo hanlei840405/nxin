@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class MetadataConverter extends BeanConverter<MetadataVo, Metadata> {
 
     @Override
-    public MetadataVo convert(Metadata metadata) {
+    public MetadataVo convert(Metadata metadata, String... ignores) {
         MetadataVo metadataVo = new MetadataVo();
-        BeanUtils.copyProperties(metadata, metadataVo);
+        BeanUtils.copyProperties(metadata, metadataVo, ignores);
         return metadataVo;
     }
 
     @Override
-    public List<MetadataVo> convert(List<Metadata> modelList) {
-        return modelList.stream().map(this::convert).collect(Collectors.toList());
+    public List<MetadataVo> convert(List<Metadata> modelList, String... ignores) {
+        return modelList.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

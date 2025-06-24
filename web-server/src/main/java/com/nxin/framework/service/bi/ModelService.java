@@ -1,11 +1,11 @@
 package com.nxin.framework.service.bi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.auth.User;
-import com.nxin.framework.entity.bi.Chart;
 import com.nxin.framework.entity.bi.Metadata;
 import com.nxin.framework.entity.bi.Model;
 import com.nxin.framework.enums.Constant;
@@ -13,7 +13,6 @@ import com.nxin.framework.mapper.bi.ModelMapper;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.utils.LoginUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,7 +42,10 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
     private UserService userService;
 
     public Model one(Long id) {
-        return getBaseMapper().selectById(id);
+        LambdaQueryWrapper<Model> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Model::getId, id);
+        queryWrapper.eq(Model::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public IPage<Model> search(Long projectId, List<Long> modelIdList, String name, int pageNo, int pageSize) {
@@ -66,7 +68,7 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
         int upsert;
         if (model.getId() != null) {
             Model persisted = one(model.getId());
-            BeanUtils.copyProperties(model, persisted, "publish", "version");
+            BeanUtils.copyProperties(model, persisted, "publish", "publishTime", "version");
             upsert = getBaseMapper().updateById(persisted);
         } else {
             model.setStatus(Constant.ACTIVE);
@@ -79,8 +81,8 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
         queryWrapper.eq(Metadata::getModelId, model.getId());
         queryWrapper.eq(Metadata::getStatus, Constant.ACTIVE);
         metadataList.forEach(metadata -> {
-            metadata.setModelId(model.getId());
             if (metadata.getId() == null) {
+                metadata.setModelId(model.getId());
                 metadata.setVersion(1);
                 metadata.setStatus(Constant.ACTIVE);
             }
@@ -93,12 +95,12 @@ public class ModelService extends ServiceImpl<ModelMapper, Model> {
     }
 
     @Transactional
-    public void delete(List<Long> idList) {
-        LambdaQueryWrapper<Model> modelLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        modelLambdaQueryWrapper.in(Model::getId, idList);
-        getBaseMapper().delete(modelLambdaQueryWrapper);
-        LambdaQueryWrapper<Metadata> metadataLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        metadataLambdaQueryWrapper.in(Metadata::getModelId, idList);
-        metadataService.remove(metadataLambdaQueryWrapper);
+    public void delete(Model persisted) {
+        persisted.setStatus(Constant.INACTIVE);
+        getBaseMapper().updateById(persisted);
+        LambdaUpdateWrapper<Metadata> metadataLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        metadataLambdaUpdateWrapper.eq(Metadata::getModelId, persisted.getId());
+        metadataLambdaUpdateWrapper.set(Metadata::getStatus, Constant.INACTIVE);
+        metadataService.update(metadataLambdaUpdateWrapper);
     }
 }

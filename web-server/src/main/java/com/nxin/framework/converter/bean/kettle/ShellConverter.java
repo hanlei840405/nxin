@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class ShellConverter extends BeanConverter<ShellVo, Shell> {
 
     @Override
-    public ShellVo convert(Shell shell) {
+    public ShellVo convert(Shell shell, String... ignores) {
         ShellVo shellVo = new ShellVo();
-        BeanUtils.copyProperties(shell, shellVo);
+        BeanUtils.copyProperties(shell, shellVo, ignores);
         return shellVo;
     }
 
     @Override
-    public List<ShellVo> convert(List<Shell> shells) {
-        return shells.stream().map(this::convert).collect(Collectors.toList());
+    public List<ShellVo> convert(List<Shell> shells, String... ignores) {
+        return shells.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

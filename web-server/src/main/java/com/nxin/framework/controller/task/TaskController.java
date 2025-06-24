@@ -8,8 +8,8 @@ import com.nxin.framework.converter.bean.task.TaskHistoryConverter;
 import com.nxin.framework.dto.CrudDto;
 import com.nxin.framework.dto.kettle.ShellPublishDto;
 import com.nxin.framework.dto.task.TaskHistoryDto;
+import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
-import com.nxin.framework.entity.basic.Project;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.entity.task.TaskHistory;
@@ -17,19 +17,16 @@ import com.nxin.framework.enums.Constant;
 import com.nxin.framework.request.QueryReq;
 import com.nxin.framework.request.TaskReq;
 import com.nxin.framework.response.CronTriggerRes;
+import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
-import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.service.io.FileService;
-import com.nxin.framework.service.kettle.LogService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import com.nxin.framework.service.kettle.ShellPublishService;
-import com.nxin.framework.service.kettle.ShellService;
 import com.nxin.framework.service.task.TaskHistoryService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.task.TaskHistoryVo;
 import com.nxin.framework.vo.task.TaskVo;
-import com.qcloud.cos.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -41,9 +38,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -58,21 +52,17 @@ public class TaskController {
     @Autowired
     private UserService userService;
     @Autowired
-    private ShellService shellService;
-    @Autowired
     private ShellPublishService shellPublishService;
     @Autowired
-    private LogService logService;
-    @Autowired
     private TaskHistoryService taskHistoryService;
-    @Autowired
-    private ProjectService projectService;
     @Autowired
     private RunningProcessService runningProcessService;
     @Autowired
     private RestTemplate restTemplate;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private ResourceService resourceService;
     @Value("${worker.schedule-find-all-cron-trigger-uri}")
     private String findAllCronTriggerUri;
     @Value("${worker.schedule-pause-uri}")
@@ -82,15 +72,16 @@ public class TaskController {
     @Value("${worker.schedule-modify-uri}")
     private String modifyUri;
 
-    private BeanConverter<TaskHistoryVo, TaskHistory> taskHistoryConverter = new TaskHistoryConverter();
+    private static final BeanConverter<TaskHistoryVo, TaskHistory> taskHistoryConverter = new TaskHistoryConverter();
 
     @PostMapping("/task/batches")
     public ResponseEntity<PageVo<TaskVo>> runningBatchTasks(@RequestBody CrudDto crudDto) {
-        User user = userService.one(LoginUtils.getUsername());
-        List<Project> projects = projectService.search(null, user.getId());
-        if (!projects.isEmpty()) {
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> projectIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        if (!projectIdList.isEmpty()) {
             QueryReq queryReq = new QueryReq();
-            queryReq.setGroupList(projects.stream().map(item -> String.valueOf(item.getId())).collect(Collectors.toList()));
+            queryReq.setGroupList(projectIdList.stream().map(String::valueOf).collect(Collectors.toList()));
             HttpEntity<QueryReq> requestEntity = new HttpEntity<>(queryReq);
             ResponseEntity<String> response = restTemplate.postForEntity(findAllCronTriggerUri, requestEntity, String.class);
             PageVo<TaskVo> taskVoPageVo;
@@ -127,10 +118,11 @@ public class TaskController {
 
     @PostMapping("/task/streaming")
     public ResponseEntity<PageVo<TaskVo>> runningStreamingTasks(@RequestBody CrudDto crudDto) {
-        User user = userService.one(LoginUtils.getUsername());
-        List<Project> projects = projectService.search(null, user.getId());
-        if (!projects.isEmpty()) {
-            IPage<RunningProcess> runningProcessIPage = runningProcessService.page(projects.stream().map(Project::getId).collect(Collectors.toList()), Constant.STREAMING, crudDto.getPageNo(), crudDto.getPageSize());
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> projectIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        if (!projectIdList.isEmpty()) {
+            IPage<RunningProcess> runningProcessIPage = runningProcessService.page(projectIdList, Constant.STREAMING, crudDto.getPageNo(), crudDto.getPageSize());
             List<TaskVo> taskVos = runningProcessIPage.getRecords().stream().map(runningProcess -> {
                 TaskVo taskVo = new TaskVo();
                 taskVo.setName(runningProcess.getInstanceName());

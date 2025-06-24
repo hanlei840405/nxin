@@ -1,7 +1,6 @@
 package com.nxin.framework.controller.kettle;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.kettle.ShellConverter;
 import com.nxin.framework.converter.bean.kettle.ShellPublishConverter;
@@ -13,9 +12,9 @@ import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.ProjectService;
+import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.ShellPublishService;
 import com.nxin.framework.service.kettle.ShellService;
-import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.kettle.ShellPublishVo;
@@ -45,9 +44,8 @@ public class ShellPublishController {
     private ProjectService projectService;
     @Autowired
     private FileService fileService;
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private BeanConverter<ShellVo, Shell> shellConverter = new ShellConverter();
-    private BeanConverter<ShellPublishVo, ShellPublish> shellPublishConverter = new ShellPublishConverter();
+    private static final BeanConverter<ShellVo, Shell> shellConverter = new ShellConverter();
+    private static final BeanConverter<ShellPublishVo, ShellPublish> shellPublishConverter = new ShellPublishConverter();
 
     @PostMapping("/publishes")
     public ResponseEntity<PageVo<ShellPublishVo>> publishes(@RequestBody CrudDto crudDto) {
@@ -111,7 +109,7 @@ public class ShellPublishController {
     /**
      * 上线新版并下线旧版
      *
-     * @param shellPublishDto
+     * @param shellPublishDto 脚本发布对象
      */
     @PostMapping("/deploy")
     public ResponseEntity<ShellPublishVo> deploy(@RequestBody ShellPublishDto shellPublishDto) {

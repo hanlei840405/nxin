@@ -1,6 +1,6 @@
 package com.nxin.framework.service.auth;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -33,13 +33,16 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private String password;
 
     public User one(Long id) {
-        return getBaseMapper().selectById(id);
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getId, id);
+        queryWrapper.eq(User::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
     public User one(String email) {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
-        queryWrapper.eq(User.EMAIL_COLUMN, email);
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getStatus, Constant.ACTIVE);
+        queryWrapper.eq(User::getEmail, email);
         return getBaseMapper().selectOne(queryWrapper);
     }
 
@@ -58,10 +61,10 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     public IPage<User> search(String name, int pageNo, int pageSize) {
         Page<User> page = new Page<>(pageNo, pageSize);
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(User.STATUS_COLUMN, Constant.ACTIVE);
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getStatus, Constant.ACTIVE);
         if (StringUtils.hasLength(name)) {
-            queryWrapper.likeRight(User.NAME_COLUMN, name);
+            queryWrapper.likeRight(User::getName, name);
         }
         return getBaseMapper().selectPage(page, queryWrapper);
     }
@@ -75,6 +78,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     @Transactional
     public User close(User user) {
         privilegeService.deletePrivilegesByUserId(user.getId());
+        user.setStatus(Constant.INACTIVE);
         save(user);
         return user;
     }

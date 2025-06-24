@@ -56,14 +56,6 @@ public class User implements Serializable {
     @Version
     private Integer version;
 
-    public static String ID_COLUMN = "id";
-
-    public static String EMAIL_COLUMN = "email";
-
-    public static String STATUS_COLUMN = "status";
-
-    public static String NAME_COLUMN = "name";
-
     public Long getId() {
         return id;
     }

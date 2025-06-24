@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class FtpConverter extends BeanConverter<FtpVo, Ftp> {
 
     @Override
-    public FtpVo convert(Ftp ftp) {
+    public FtpVo convert(Ftp ftp, String... ignores) {
         FtpVo ftpVo = new FtpVo();
-        BeanUtils.copyProperties(ftp, ftpVo);
+        BeanUtils.copyProperties(ftp, ftpVo, ignores);
         return ftpVo;
     }
 
     @Override
-    public List<FtpVo> convert(List<Ftp> ftpList) {
-        return ftpList.stream().map(this::convert).collect(Collectors.toList());
+    public List<FtpVo> convert(List<Ftp> ftpList, String... ignores) {
+        return ftpList.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

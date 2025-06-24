@@ -1,6 +1,5 @@
 package com.nxin.framework.controller.basic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.base.DictionaryConverter;
@@ -18,7 +17,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -33,21 +31,15 @@ public class DictionaryController {
     @Autowired
     private DictionaryItemService dictionaryItemService;
 
-    private final BeanConverter<DictionaryVo, Dictionary> dictionaryConverter = new DictionaryConverter();
-    private final BeanConverter<DictionaryItemVo, DictionaryItem> dictionaryItemConverter = new DictionaryItemConverter();
+    private static final BeanConverter<DictionaryVo, Dictionary> dictionaryConverter = new DictionaryConverter();
+    private static final BeanConverter<DictionaryItemVo, DictionaryItem> dictionaryItemConverter = new DictionaryItemConverter();
 
     @PreAuthorize("hasAuthority('ROOT')")
     @GetMapping("/dictionary/{id}")
     public ResponseEntity<DictionaryVo> one(@PathVariable Long id) {
-        LambdaQueryWrapper<Dictionary> dictionaryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        dictionaryLambdaQueryWrapper.eq(Dictionary::getStatus, Constant.ACTIVE);
-        dictionaryLambdaQueryWrapper.eq(Dictionary::getId, id);
-        Dictionary dictionary = dictionaryService.getOne(dictionaryLambdaQueryWrapper);
+        Dictionary dictionary = dictionaryService.one(id);
         if (dictionary != null) {
-            LambdaQueryWrapper<DictionaryItem> dictionaryItemLambdaQueryWrapper = new LambdaQueryWrapper<>();
-            dictionaryItemLambdaQueryWrapper.eq(DictionaryItem::getStatus, Constant.ACTIVE);
-            dictionaryItemLambdaQueryWrapper.eq(DictionaryItem::getDictionaryId, id);
-            List<DictionaryItem> dictionaryItems = dictionaryItemService.list(dictionaryItemLambdaQueryWrapper);
+            List<DictionaryItem> dictionaryItems = dictionaryItemService.all(id);
             DictionaryVo dictionaryVo = dictionaryConverter.convert(dictionary);
             dictionaryVo.setDictionaryItemList(dictionaryItemConverter.convert(dictionaryItems));
             return ResponseEntity.ok(dictionaryVo);
@@ -57,15 +49,9 @@ public class DictionaryController {
 
     @GetMapping("/dictionaryItems/{code}")
     public ResponseEntity<List<DictionaryItemVo>> dictionaryItems(@PathVariable String code) {
-        LambdaQueryWrapper<Dictionary> dictionaryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        dictionaryLambdaQueryWrapper.eq(Dictionary::getStatus, Constant.ACTIVE);
-        dictionaryLambdaQueryWrapper.eq(Dictionary::getCode, code);
-        Dictionary dictionary = dictionaryService.getOne(dictionaryLambdaQueryWrapper);
+        Dictionary dictionary = dictionaryService.one(code);
         if (dictionary != null) {
-            LambdaQueryWrapper<DictionaryItem> dictionaryItemLambdaQueryWrapper = new LambdaQueryWrapper<>();
-            dictionaryItemLambdaQueryWrapper.eq(DictionaryItem::getStatus, Constant.ACTIVE);
-            dictionaryItemLambdaQueryWrapper.eq(DictionaryItem::getDictionaryId, dictionary.getId());
-            List<DictionaryItem> dictionaryItems = dictionaryItemService.list(dictionaryItemLambdaQueryWrapper);
+            List<DictionaryItem> dictionaryItems = dictionaryItemService.all(dictionary.getId());
             return ResponseEntity.ok(dictionaryItemConverter.convert(dictionaryItems));
         }
         return ResponseEntity.ok(Collections.emptyList());
@@ -95,7 +81,11 @@ public class DictionaryController {
     @PreAuthorize("hasAuthority('ROOT')")
     @DeleteMapping("/dictionary/{id}")
     public ResponseEntity delete(@PathVariable Long id) {
-        dictionaryService.delete(id);
-        return ResponseEntity.ok().build();
+        Dictionary persisted = dictionaryService.one(id);
+        if (persisted != null) {
+            dictionaryService.delete(persisted);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 }

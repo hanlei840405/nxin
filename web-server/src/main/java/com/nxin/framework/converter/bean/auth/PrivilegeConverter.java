@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class PrivilegeConverter extends BeanConverter<PrivilegeVo, Privilege> {
 
     @Override
-    public PrivilegeVo convert(Privilege privilege) {
+    public PrivilegeVo convert(Privilege privilege, String... ignores) {
         PrivilegeVo privilegeVo = new PrivilegeVo();
-        BeanUtils.copyProperties(privilege, privilegeVo);
+        BeanUtils.copyProperties(privilege, privilegeVo, ignores);
         return privilegeVo;
     }
 
     @Override
-    public List<PrivilegeVo> convert(List<Privilege> privileges) {
-        return privileges.stream().map(this::convert).collect(Collectors.toList());
+    public List<PrivilegeVo> convert(List<Privilege> privileges, String... ignores) {
+        return privileges.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

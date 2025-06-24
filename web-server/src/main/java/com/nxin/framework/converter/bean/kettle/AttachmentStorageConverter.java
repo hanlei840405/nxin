@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class AttachmentStorageConverter extends BeanConverter<AttachmentStorageVo, AttachmentStorage> {
 
     @Override
-    public AttachmentStorageVo convert(AttachmentStorage attachmentStorage) {
+    public AttachmentStorageVo convert(AttachmentStorage attachmentStorage, String... ignores) {
         AttachmentStorageVo attachmentStorageVo = new AttachmentStorageVo();
-        BeanUtils.copyProperties(attachmentStorage, attachmentStorageVo);
+        BeanUtils.copyProperties(attachmentStorage, attachmentStorageVo, ignores);
         return attachmentStorageVo;
     }
 
     @Override
-    public List<AttachmentStorageVo> convert(List<AttachmentStorage> attachmentStorages) {
-        return attachmentStorages.stream().map(this::convert).collect(Collectors.toList());
+    public List<AttachmentStorageVo> convert(List<AttachmentStorage> attachmentStorages, String... ignores) {
+        return attachmentStorages.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

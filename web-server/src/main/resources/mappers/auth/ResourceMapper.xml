@@ -3,7 +3,7 @@
 <mapper namespace="com.nxin.framework.mapper.auth.ResourceMapper">
 
     <select id="selectByUserId" resultType="com.nxin.framework.entity.auth.Resource">
-        SELECT auth_resource.id,
+        SELECT distinct auth_resource.id,
         auth_resource.code,
         auth_resource.name,
         auth_resource.category,
@@ -18,6 +18,24 @@
         inner join auth_privilege on auth_privilege.resource_id=auth_resource.id
         inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
         where auth_resource.status=#{status} and auth_privilege.status=#{status} and auth_user_privilege.user_id=#{userId}
+    </select>
+
+    <select id="selectByCategoryAndLevel" resultType="com.nxin.framework.entity.auth.Resource">
+        SELECT auth_resource.id,
+        auth_resource.code,
+        auth_resource.name,
+        auth_resource.category,
+        auth_resource.level,
+        auth_resource.status,
+        auth_resource.create_time,
+        auth_resource.creator,
+        auth_resource.modifier,
+        auth_resource.modify_time,
+        auth_resource.version
+        FROM auth_resource
+        inner join auth_privilege on auth_privilege.resource_id=auth_resource.id
+        where auth_resource.status='1' and auth_privilege.status='1'
+        and auth_resource.category=#{category} and auth_resource.level=#{level}
     </select>
 
     <select id="selectByUserIdAndCategoryAndLevel" resultType="com.nxin.framework.entity.auth.Resource">
@@ -35,7 +53,8 @@
         FROM auth_resource
         inner join auth_privilege on auth_privilege.resource_id=auth_resource.id
         inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
-        where auth_resource.status='1' and auth_privilege.status='1' and auth_user_privilege.user_id=#{userId}
+        where auth_resource.status='1' and auth_privilege.status='1'
+        and auth_user_privilege.user_id=#{userId}
         and auth_resource.category=#{category} and auth_resource.level=#{level}
     </select>
 

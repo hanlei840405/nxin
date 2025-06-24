@@ -1,11 +1,11 @@
 package com.nxin.framework.service.bi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.entity.auth.User;
-import com.nxin.framework.entity.bi.Model;
 import com.nxin.framework.entity.bi.Report;
 import com.nxin.framework.entity.bi.ReportChartParams;
 import com.nxin.framework.enums.Constant;
@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -41,12 +43,19 @@ public class ReportService extends ServiceImpl<ReportMapper, Report> {
     private ModelService modelService;
 
     public Report one(Long id) {
-        return getBaseMapper().selectById(id);
+        LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Report::getId, id);
+        queryWrapper.eq(Report::getStatus, Constant.ACTIVE);
+        return getBaseMapper().selectOne(queryWrapper);
     }
 
-    public IPage<Report> search(Long projectId, String name, int pageNo, int pageSize) {
+    public IPage<Report> search(Long projectId, List<Long> reportIdList, String name, int pageNo, int pageSize) {
         Page<Report> page = new Page<>(pageNo, pageSize);
+        if (reportIdList.isEmpty()) {
+            return page;
+        }
         LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Report::getId, reportIdList);
         queryWrapper.eq(Report::getProjectId, projectId);
         queryWrapper.eq(Report::getStatus, Constant.ACTIVE);
         if (StringUtils.hasLength(name)) {
@@ -60,7 +69,7 @@ public class ReportService extends ServiceImpl<ReportMapper, Report> {
         int upsert;
         if (report.getId() != null) {
             Report persisted = one(report.getId());
-            BeanUtils.copyProperties(report, persisted, "version");
+            BeanUtils.copyProperties(report, persisted, "publish", "publishTime", "version");
             report.setModifier(LoginUtils.getUsername());
             upsert = getBaseMapper().updateById(persisted);
         } else {
@@ -71,18 +80,31 @@ public class ReportService extends ServiceImpl<ReportMapper, Report> {
             User user = userService.one(LoginUtils.getUsername());
             resourceService.registryBusinessResource(String.valueOf(report.getId()), report.getName(), Constant.RESOURCE_CATEGORY_REPORT, user);
         }
-
         LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ReportChartParams::getReportId, report.getId());
-        reportChartParamsService.remove(queryWrapper);
-        Model model = modelService.one(report.getModelId());
+        queryWrapper.eq(ReportChartParams::getStatus, Constant.ACTIVE);
         reportChartParamsList.forEach(reportChartParams -> {
-            reportChartParams.setReportId(report.getId());
-            reportChartParams.setDatasourceId(model.getDatasourceId());
-            reportChartParams.setVersion(1);
+            if (reportChartParams.getId() == null) {
+                reportChartParams.setReportId(report.getId());
+                reportChartParams.setVersion(1);
+                reportChartParams.setStatus(Constant.ACTIVE);
+            }
         });
-        reportChartParamsService.saveBatch(reportChartParamsList);
+        List<ReportChartParams> afterPublishCreateList = reportChartParamsService.list(queryWrapper).stream().filter(item -> Objects.isNull(report.getPublishTime()) || item.getCreateTime().isAfter(report.getPublishTime())).collect(Collectors.toList());
+        List<ReportChartParams> deletedList = afterPublishCreateList.stream().filter(item -> reportChartParamsList.stream().noneMatch(i -> Objects.equals(i.getId(), item.getId()))).peek(item -> item.setStatus(Constant.INACTIVE)).collect(Collectors.toList());
+        reportChartParamsList.addAll(deletedList);
+        reportChartParamsService.saveOrUpdateBatch(reportChartParamsList);
         return upsert > 0;
+    }
+
+    @Transactional
+    public void delete(Report persisted) {
+        persisted.setStatus(Constant.INACTIVE);
+        getBaseMapper().updateById(persisted);
+        LambdaUpdateWrapper<ReportChartParams> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ReportChartParams::getReportId, persisted.getId());
+        updateWrapper.set(ReportChartParams::getStatus, Constant.INACTIVE);
+        reportChartParamsService.update(updateWrapper);
     }
 
 }

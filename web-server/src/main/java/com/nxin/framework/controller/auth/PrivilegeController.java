@@ -25,7 +25,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
@@ -46,12 +49,17 @@ public class PrivilegeController {
     public ResponseEntity<PageVo<PrivilegeVo>> privileges(@RequestBody CrudDto crudDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         IPage<Privilege> page = privilegeService.search(crudDto.getPayload(), loginUser.getId(), crudDto.getPageNo(), crudDto.getPageSize());
-        return ResponseEntity.ok(new PageVo<>(page.getTotal(), privilegeConverter.convert(page.getRecords())));
-    }
-
-    @GetMapping("/privileges")
-    public ResponseEntity<Map<String, List<ResourceVo>>> privileges() {
-        return ResponseEntity.ok(resourceConverter.convert(resourceService.all()).stream().collect(Collectors.groupingBy(ResourceVo::getCategory, LinkedHashMap::new, Collectors.toList())));
+        if (page.getSize() > 0) {
+            List<Long> resourceIdList = page.getRecords().stream().map(Privilege::getResourceId).distinct().collect(Collectors.toList());
+            List<Resource> resourceList = resourceService.findAllByIdIn(resourceIdList);
+            Map<Long, Resource> resourceMap = resourceList.stream().collect(Collectors.toMap(Resource::getId, v -> v));
+            List<PrivilegeVo> privilegeVos = privilegeConverter.convert(page.getRecords());
+            privilegeVos.forEach(item -> {
+                item.setDescription(resourceMap.getOrDefault(item.getResourceId(), new Resource()).getCategory());
+            });
+            return ResponseEntity.ok(new PageVo<>(page.getTotal(), privilegeVos));
+        }
+        return ResponseEntity.ok(new PageVo<>(0, Collections.emptyList()));
     }
 
     @GetMapping("/privileges/{userId}")
@@ -64,6 +72,7 @@ public class PrivilegeController {
     public ResponseEntity grantByResource(@RequestBody List<GrantDto> grantDtos) {
         User loginUser = userService.one(LoginUtils.getUsername());
         for (GrantDto grantDto : grantDtos) {
+            // 非root用户需要确认权限是否足够
             if (!resourceService.isRoot(loginUser.getId())) {
                 List<Privilege> records = privilegeService.findByUserAndResource(loginUser.getId(), grantDto.getResourceCode(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
                 if (records.isEmpty()) {
@@ -129,13 +138,13 @@ public class PrivilegeController {
         return ResponseEntity.ok(usersVo);
     }
 
-    @DeleteMapping("/grant/{resourceCategory}/{resourceLevel}/{resourceCode}/{userId}")
-    public ResponseEntity<List<UserVo>> deleteUser(@PathVariable String resourceCategory, @PathVariable String resourceLevel, @PathVariable String resourceCode, @PathVariable("userId") Long userId) {
+    @DeleteMapping("/grant/{resourceCategory}/{resourceLevel}/{resourceCode}/{userId}/{privilegeCategory}")
+    public ResponseEntity<List<UserVo>> deleteUser(@PathVariable String resourceCategory, @PathVariable String resourceLevel, @PathVariable String resourceCode, @PathVariable("userId") Long userId, @PathVariable("privilegeCategory") String privilegeCategory) {
         User loginUser = userService.one(LoginUtils.getUsername());
         List<User> members = userService.findByResource(resourceCode, resourceCategory, resourceLevel, Constant.PRIVILEGE_READ_WRITE); // 拥有WR该资源的所有成员
         if (members.contains(loginUser)) { // 拥有RW的用户且要删除的为操作人本人的，可执行删除操作
             if (members.size() > 1) {
-                privilegeService.deletePrivilegesByResourceAndUser(resourceCode, resourceCategory, resourceLevel, Collections.singletonList(userId));
+                privilegeService.deletePrivilegesByResourceAndUser(resourceCode, resourceCategory, resourceLevel, Collections.singletonList(userId), privilegeCategory);
                 return ResponseEntity.ok().build();
             }
             return ResponseEntity.status(Constant.EXCEPTION_FORBIDDEN_REMOVE_SELF).build();

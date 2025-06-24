@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class DatasourceConverter extends BeanConverter<DatasourceVo, Datasource> {
 
     @Override
-    public DatasourceVo convert(Datasource datasource) {
+    public DatasourceVo convert(Datasource datasource, String... ignores) {
         DatasourceVo datasourceVo = new DatasourceVo();
-        BeanUtils.copyProperties(datasource, datasourceVo);
+        BeanUtils.copyProperties(datasource, datasourceVo, ignores);
         return datasourceVo;
     }
 
     @Override
-    public List<DatasourceVo> convert(List<Datasource> datasourceList) {
-        return datasourceList.stream().map(this::convert).collect(Collectors.toList());
+    public List<DatasourceVo> convert(List<Datasource> datasourceList, String... ignores) {
+        return datasourceList.stream().map(item -> this.convert(item, ignores)).collect(Collectors.toList());
     }
 }

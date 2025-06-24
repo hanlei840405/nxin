@@ -45,7 +45,7 @@ public class Chart implements Serializable {
     @ApiModelProperty("是否发布")
     private Boolean publish;
 
-    @ApiModelProperty("创建时间")
+    @ApiModelProperty("发布时间")
     private LocalDateTime publishTime;
 
     @ApiModelProperty("状态")
@@ -68,6 +68,7 @@ public class Chart implements Serializable {
     private String modifier;
 
     @ApiModelProperty("版本")
+    @Version
     private Integer version;
 
     public Long getId() {
