@@ -28,7 +28,7 @@
         </if>
     </select>
 
-    <select id="findByPrivilege" resultType="com.nxin.framework.entity.auth.User">
+    <select id="findByPrivilegeAndRw" resultType="com.nxin.framework.entity.auth.User">
         SELECT DISTINCT auth_user.id,
         auth_user.name,
         auth_user.gender,
@@ -47,5 +47,8 @@
         inner join auth_user_privilege on auth_user_privilege.user_id=auth_user.id
         inner join auth_privilege on auth_privilege.id=auth_user_privilege.privilege_id
         where auth_user.status='1' and auth_privilege.status='1' and auth_privilege.id=#{privilegeId}
+        <if test="rw != null and rw != ''">
+            and auth_privilege.category=#{rw}
+        </if>
     </select>
 </mapper>

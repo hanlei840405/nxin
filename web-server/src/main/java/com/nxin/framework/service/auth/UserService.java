@@ -62,8 +62,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return users;
     }
 
-    public List<User> findByPrivilege(Long privilegeId) {
-        return getBaseMapper().findByPrivilege(privilegeId);
+    public List<User> findByPrivilegeAndRw(Long privilegeId, String rw) {
+        return getBaseMapper().findByPrivilegeAndRw(privilegeId, rw);
     }
 
     public IPage<User> search(String name, int pageNo, int pageSize) {

@@ -78,6 +78,7 @@ public class JobListener extends JobListenerSupport {
         taskHistoryService.save(taskHistory);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", name);
+        jsonObject.put("shellPublishId", id);
         jsonObject.put("taskHistoryId", taskHistory.getId());
         jsonObject.put("fireTime", context.getFireTime());
         SenderUtils.getSender().send(topic, jsonObject.toString());

@@ -9,15 +9,18 @@
         auth_apply.audit_status
         FROM auth_apply
         inner join auth_privilege p1 on auth_apply.privilege_id=p1.id
+        <if test="auditor != null">
         inner join auth_user_privilege on auth_user_privilege.privilege_id=p1.id
         inner join auth_privilege p2 on auth_user_privilege.privilege_id=p2.id and p1.id=p2.id
-        where auth_apply.status='1' and auth_apply.audit_status=0 and p1.status='1' and p2.status='1'
+        </if>
+        where auth_apply.status='1' and auth_apply.audit_status=0 and p1.status='1'
         <if test="auditor != null">
-            and p2.category='RW'
-            and auth_user_privilege.user_id=#{auditor}
+        and p2.status='1'
+        and p2.category='RW'
+        and auth_user_privilege.user_id=#{auditor}
         </if>
         <if test="creator != null and creator != ''">
-            and auth_apply.creator like concat(#{creator}, '%')
+        and auth_apply.creator like concat(#{creator}, '%')
         </if>
         order by auth_apply.id desc
     </select>

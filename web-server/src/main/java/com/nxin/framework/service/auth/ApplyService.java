@@ -17,10 +17,12 @@ import com.nxin.framework.utils.LoginUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,9 +43,8 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
     private PrivilegeService privilegeService;
     @Autowired
     private ResourceService resourceService;
-
-    private static final String AUDIT_STATUS_PASS = "1";
-    private static final String AUDIT_STATUS_REJECT = "9";
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     public Apply one(Long id) {
         LambdaQueryWrapper<Apply> queryWrapper = new LambdaQueryWrapper<>();
@@ -90,13 +91,24 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
             applyLambdaQueryWrapper.eq(Apply::getStatus, Constant.ACTIVE);
             applyLambdaQueryWrapper.eq(Apply::getCreator, LoginUtils.getUsername());
             applyLambdaQueryWrapper.in(Apply::getPrivilegeId, privilegesBelong2Resource.stream().map(Privilege::getId).collect(Collectors.toList()));
-            applyLambdaQueryWrapper.ne(Apply::getAuditStatus, AUDIT_STATUS_REJECT);
+            applyLambdaQueryWrapper.ne(Apply::getAuditStatus, Constant.AUDIT_STATUS_REJECT);
             if (getBaseMapper().exists(applyLambdaQueryWrapper)) {
                 throw new ExistedException(privilegesBelong2Resource.get(0).getName());
             }
             apply.setStatus(Constant.ACTIVE);
             apply.setVersion(1);
             upsert = getBaseMapper().insert(apply);
+        }
+
+        List<User> auditorList = userService.findByPrivilegeAndRw(apply.getPrivilegeId(), Constant.PRIVILEGE_READ_WRITE);
+        for (User auditor : auditorList) {
+            try {
+                Map<String, Object> headers = new HashMap<>();
+                headers.put("type", "application_apply");
+                simpMessagingTemplate.convertAndSendToUser(auditor.getEmail(), Constant.WEB_SOCKET_DESTINATION_MESSAGE, apply, headers);
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+            }
         }
         return upsert > 0;
     }
@@ -106,7 +118,7 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
         Map<String, User> userMap = creators.stream().collect(Collectors.toMap(User::getEmail, v -> v));
         List<GrantDto> grantDtoList = new ArrayList<>();
         for (Apply apply : applyList) {
-            if (AUDIT_STATUS_PASS.equals(apply.getAuditStatus())) {
+            if (Constant.AUDIT_STATUS_PASS.equals(apply.getAuditStatus())) {
                 GrantDto grantDto = new GrantDto();
                 grantDto.setPrivilegeId(apply.getPrivilegeId());
                 grantDto.setUserId(userMap.getOrDefault(apply.getCreator(), new User()).getId());
@@ -117,6 +129,15 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
             privilegeService.grant(grantDtoList);
         }
         this.updateBatchById(applyList, applyList.size());
+        for (Apply apply : applyList) {
+            try {
+                Map<String, Object> headers = new HashMap<>();
+                headers.put("type", "application_audit");
+                simpMessagingTemplate.convertAndSendToUser(apply.getCreator(), Constant.WEB_SOCKET_DESTINATION_MESSAGE, apply, headers);
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+            }
+        }
     }
 
     @Transactional

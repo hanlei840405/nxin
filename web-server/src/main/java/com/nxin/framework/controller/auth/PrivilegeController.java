@@ -168,7 +168,7 @@ public class PrivilegeController {
         if (privileges.isEmpty()) {
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
-        List<User> members = userService.findByPrivilege(privilegeId);
+        List<User> members = userService.findByPrivilegeAndRw(privilegeId, null);
         List<UserVo> usersVo = userConverter.convert(members);
         return ResponseEntity.ok(usersVo);
     }

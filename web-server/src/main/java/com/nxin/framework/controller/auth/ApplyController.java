@@ -48,8 +48,6 @@ public class ApplyController {
     @Autowired
     private UserService userService;
 
-    private static final String AUDIT_STATUS_APPLY = "0";
-
     private static final BeanConverter<ApplyVo, Apply> applyConverter = new ApplyConverter();
 
     @GetMapping("/apply/{id}")
@@ -84,7 +82,7 @@ public class ApplyController {
     public ResponseEntity save(@RequestBody ApplyDto applyDto) {
         Apply apply = new Apply();
         BeanUtils.copyProperties(applyDto, apply);
-        apply.setAuditStatus(AUDIT_STATUS_APPLY);
+        apply.setAuditStatus(Constant.AUDIT_STATUS_APPLY);
         try {
             applyService.save(apply);
             return ResponseEntity.ok().build();
@@ -101,7 +99,7 @@ public class ApplyController {
             User loginUser = userService.one(LoginUtils.getUsername());
             LambdaQueryWrapper<Apply> applyLambdaQueryWrapper = new LambdaQueryWrapper<>();
             applyLambdaQueryWrapper.eq(Apply::getStatus, Constant.ACTIVE);
-            applyLambdaQueryWrapper.eq(Apply::getAuditStatus, AUDIT_STATUS_APPLY);
+            applyLambdaQueryWrapper.eq(Apply::getAuditStatus, Constant.AUDIT_STATUS_APPLY);
             applyLambdaQueryWrapper.in(Apply::getId, applyDto.getApplyIdList());
             List<Apply> applies = applyService.list(applyLambdaQueryWrapper);
             if (!applies.isEmpty()) {
@@ -133,7 +131,7 @@ public class ApplyController {
     @DeleteMapping("/apply/{id}")
     public ResponseEntity<ApplyVo> delete(@PathVariable Long id) {
         Apply persisted = applyService.one(id);
-        if (persisted != null && AUDIT_STATUS_APPLY.equals(persisted.getAuditStatus())) {
+        if (persisted != null && Constant.AUDIT_STATUS_APPLY.equals(persisted.getAuditStatus())) {
             if (persisted.getCreator().equals(LoginUtils.getUsername())) {
                 applyService.delete(persisted);
                 return ResponseEntity.ok().build();

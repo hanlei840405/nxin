@@ -18,5 +18,5 @@ public interface UserMapper extends BaseMapper<User> {
 
     List<User> findByResource(@Param("resourceCode") String resourceCode, @Param("resourceCategory") String resourceCategory, @Param("resourceLevel") String resourceLevel, @Param("rw") String rw);
 
-    List<User> findByPrivilege(@Param("privilegeId") Long privilegeId);
+    List<User> findByPrivilegeAndRw(@Param("privilegeId") Long privilegeId, @Param("rw") String rw);
 }

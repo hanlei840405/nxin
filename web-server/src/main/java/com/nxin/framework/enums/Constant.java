@@ -88,4 +88,8 @@ public interface Constant {
     String SSH_PATH = "ssh";
     int ATTACHMENT_CATEGORY_DOWNLOAD = 0;
     int ATTACHMENT_CATEGORY_EXPORT = 1;
+    String AUDIT_STATUS_APPLY = "0";
+    String AUDIT_STATUS_PASS = "1";
+    String AUDIT_STATUS_REJECT = "9";
+    String WEB_SOCKET_DESTINATION_MESSAGE = "message";
 }
