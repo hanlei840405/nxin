@@ -18,7 +18,7 @@
         where auth_privilege.status='1' and auth_resource.status='1' and auth_user_privilege.user_id=#{userId}
     </select>
 
-    <select id="selectByPrivilegeIdAndUserId" resultType="com.nxin.framework.entity.auth.Privilege">
+    <select id="selectByPrivilegeIdListAndUserId" resultType="com.nxin.framework.entity.auth.Privilege">
         SELECT auth_privilege.id,
         auth_privilege.name,
         auth_privilege.category,
@@ -31,7 +31,10 @@
         FROM auth_privilege
         inner join auth_resource on auth_resource.id=auth_privilege.resource_id
         inner join auth_user_privilege on auth_privilege.id=auth_user_privilege.privilege_id
-        where auth_privilege.status='1' and auth_resource.status='1' and auth_user_privilege.user_id=#{userId} and auth_privilege.id=#{privilegeId}
+        where auth_privilege.status='1' and auth_resource.status='1' and auth_user_privilege.user_id=#{userId} and auth_privilege.id in
+        <foreach collection="privilegeIdList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
     </select>
 
     <select id="selectByUserAndResource" resultType="com.nxin.framework.entity.auth.Privilege">

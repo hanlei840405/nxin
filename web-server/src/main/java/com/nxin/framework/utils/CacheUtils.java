@@ -3,7 +3,7 @@ package com.nxin.framework.utils;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheUtils {
-    private static int MAX = 1024 * 1024;
+    private static final int MAX = 1024 * 1024;
     private static final ConcurrentHashMap<String, String> CACHE = new ConcurrentHashMap<>(MAX);
 
     public static String get(String key) {

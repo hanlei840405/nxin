@@ -47,14 +47,14 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
         return getBaseMapper().selectByUserId(userId);
     }
 
-    public Privilege findByPrivilegeIdAndUserId(Long privilegeId, Long userId) {
+    public List<Privilege> findByPrivilegeIdListAndUserId(List<Long> privilegeIdList, Long userId) {
         if (resourceService.isRoot(userId)) {
             LambdaQueryWrapper<Privilege> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Privilege::getId, privilegeId);
+            queryWrapper.in(Privilege::getId, privilegeIdList);
             queryWrapper.eq(Privilege::getStatus, Constant.ACTIVE);
-            return getBaseMapper().selectOne(queryWrapper);
+            return getBaseMapper().selectList(queryWrapper);
         }
-        return getBaseMapper().selectByPrivilegeIdAndUserId(privilegeId, userId);
+        return getBaseMapper().selectByPrivilegeIdListAndUserId(privilegeIdList, userId);
     }
 
     public List<Privilege> findByUserAndResource(Long userId, String resourceCode, String resourceCategory, String resourceLevel, String rw) {

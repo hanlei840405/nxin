@@ -124,7 +124,7 @@ public class ReportController {
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> reportIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Report> reportIPage = reportService.search(reportDto.getProjectId(), reportIdList, reportDto.getPayload(), reportDto.getPageNo(), reportDto.getPageSize());
-        if (reportIPage.getSize() > 0) {
+        if (!reportIPage.getRecords().isEmpty()) {
             LambdaQueryWrapper<ReportChartParams> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ReportChartParams::getReportId, reportIPage.getRecords().stream().map(Report::getId).collect(Collectors.toList()));
             queryWrapper.eq(ReportChartParams::getStatus, Constant.ACTIVE);

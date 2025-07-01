@@ -10,6 +10,7 @@ import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.ShellPublish;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.message.sender.SenderUtils;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.kettle.RunningProcessService;
@@ -20,7 +21,6 @@ import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.task.RunningProcessVo;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
@@ -44,8 +44,6 @@ public class ProcessController {
     private TaskHistoryService taskHistoryService;
     @Autowired
     private RunningProcessService runningProcessService;
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private ResourceService resourceService;
 
@@ -87,7 +85,7 @@ public class ProcessController {
                 jsonObject.put("taskHistoryId", String.valueOf(crudDto.getId()));
                 jsonObject.put("name", runningProcess.getInstanceName());
                 jsonObject.put("instanceId", runningProcess.getInstanceId());
-                stringRedisTemplate.convertAndSend(Constant.TOPIC_TASK_SHUTDOWN, jsonObject.toJSONString());
+                SenderUtils.getSender().send(Constant.TOPIC_TASK_SHUTDOWN, jsonObject.toJSONString());
                 // 将关联脚本也一并下线
                 List<ShellPublish> deployedShellPublishes = new ArrayList<>(0);
                 String reference = persisted.getReference();

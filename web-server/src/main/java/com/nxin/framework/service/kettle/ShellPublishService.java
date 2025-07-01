@@ -6,14 +6,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.ImmutableMap;
+import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.entity.kettle.RunningProcess;
 import com.nxin.framework.entity.kettle.Shell;
 import com.nxin.framework.entity.kettle.ShellPublish;
-import com.nxin.framework.entity.kettle.AttachmentStorage;
 import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.exception.*;
 import com.nxin.framework.mapper.kettle.ShellPublishMapper;
+import com.nxin.framework.message.sender.SenderUtils;
 import com.nxin.framework.request.StreamingReq;
 import com.nxin.framework.request.TaskReq;
 import com.nxin.framework.service.io.FileService;
@@ -354,7 +355,7 @@ public class ShellPublishService extends ServiceImpl<ShellPublishMapper, ShellPu
                     jsonObject.put("taskHistoryId", String.valueOf(taskHistory.getId()));
                     jsonObject.put("name", runningProcess.getInstanceName());
                     jsonObject.put("instanceId", runningProcess.getInstanceId());
-                    stringRedisTemplate.convertAndSend(Constant.TOPIC_TASK_SHUTDOWN, jsonObject.toJSONString());
+                    SenderUtils.getSender().send(Constant.TOPIC_TASK_SHUTDOWN, jsonObject.toJSONString());
                 }
             }
             // 将关联脚本也一并下线

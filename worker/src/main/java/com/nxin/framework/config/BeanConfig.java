@@ -6,15 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.service.TopicShutdownListener;
-import com.qcloud.cos.COSClient;
-import com.qcloud.cos.ClientConfig;
-import com.qcloud.cos.auth.BasicCOSCredentials;
-import com.qcloud.cos.auth.COSCredentials;
-import com.qcloud.cos.http.HttpProtocol;
-import com.qcloud.cos.region.Region;
+import com.nxin.framework.message.listener.TopicShutdownListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -78,7 +71,6 @@ public class BeanConfig {
 
     @Bean
     MessageListenerAdapter listenerAdapter(TopicShutdownListener topicShutdownListener) {
-        // 使用适配器对象的默认方法，方法名称必须叫这个handleMessage
         return new MessageListenerAdapter(topicShutdownListener, "onMessage");
     }
 }

@@ -37,8 +37,6 @@ public class DatasourceController {
     @Autowired
     private DatasourceService datasourceService;
     @Autowired
-    private ProjectService projectService;
-    @Autowired
     private UserService userService;
     @Autowired
     private ResourceService resourceService;

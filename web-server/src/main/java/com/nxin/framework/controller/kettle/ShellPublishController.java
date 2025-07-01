@@ -41,8 +41,6 @@ public class ShellPublishController {
     @Autowired
     private UserService userService;
     @Autowired
-    private ProjectService projectService;
-    @Autowired
     private FileService fileService;
     private static final BeanConverter<ShellVo, Shell> shellConverter = new ShellConverter();
     private static final BeanConverter<ShellPublishVo, ShellPublish> shellPublishConverter = new ShellPublishConverter();

@@ -24,5 +24,5 @@ public interface ResourceMapper extends BaseMapper<Resource> {
 
     List<Resource> selectByUserIdAndCategoryAndLevel(@Param("userId") Long userId, @Param("category") String category, @Param("level") String level);
 
-    List<Resource> findByPrivilegeId(@Param("privilegeId") Long privilegeId);
+    Resource findByPrivilegeId(@Param("privilegeId") Long privilegeId);
 }

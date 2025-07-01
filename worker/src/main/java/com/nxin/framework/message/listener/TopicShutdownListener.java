@@ -1,4 +1,4 @@
-package com.nxin.framework.service;
+package com.nxin.framework.message.listener;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;

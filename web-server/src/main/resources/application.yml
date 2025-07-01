@@ -49,6 +49,7 @@ spring:
   jackson:
     serialization:
       FAIL_ON_EMPTY_BEANS: false
+      WRITE-DATES-AS-TIMESTAMPS: false
   mail:
     host:
     port:
@@ -148,3 +149,5 @@ worker:
   schedule-resume-uri: http://127.0.0.1:8001/schedule/resume
   schedule-modify-uri: http://127.0.0.1:8001/schedule/modify
   schedule-create-streaming-uri: http://127.0.0.1:8001/schedule/createStreaming
+message:
+  sender: redis

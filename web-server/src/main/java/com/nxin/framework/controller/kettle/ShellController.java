@@ -38,8 +38,6 @@ public class ShellController {
     @Autowired
     private ShellService shellService;
     @Autowired
-    private ProjectService projectService;
-    @Autowired
     private UserService userService;
     @Autowired
     private FileService fileService;

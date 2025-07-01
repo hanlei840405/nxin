@@ -51,7 +51,7 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
         return getBaseMapper().selectByUserIdAndCategoryAndLevel(userId, category, level);
     }
 
-    public List<Resource> findByPrivilegeId(Long privilegeId) {
+    public Resource findByPrivilegeId(Long privilegeId) {
         return getBaseMapper().findByPrivilegeId(privilegeId);
     }
 

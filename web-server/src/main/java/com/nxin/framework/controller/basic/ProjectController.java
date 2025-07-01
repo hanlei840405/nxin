@@ -34,8 +34,6 @@ public class ProjectController {
     @Autowired
     private UserService userService;
     @Autowired
-    private PrivilegeService privilegeService;
-    @Autowired
     private ResourceService resourceService;
 
     private static final BeanConverter<ProjectVo, Project> projectConverter = new ProjectConverter();

@@ -1,5 +1,6 @@
 package com.nxin.framework.config;
 
+import com.nxin.framework.message.sender.SenderUtils;
 import com.nxin.framework.service.task.JobListener;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Scheduler;
@@ -14,7 +15,7 @@ import java.io.File;
 
 @Slf4j
 @Component
-public class StartListener implements ApplicationListener<ContextRefreshedEvent> {
+public class ContainStartup implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${production.dir}")
     private String productionDir;
     @Value("${attachment.dir}")
@@ -26,6 +27,7 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
+        SenderUtils.init();
         File production = new File(productionDir);
         if (!production.exists()) {
             production.mkdirs();

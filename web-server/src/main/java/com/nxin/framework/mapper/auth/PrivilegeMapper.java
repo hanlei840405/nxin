@@ -19,7 +19,7 @@ public interface PrivilegeMapper extends BaseMapper<Privilege> {
 
     List<Privilege> selectByUserId(@Param("userId") Long userId);
 
-    Privilege selectByPrivilegeIdAndUserId(@Param("privilegeId") Long privilegeId, @Param("userId") Long userId);
+    List<Privilege> selectByPrivilegeIdListAndUserId(@Param("privilegeId") List<Long> privilegeIdList, @Param("userId") Long userId);
 
     List<Privilege> selectByUserAndResource(@Param("userId") Long userId, @Param("resourceCode") String resourceCode, @Param("resourceCategory") String resourceCategory, @Param("resourceLevel") String resourceLevel, @Param("rw") String rw);
 

@@ -46,6 +46,13 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return getBaseMapper().selectOne(queryWrapper);
     }
 
+    public List<User> findByEmail(List<String> emailList) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getStatus, Constant.ACTIVE);
+        queryWrapper.in(User::getEmail, emailList);
+        return getBaseMapper().selectList(queryWrapper);
+    }
+
     public List<User> findByResource(String resourceCode, String resourceCategory, String resourceLevel, String rw) {
         List<User> users = getBaseMapper().findByResource(resourceCode, resourceCategory, resourceLevel, rw);
         User user = one(LoginUtils.getUsername());

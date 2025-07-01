@@ -31,8 +31,6 @@ public class AttachmentStorageController {
     @Autowired
     private AttachmentStorageService attachmentStorageService;
     @Autowired
-    private ProjectService projectService;
-    @Autowired
     private UserService userService;
 
     private static final BeanConverter<AttachmentStorageVo, AttachmentStorage> attachmentStorageConverter = new AttachmentStorageConverter();

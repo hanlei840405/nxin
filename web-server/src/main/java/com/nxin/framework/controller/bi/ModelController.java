@@ -55,8 +55,6 @@ public class ModelController {
     @Autowired
     private ModelService modelService;
     @Autowired
-    private ProjectService projectService;
-    @Autowired
     private UserService userService;
     @Autowired
     private MetadataService metadataService;
@@ -96,7 +94,7 @@ public class ModelController {
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_MODEL, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> modelIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Model> modelIPage = modelService.search(modelDto.getProjectId(), modelIdList, modelDto.getPayload(), modelDto.getPageNo(), modelDto.getPageSize());
-        if (modelIPage.getSize() > 0) {
+        if (!modelIPage.getRecords().isEmpty()) {
             LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(Metadata::getModelId, modelIPage.getRecords().stream().map(Model::getId).collect(Collectors.toList()));
             queryWrapper.eq(Metadata::getStatus, Constant.ACTIVE);

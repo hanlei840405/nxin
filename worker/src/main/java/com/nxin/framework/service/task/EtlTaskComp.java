@@ -10,6 +10,7 @@ import com.nxin.framework.service.io.FileService;
 import com.nxin.framework.service.kettle.RunningProcessService;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleJobException;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
@@ -19,6 +20,7 @@ import org.pentaho.di.www.CarteObjectEntry;
 import org.pentaho.di.www.CarteSingleton;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.quartz.QuartzJobBean;
@@ -43,8 +45,6 @@ public class EtlTaskComp extends QuartzJobBean {
     @Autowired
     private RunningProcessService runningProcessService;
     @Autowired
-    private TaskHistoryService taskHistoryService;
-    @Autowired
     private FileService fileService;
     @Autowired
     private TransactionTemplate transactionTemplate;
@@ -63,41 +63,25 @@ public class EtlTaskComp extends QuartzJobBean {
      * 可以选择将任务发布到kettle集群执行
      */
     @Override
-    protected void executeInternal(JobExecutionContext jobExecutionContext) {
+    protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
-        String id = jobDataMap.getString("id");
-        String shellId = jobDataMap.getString("shellId");
-        String projectId = jobDataMap.getString("projectId");
-
-//        String attachmentPath = String.format("%s/%s/%s/%s/", attachmentDir, projectId, parentId, shellId);
-//        File attachment = new File(attachmentPath);
-//        if (!attachment.exists()) {
-//            attachment.mkdirs();
-//        }
-//        String downloadPath = String.format("%s/%s/%s/%s/", downloadDir, projectId, parentId, shellId);
-//        File download = new File(downloadPath);
-//        if (!download.exists()) {
-//            download.mkdirs();
-//        }
-
+        String uuid = jobDataMap.getString("uuid");
+        long shellId = jobDataMap.getLong("shellId");
+        long projectId = jobDataMap.getLong("projectId");
         String rootPath = jobDataMap.getString("rootPath");
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
         List<String> attachmentOrDownloadDirList = (List<String>) jobDataMap.get("attachmentOrDownloadDirList");
         SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
-        String uuid = UUID.randomUUID().toString();
         spoonLoggingObject.setContainerObjectId(uuid);
         JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
         jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
-        TaskHistory taskHistory = new TaskHistory();
-        taskHistory.setShellPublishId(Long.valueOf(id));
-        taskHistory.setBeginTime(LocalDateTime.now());
         CarteObjectEntry carteObjectEntry = null;
         FileLoggingEventListener fileLoggingEventListener = null;
         try {
-            List<Ftp> ftps = ftpService.all(Long.valueOf(projectId), "SFTP");
+            List<Ftp> ftps = ftpService.all(projectId, "SFTP");
             for (Ftp ftp : ftps) {
                 if (ftp.getUsePrivateKey()) {
-                    String sshFilePath = productionDir.concat(rootPath).concat(Constant.SSH_PATH).concat(File.separator).concat(projectId);
+                    String sshFilePath = productionDir.concat(rootPath).concat(Constant.SSH_PATH).concat(File.separator).concat(String.valueOf(projectId));
                     File sshFileFolder = new File(sshFilePath);
                     if (!sshFileFolder.exists()) {
                         sshFileFolder.mkdirs();
@@ -124,40 +108,27 @@ public class EtlTaskComp extends QuartzJobBean {
                 JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
                 spoonLoggingObject.setLogLevel(jobExecutionConfiguration.getLogLevel());
                 Job job = new Job(null, jobMeta, spoonLoggingObject);
-                carteObjectEntry = new CarteObjectEntry(job.getName(), uuid);
+                carteObjectEntry = new CarteObjectEntry(job.getJobMeta().getName(), uuid);
                 job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                 job.setGatheringMetrics(true);
 
                 fileLoggingEventListener = new FileLoggingEventListener(job.getLogChannelId(), logDir + job.getLogChannelId() + ".out", true);
                 Constant.logMapping.put(uuid, fileLoggingEventListener);
                 KettleLogStore.getAppender().addLoggingEventListener(fileLoggingEventListener);
-                CarteSingleton.getInstance().getJobMap().addJob(job.getName(), uuid, job, jobConfiguration);
+                CarteSingleton.getInstance().getJobMap().addJob(job.getJobMeta().getName(), uuid, job, jobConfiguration);
                 job.start();
-                RunningProcess runningProcess = new RunningProcess();
-                runningProcess.setProd("1");
-                runningProcess.setOwner(Constant.OWNER_TASK);
-                runningProcess.setShellPublishId(Long.valueOf(id));
-                runningProcess.setShellId(Long.valueOf(shellId));
-                runningProcess.setProjectId(Long.valueOf(projectId));
-                runningProcess.setInstanceId(uuid);
-                runningProcess.setInstanceName(job.getName());
-                runningProcess.setCategory(Constant.JOB);
-                runningProcess.setVersion(1);
-                runningProcessService.save(runningProcess);
-                taskHistory.setLogChannelId(job.getLogChannelId());
-                taskHistory.setRunningProcessId(runningProcess.getId());
                 job.waitUntilFinished();
-                runningProcessService.delete(runningProcess);
+                // 将参数放入jobDataMap
+                jobDataMap.put("name", job.getJobMeta().getName());
+                jobDataMap.put("logChannelId()", job.getLogChannelId());
                 if (job.getErrors() > 0) {
-                    taskHistory.setStatus(Constant.INACTIVE);
-                    log.error("执行" + entryJobPath + "发生异常, {}", job.getResult().getLogText());
-                } else {
-                    taskHistory.setStatus(Constant.ACTIVE);
+                    log.error("执行{}发生异常, {}", entryJobPath, job.getResult().getLogText());
+                    throw new JobExecutionException();
                 }
             }
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            taskHistory.setStatus(Constant.INACTIVE);
+            throw new JobExecutionException();
         } finally {
             if (carteObjectEntry != null) {
                 Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
@@ -176,7 +147,5 @@ public class EtlTaskComp extends QuartzJobBean {
                 }
             }
         }
-        taskHistory.setEndTime(LocalDateTime.now());
-        taskHistoryService.save(taskHistory);
     }
 }

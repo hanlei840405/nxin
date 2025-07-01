@@ -45,8 +45,6 @@ public class FtpController {
     @Autowired
     private FtpService ftpService;
     @Autowired
-    private ProjectService projectService;
-    @Autowired
     private UserService userService;
     @Autowired
     private ResourceService resourceService;

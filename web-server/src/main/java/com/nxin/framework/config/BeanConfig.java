@@ -6,7 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.nxin.framework.enums.Constant;
-import com.nxin.framework.service.TopicShutdownListener;
+import com.nxin.framework.message.listener.TopicShutdownListener;
+import com.nxin.framework.message.listener.TopicTaskExecutedListener;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
@@ -125,16 +126,27 @@ public class BeanConfig {
     }
 
     @Bean
-    RedisMessageListenerContainer container(MessageListenerAdapter listenerAdapter) {
+    RedisMessageListenerContainer container(MessageListenerAdapter topicShutdownListenerAdapter, MessageListenerAdapter topicTaskExecutedSuccessListenerAdapter, MessageListenerAdapter topicTaskExecutedFailureListenerAdapter) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
-        container.addMessageListener(listenerAdapter, new PatternTopic(Constant.TOPIC_DESIGNER_SHUTDOWN));
+        container.addMessageListener(new MessageListenerAdapter(topicShutdownListenerAdapter), new PatternTopic(Constant.TOPIC_DESIGNER_SHUTDOWN));
+        container.addMessageListener(new MessageListenerAdapter(topicTaskExecutedFailureListenerAdapter), new PatternTopic(Constant.TOPIC_TASK_FAILURE));
+        container.addMessageListener(new MessageListenerAdapter(topicTaskExecutedSuccessListenerAdapter), new PatternTopic(Constant.TOPIC_TASK_SUCCESS));
         return container;
     }
 
     @Bean
-    MessageListenerAdapter listenerAdapter(TopicShutdownListener topicShutdownListener) {
-        // 使用适配器对象的默认方法，方法名称必须叫这个handleMessage
+    MessageListenerAdapter topicShutdownListenerAdapter(TopicShutdownListener topicShutdownListener) {
         return new MessageListenerAdapter(topicShutdownListener, "onMessage");
+    }
+
+    @Bean
+    MessageListenerAdapter topicTaskExecutedSuccessListenerAdapter(TopicTaskExecutedListener topicTaskExecutedListener) {
+        return new MessageListenerAdapter(topicTaskExecutedListener, "onSuccess");
+    }
+
+    @Bean
+    MessageListenerAdapter topicTaskExecutedFailureListenerAdapter(TopicTaskExecutedListener topicTaskExecutedListener) {
+        return new MessageListenerAdapter(topicTaskExecutedListener, "onFailure");
     }
 }

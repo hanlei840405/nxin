@@ -88,7 +88,7 @@ public class ChartController {
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> chartIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Chart> chartIPage = chartService.search(chartIdList, chartDto.getPayload(), chartDto.getPageNo(), chartDto.getPageSize());
-        if (chartIPage.getSize() > 0) {
+        if (!chartIPage.getRecords().isEmpty()) {
             LambdaQueryWrapper<ChartParams> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ChartParams::getChartId, chartIPage.getRecords().stream().map(Chart::getId).collect(Collectors.toList()));
             queryWrapper.eq(ChartParams::getStatus, Constant.ACTIVE);

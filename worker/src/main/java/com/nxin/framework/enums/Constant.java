@@ -59,6 +59,8 @@ public interface Constant {
     String OWNER_DESIGNER = "designer";
     String OWNER_TASK = "task";
     String TOPIC_TASK_SHUTDOWN = "TASK_SHUTDOWN";
+    String TOPIC_TASK_SUCCESS = "TASK_SUCCESS";
+    String TOPIC_TASK_FAILURE = "TASK_FAILURE";
     int EXCEPTION_NOT_FOUNT = 10001;
     int EXCEPTION_UNAUTHORIZED = 10002;
     int EXCEPTION_OWNER = 10003;

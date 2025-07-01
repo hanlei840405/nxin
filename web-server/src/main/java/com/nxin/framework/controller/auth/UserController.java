@@ -25,13 +25,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     @Autowired
     private UserService userService;
-    @Autowired
-    private JwtUserDetailsService jwtUserDetailsService;
-    @Autowired
-    private ResourceService resourceService;
-    @Autowired
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private BeanConverter<UserVo, User> userConverter = new UserConverter();
+
+    private final static BeanConverter<UserVo, User> userConverter = new UserConverter();
 
     @GetMapping("/user/{id}")
     public ResponseEntity<UserVo> one(@PathVariable("id") Long id) {

@@ -1,5 +1,6 @@
 package com.nxin.framework.controller.auth;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nxin.framework.converter.bean.BeanConverter;
 import com.nxin.framework.converter.bean.auth.PrivilegeConverter;
@@ -23,6 +24,7 @@ import com.nxin.framework.vo.auth.UserVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -31,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
 @RestController
 @RequestMapping
 public class PrivilegeController {
@@ -41,15 +42,44 @@ public class PrivilegeController {
     private PrivilegeService privilegeService;
     @Autowired
     private ResourceService resourceService;
-    private BeanConverter<ResourceVo, Resource> resourceConverter = new ResourceConverter();
-    private BeanConverter<PrivilegeVo, Privilege> privilegeConverter = new PrivilegeConverter();
-    private BeanConverter<UserVo, User> userConverter = new UserConverter();
+    private final static BeanConverter<ResourceVo, Resource> resourceConverter = new ResourceConverter();
+    private final static BeanConverter<PrivilegeVo, Privilege> privilegeConverter = new PrivilegeConverter();
+    private final static BeanConverter<UserVo, User> userConverter = new UserConverter();
 
+    @GetMapping("/resources/{userId}")
+    public ResponseEntity<List<ResourceVo>> resources(@PathVariable Long userId) {
+        List<Resource> resources = resourceService.findByUserId(userId);
+        List<ResourceVo> resourceVos = resourceConverter.convert(resources);
+        return ResponseEntity.ok(resourceVos);
+    }
+
+    @PostMapping("/resources")
+    public ResponseEntity<List<ResourceVo>> resources(@RequestBody CrudDto crudDto) {
+        if (StringUtils.hasLength(crudDto.getPayload())) {
+            LambdaQueryWrapper<Resource> resourceLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            resourceLambdaQueryWrapper.eq(Resource::getStatus, Constant.ACTIVE);
+            resourceLambdaQueryWrapper.likeRight(Resource::getName, crudDto.getPayload());
+            List<Resource> resources = resourceService.list(resourceLambdaQueryWrapper);
+            return ResponseEntity.ok(resourceConverter.convert(resources));
+        }
+        return ResponseEntity.ok(Collections.emptyList());
+    }
+
+    @GetMapping("/privileges/resource/{resourceId}")
+    public ResponseEntity<List<PrivilegeVo>> privilegesByResource(@PathVariable Long resourceId) {
+        LambdaQueryWrapper<Privilege> privilegeLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        privilegeLambdaQueryWrapper.eq(Privilege::getStatus, Constant.ACTIVE);
+        privilegeLambdaQueryWrapper.eq(Privilege::getResourceId, resourceId);
+        List<Privilege> privileges = privilegeService.list(privilegeLambdaQueryWrapper);
+        return ResponseEntity.ok(privilegeConverter.convert(privileges));
+    }
+
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @PostMapping("/privileges")
     public ResponseEntity<PageVo<PrivilegeVo>> privileges(@RequestBody CrudDto crudDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
         IPage<Privilege> page = privilegeService.search(crudDto.getPayload(), loginUser.getId(), crudDto.getPageNo(), crudDto.getPageSize());
-        if (page.getSize() > 0) {
+        if (!page.getRecords().isEmpty()) {
             List<Long> resourceIdList = page.getRecords().stream().map(Privilege::getResourceId).distinct().collect(Collectors.toList());
             List<Resource> resourceList = resourceService.findAllByIdIn(resourceIdList);
             Map<Long, Resource> resourceMap = resourceList.stream().collect(Collectors.toMap(Resource::getId, v -> v));
@@ -62,12 +92,14 @@ public class PrivilegeController {
         return ResponseEntity.ok(new PageVo<>(0, Collections.emptyList()));
     }
 
-    @GetMapping("/privileges/{userId}")
-    public ResponseEntity<List<PrivilegeVo>> privileges(@PathVariable Long userId) {
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
+    @GetMapping("/privileges/user/{userId}")
+    public ResponseEntity<List<PrivilegeVo>> privilegesByUser(@PathVariable Long userId) {
         List<Privilege> grantedPrivileges = privilegeService.findByUserId(userId);
         return ResponseEntity.ok(privilegeConverter.convert(grantedPrivileges));
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @PostMapping("/grantByResource")
     public ResponseEntity grantByResource(@RequestBody List<GrantDto> grantDtos) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -91,12 +123,13 @@ public class PrivilegeController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @PostMapping("/grant")
     public ResponseEntity grant(@RequestBody List<GrantDto> grantDtos) {
         User loginUser = userService.one(LoginUtils.getUsername());
         for (GrantDto grantDto : grantDtos) {
-            Privilege privilege = privilegeService.findByPrivilegeIdAndUserId(grantDto.getPrivilegeId(), loginUser.getId());
-            if (privilege == null) {
+            List<Privilege> privileges = privilegeService.findByPrivilegeIdListAndUserId(Collections.singletonList(grantDto.getPrivilegeId()), loginUser.getId());
+            if (privileges.isEmpty()) {
                 return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
         }
@@ -104,6 +137,7 @@ public class PrivilegeController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @GetMapping("/grant/{resourceCategory}/{resourceLevel}/{resourceCode}")
     public ResponseEntity<List<UserVo>> grantUsers(@PathVariable String resourceCategory, @PathVariable String resourceLevel, @PathVariable String resourceCode) {
         List<User> members = userService.findByResource(resourceCode, resourceCategory, resourceLevel, null);
@@ -126,11 +160,12 @@ public class PrivilegeController {
         return ResponseEntity.ok(usersVo);
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @GetMapping("/grant/{privilegeId}")
     public ResponseEntity<List<UserVo>> grantUsers(@PathVariable Long privilegeId) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        Privilege privilege = privilegeService.findByPrivilegeIdAndUserId(privilegeId, loginUser.getId());
-        if (privilege == null) {
+        List<Privilege> privileges = privilegeService.findByPrivilegeIdListAndUserId(Collections.singletonList(privilegeId), loginUser.getId());
+        if (privileges.isEmpty()) {
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
         List<User> members = userService.findByPrivilege(privilegeId);
@@ -138,6 +173,7 @@ public class PrivilegeController {
         return ResponseEntity.ok(usersVo);
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @DeleteMapping("/grant/{resourceCategory}/{resourceLevel}/{resourceCode}/{userId}/{privilegeCategory}")
     public ResponseEntity<List<UserVo>> deleteUser(@PathVariable String resourceCategory, @PathVariable String resourceLevel, @PathVariable String resourceCode, @PathVariable("userId") Long userId, @PathVariable("privilegeCategory") String privilegeCategory) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -152,21 +188,23 @@ public class PrivilegeController {
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('PRIVILEGE')")
     @DeleteMapping("/grant/{privilegeId}/{userId}")
     public ResponseEntity<List<UserVo>> deleteUser(@PathVariable Long privilegeId, @PathVariable("userId") Long userId) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        Privilege privilege = privilegeService.findByPrivilegeIdAndUserId(privilegeId, loginUser.getId());
-        if (privilege == null) {
+        List<Privilege> privileges = privilegeService.findByPrivilegeIdListAndUserId(Collections.singletonList(privilegeId), loginUser.getId());
+        if (privileges.isEmpty()) {
             return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
         }
-        List<Resource> resources = resourceService.findByPrivilegeId(privilegeId);
-        for (Resource resource : resources) {
+        Resource resource = resourceService.findByPrivilegeId(privilegeId);
+        if (resource != null) {
             List<User> members = userService.findByResource(resource.getCode(), resource.getCategory(), resource.getLevel(), Constant.PRIVILEGE_READ_WRITE);
             if (members.size() == 1) {
                 return ResponseEntity.status(Constant.EXCEPTION_FORBIDDEN_REMOVE_SELF).build();
             }
+            privilegeService.deleteGrantedPrivileges(userId, Collections.singletonList(privilegeId));
+            return ResponseEntity.ok().build();
         }
-        privilegeService.deleteGrantedPrivileges(userId, Collections.singletonList(privilegeId));
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 }

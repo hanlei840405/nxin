@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -24,4 +25,6 @@ public class ApplyDto extends CrudDto implements Serializable {
     private LocalDateTime expireDate;
     private String auditStatus;
     private Boolean searchAudit;
+
+    private List<Long> applyIdList;
 }

@@ -1,6 +1,5 @@
 package com.nxin.framework.controller.auth;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nxin.framework.dto.auth.AuthDto;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.enums.Constant;
@@ -61,8 +60,6 @@ public class JwtAuthenticationController {
     private String mailFrom;
     @Value("${spring.mail.forgotSubject}")
     private String forgotSubject;
-
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping(value = "/authenticate")
     public ResponseEntity<AuthVo> authenticate(@RequestBody AuthDto authDto) {

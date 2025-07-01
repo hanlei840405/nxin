@@ -6,8 +6,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nxin.framework.dto.auth.GrantDto;
 import com.nxin.framework.entity.auth.Apply;
+import com.nxin.framework.entity.auth.Privilege;
+import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.enums.Constant;
+import com.nxin.framework.exception.ExistedException;
+import com.nxin.framework.exception.RecordsNotMatchException;
 import com.nxin.framework.mapper.auth.ApplyMapper;
 import com.nxin.framework.utils.LoginUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -16,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -32,8 +39,11 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
     private UserService userService;
     @Autowired
     private PrivilegeService privilegeService;
+    @Autowired
+    private ResourceService resourceService;
 
-    private static final String AUDIT_STATUS_APPLY = "0";
+    private static final String AUDIT_STATUS_PASS = "1";
+    private static final String AUDIT_STATUS_REJECT = "9";
 
     public Apply one(Long id) {
         LambdaQueryWrapper<Apply> queryWrapper = new LambdaQueryWrapper<>();
@@ -46,24 +56,45 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
         Page<Apply> page = new Page<>(pageNo, pageSize);
         User loginUser = userService.one(LoginUtils.getUsername());
         if (BooleanUtils.isTrue(searchAudit)) {
-            return getBaseMapper().selectUnAudit(page, creator, loginUser.getId());
+            return getBaseMapper().selectUnAudit(page, creator, resourceService.isRoot(loginUser.getId()) ? null : loginUser.getId());
         }
         LambdaQueryWrapper<Apply> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Apply::getCreator, creator);
+        queryWrapper.eq(Apply::getStatus, Constant.ACTIVE);
+        if (!resourceService.isRoot(loginUser.getId())) {
+            queryWrapper.eq(Apply::getCreator, LoginUtils.getUsername());
+        }
         queryWrapper.orderByDesc(Apply::getId);
         return getBaseMapper().selectPage(page, queryWrapper);
     }
 
     @Transactional
     public boolean save(Apply apply) {
+        Resource resource = resourceService.findByPrivilegeId(apply.getPrivilegeId());
+        if (resource == null) {
+            throw new RecordsNotMatchException();
+        }
+        List<Privilege> privilegesBelong2Resource = privilegeService.findByRwAndResource(resource.getCode(), resource.getCategory(), resource.getLevel(), null);
+        if (privilegesBelong2Resource.isEmpty()) {
+            throw new RecordsNotMatchException();
+        }
         int upsert;
         if (apply.getId() != null) {
             Apply persisted = one(apply.getId());
+            if (persisted == null) {
+                throw new RecordsNotMatchException();
+            }
             BeanUtils.copyProperties(apply, persisted, "auditStatus", "version");
             upsert = getBaseMapper().updateById(persisted);
         } else {
+            LambdaQueryWrapper<Apply> applyLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            applyLambdaQueryWrapper.eq(Apply::getStatus, Constant.ACTIVE);
+            applyLambdaQueryWrapper.eq(Apply::getCreator, LoginUtils.getUsername());
+            applyLambdaQueryWrapper.in(Apply::getPrivilegeId, privilegesBelong2Resource.stream().map(Privilege::getId).collect(Collectors.toList()));
+            applyLambdaQueryWrapper.ne(Apply::getAuditStatus, AUDIT_STATUS_REJECT);
+            if (getBaseMapper().exists(applyLambdaQueryWrapper)) {
+                throw new ExistedException(privilegesBelong2Resource.get(0).getName());
+            }
             apply.setStatus(Constant.ACTIVE);
-            apply.setAuditStatus(AUDIT_STATUS_APPLY);
             apply.setVersion(1);
             upsert = getBaseMapper().insert(apply);
         }
@@ -71,13 +102,21 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
     }
 
     @Transactional
-    public void audit(Apply persisted) {
-        User user = userService.one(persisted.getCreator());
-        GrantDto grantDto = new GrantDto();
-        grantDto.setPrivilegeId(persisted.getPrivilegeId());
-        grantDto.setUserId(user.getId());
-        privilegeService.grant(Collections.singletonList(grantDto));
-        getBaseMapper().updateById(persisted);
+    public void audit(List<Apply> applyList, List<User> creators) {
+        Map<String, User> userMap = creators.stream().collect(Collectors.toMap(User::getEmail, v -> v));
+        List<GrantDto> grantDtoList = new ArrayList<>();
+        for (Apply apply : applyList) {
+            if (AUDIT_STATUS_PASS.equals(apply.getAuditStatus())) {
+                GrantDto grantDto = new GrantDto();
+                grantDto.setPrivilegeId(apply.getPrivilegeId());
+                grantDto.setUserId(userMap.getOrDefault(apply.getCreator(), new User()).getId());
+                grantDtoList.add(grantDto);
+            }
+        }
+        if (!grantDtoList.isEmpty()) {
+            privilegeService.grant(grantDtoList);
+        }
+        this.updateBatchById(applyList, applyList.size());
     }
 
     @Transactional

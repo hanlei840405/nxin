@@ -9,6 +9,7 @@ import com.nxin.framework.event.JobExecuteEvent;
 import com.nxin.framework.event.TransformExecuteEvent;
 import com.nxin.framework.exception.ConvertException;
 import com.nxin.framework.exception.XmlParseException;
+import com.nxin.framework.message.sender.SenderUtils;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.kettle.KettleGeneratorService;
 import com.nxin.framework.service.kettle.LogService;
@@ -50,8 +51,6 @@ import java.util.concurrent.Executor;
 @RequestMapping("/design")
 public class DesignController {
     @Autowired
-    private LogService logService;
-    @Autowired
     private KettleGeneratorService kettleGeneratorService;
     @Autowired
     private ShellService shellService;
@@ -62,8 +61,6 @@ public class DesignController {
     @Qualifier("taskExecutor")
     @Autowired
     private Executor taskExecutor;
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
     @Autowired
     private ApplicationContext applicationContext;
     @Autowired
@@ -162,7 +159,7 @@ public class DesignController {
                     jsonObject.put("category", existed.getCategory());
                     jsonObject.put("name", existed.getName());
                     jsonObject.put("instanceId", crudDto.getPayload());
-                    stringRedisTemplate.convertAndSend(Constant.TOPIC_DESIGNER_SHUTDOWN, jsonObject.toJSONString());
+                    SenderUtils.getSender().send(Constant.TOPIC_DESIGNER_SHUTDOWN, jsonObject.toJSONString());
                     return ResponseEntity.ok().build();
                 } catch (NullPointerException e) {
                     return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
