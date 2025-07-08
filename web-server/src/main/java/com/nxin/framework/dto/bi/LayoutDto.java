@@ -5,14 +5,15 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class LayoutDto extends CrudDto implements Serializable {
 
-    private String code;
     private String name;
-    private String resourceCode;
+    private Boolean authenticate;
     private String description;
-    private String arrange;
+
+    private List<LayoutReportDto> layoutReportList;
 }

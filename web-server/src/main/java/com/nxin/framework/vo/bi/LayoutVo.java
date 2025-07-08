@@ -1,18 +1,18 @@
 package com.nxin.framework.vo.bi;
 
-import com.nxin.framework.dto.CrudDto;
+import com.nxin.framework.vo.BaseVo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class LayoutVo extends CrudDto implements Serializable {
+public class LayoutVo extends BaseVo {
 
-    private String code;
     private String name;
-    private String resourceCode;
+    private Boolean authenticate;
     private String description;
-    private String arrange;
+
+    private List<LayoutReportVo> layoutReportList;
 }

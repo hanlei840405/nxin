@@ -1,12 +1,10 @@
 package com.nxin.framework.entity.bi;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.Version;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -50,16 +48,20 @@ public class ChartParams implements Serializable {
     private String status;
 
     @ApiModelProperty("创建时间")
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     @ApiModelProperty("创建者")
+    @TableField(fill = FieldFill.INSERT)
     private String creator;
 
-    @ApiModelProperty("修改者")
-    private String modifier;
-
     @ApiModelProperty("修改时间")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime modifyTime;
+
+    @ApiModelProperty("修改者")
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String modifier;
 
     @ApiModelProperty("版本")
     @Version

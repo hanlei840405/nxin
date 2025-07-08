@@ -13,7 +13,6 @@ import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.FtpService;
-import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
 import com.nxin.framework.vo.basic.FtpVo;
@@ -70,10 +69,6 @@ public class FtpController {
     @PostMapping("/ftpPage")
     public ResponseEntity<PageVo<FtpVo>> page(@RequestBody DatasourceDto ftpDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(ftpDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (!members.contains(loginUser)) {
-            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
-        }
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_FTP, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> ftpIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Ftp> ftpIPage = ftpService.search(ftpDto.getProjectId(), ftpIdList, ftpDto.getPayload(), ftpDto.getPageNo(), ftpDto.getPageSize());

@@ -40,10 +40,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -145,15 +142,19 @@ public class ReportController {
     @PostMapping("/reportList")
     public ResponseEntity<List<ReportVo>> list(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(reportDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (members.contains(loginUser)) {
-            LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Report::getProjectId, reportDto.getProjectId());
-            queryWrapper.eq(Report::getStatus, Constant.ACTIVE);
-            queryWrapper.eq(Report::getPublish, Boolean.TRUE);
-            return ResponseEntity.ok(reportConverter.convert(reportService.list(queryWrapper)));
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Long> reportIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
+        if (reportIdList.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
         }
-        return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Report::getId, reportIdList);
+        if (StringUtils.hasLength(reportDto.getPayload())) {
+            queryWrapper.likeRight(Report::getName, reportDto.getPayload());
+        }
+        queryWrapper.eq(Report::getPublish, Boolean.TRUE);
+        queryWrapper.eq(Report::getStatus, Constant.ACTIVE);
+        return ResponseEntity.ok(reportConverter.convert(reportService.list(queryWrapper)));
     }
 
     @PostMapping("/report")
@@ -226,6 +227,7 @@ public class ReportController {
             cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
             cfg.setLogTemplateExceptions(false);
             cfg.setWrapUncheckedExceptions(true);
+            cfg.setNumberFormat("#");
             try {
                 StringTemplateLoader stringLoader = new StringTemplateLoader();
                 stringLoader.putTemplate("chartTemplate", chart.getOptions());
@@ -288,6 +290,7 @@ public class ReportController {
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         cfg.setLogTemplateExceptions(false);
         cfg.setWrapUncheckedExceptions(true);
+        cfg.setNumberFormat("#");
         try {
             StringTemplateLoader stringLoader = new StringTemplateLoader();
             stringLoader.putTemplate("chartTemplate", chart.getOptions());
@@ -345,6 +348,7 @@ public class ReportController {
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         cfg.setLogTemplateExceptions(false);
         cfg.setWrapUncheckedExceptions(true);
+        cfg.setNumberFormat("#");
         try {
             StringTemplateLoader stringLoader = new StringTemplateLoader();
             stringLoader.putTemplate("chartTemplate", chart.getOptions());

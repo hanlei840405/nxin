@@ -11,7 +11,6 @@ import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
 import com.nxin.framework.service.basic.DatasourceService;
-import com.nxin.framework.service.basic.ProjectService;
 import com.nxin.framework.utils.DatabaseMetaUtils;
 import com.nxin.framework.utils.LoginUtils;
 import com.nxin.framework.vo.PageVo;
@@ -59,10 +58,6 @@ public class DatasourceController {
     @PostMapping("/datasourcePage")
     public ResponseEntity<PageVo<DatasourceVo>> page(@RequestBody DatasourceDto datasourceDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<User> members = userService.findByResource(datasourceDto.getProjectId().toString(), Constant.RESOURCE_CATEGORY_PROJECT, Constant.RESOURCE_LEVEL_BUSINESS, null);
-        if (!members.contains(loginUser)) {
-            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
-        }
         List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_DATASOURCE, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> datasourceIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Datasource> datasourceIPage = datasourceService.search(datasourceDto.getProjectId(), datasourceIdList, datasourceDto.getPayload(), datasourceDto.getPageNo(), datasourceDto.getPageSize());

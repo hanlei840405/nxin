@@ -1,22 +1,22 @@
 package com.nxin.framework.entity.bi;
 
 import com.baomidou.mybatisplus.annotation.*;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author jesse han
  * @since 2024-01-08
  */
-@TableName("analysis_layout")
-@ApiModel(value = "Layout对象", description = "")
+@TableName("bi_layout")
+@ApiModel(value = "报表布局", description = "")
 public class Layout implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,15 +24,13 @@ public class Layout implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private String code;
-
+    @ApiModelProperty("名称")
     private String name;
 
-    @ApiModelProperty("资源码")
-    private String resourceCode;
+    @ApiModelProperty("是否权限认证")
+    private Boolean authenticate;
 
-    private String arrange;
-
+    @ApiModelProperty("说明")
     private String description;
 
     @ApiModelProperty("创建时间")
@@ -66,14 +64,6 @@ public class Layout implements Serializable {
         this.id = id;
     }
 
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
     public String getName() {
         return name;
     }
@@ -82,20 +72,12 @@ public class Layout implements Serializable {
         this.name = name;
     }
 
-    public String getResourceCode() {
-        return resourceCode;
+    public Boolean getAuthenticate() {
+        return authenticate;
     }
 
-    public void setResourceCode(String resourceCode) {
-        this.resourceCode = resourceCode;
-    }
-
-    public String getArrange() {
-        return arrange;
-    }
-
-    public void setArrange(String arrange) {
-        this.arrange = arrange;
+    public void setAuthenticate(Boolean authenticate) {
+        this.authenticate = authenticate;
     }
 
     public String getDescription() {
@@ -157,18 +139,16 @@ public class Layout implements Serializable {
     @Override
     public String toString() {
         return "Layout{" +
-            "id = " + id +
-            ", code = " + code +
-            ", name = " + name +
-            ", resourceCode = " + resourceCode +
-            ", arrange = " + arrange +
-            ", description = " + description +
-            ", creator = " + creator +
-            ", modifier = " + modifier +
-            ", createTime = " + createTime +
-            ", modifyTime = " + modifyTime +
-            ", status = " + status +
-            ", version = " + version +
-        "}";
+                "id = " + id +
+                ", name = " + name +
+                ", authenticate = " + authenticate +
+                ", description = " + description +
+                ", creator = " + creator +
+                ", modifier = " + modifier +
+                ", createTime = " + createTime +
+                ", modifyTime = " + modifyTime +
+                ", status = " + status +
+                ", version = " + version +
+                "}";
     }
 }

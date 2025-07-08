@@ -37,7 +37,7 @@ CREATE TABLE `auth_apply` (
   PRIMARY KEY (`id`),
   KEY `idx_status_audit_stauts_privilege_id` (`status`,`audit_status`,`privilege_id`) /*!80000 INVISIBLE */,
   KEY `idx_creator` (`creator`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='权限申请';
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='权限申请';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -46,7 +46,6 @@ CREATE TABLE `auth_apply` (
 
 LOCK TABLES `auth_apply` WRITE;
 /*!40000 ALTER TABLE `auth_apply` DISABLE KEYS */;
-INSERT INTO `auth_apply` VALUES (1,57,'aaa','2027-01-01 00:00:00','0','1','2025-06-23 00:00:00','jesse.18@163.com','jesse.18@163.com','2025-06-23 00:00:00',1);
 /*!40000 ALTER TABLE `auth_apply` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -71,7 +70,7 @@ CREATE TABLE `auth_privilege` (
   `version` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_status_resource_id_category` (`status`,`resource_id`,`category`)
-) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -80,34 +79,31 @@ CREATE TABLE `auth_privilege` (
 
 LOCK TABLES `auth_privilege` WRITE;
 /*!40000 ALTER TABLE `auth_privilege` DISABLE KEYS */;
-INSERT INTO `auth_privilege` VALUES (3,'ROOT',1,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(7,'第二组',21,'RW',NULL,'1','2024-01-17 00:58:46','jesse.18@163.com','jesse.18@163.com','2024-01-17 00:58:46',1),(8,'第三组',22,'RW',NULL,'1','2024-01-17 01:00:12','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:00:12',1),(9,'第四组',23,'RW',NULL,'1','2024-01-17 01:03:45','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:03:45',1),(10,'第二组',21,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(11,'第五组',24,'RW',NULL,'1','2024-01-22 20:17:31','jesse.18@163.com','jesse.18@163.com','2024-01-22 20:17:31',1),(12,'第五组',24,'RW',NULL,'1','2024-01-22 20:17:31','jesse.18@163.com','jesse.18@163.com','2024-01-22 20:17:31',1),(13,'首页',2,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(14,'工程管理',3,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(15,'数据源管理',4,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(16,'下载中心',5,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(17,'在线设计',6,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(18,'脚本发布',7,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(19,'批处理任务',8,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(20,'流处理任务',9,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(21,'进程管理',10,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(22,'日志跟踪',11,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(23,'模型设计',12,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(24,'统计设置',13,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(25,'布局设置',14,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(26,'用户管理',15,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(27,'集群性能',16,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(28,'权限管理',18,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(29,'第三组',22,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(30,'第四组',23,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(31,'第六组',25,'R',NULL,'1','2025-06-03 12:10:31','jesse.18@163.com','jesse.18@163.com','2025-06-03 12:10:31',1),(32,'第六组',25,'RW',NULL,'1','2025-06-03 12:10:31','jesse.18@163.com','jesse.18@163.com','2025-06-03 12:10:31',1),(35,'样例基础柱状图',27,'R',NULL,'1','2025-06-16 11:39:08','jesse.18@163.com','jesse.18@163.com','2025-06-16 11:39:08',1),(36,'样例基础柱状图',27,'RW',NULL,'1','2025-06-16 11:39:08','jesse.18@163.com','jesse.18@163.com','2025-06-16 11:39:08',1),(37,'样例产品销售报表',28,'R',NULL,'1','2025-06-19 11:10:35','jesse.18@163.com','jesse.18@163.com','2025-06-19 11:10:35',1),(38,'样例产品销售报表',28,'RW',NULL,'1','2025-06-19 11:10:35','jesse.18@163.com','jesse.18@163.com','2025-06-19 11:10:35',1),(41,'产品销售模型',30,'R',NULL,'1','2025-06-20 19:59:27','jesse.18@163.com','jesse.18@163.com','2025-06-20 19:59:27',1),(42,'产品销售模型',30,'RW',NULL,'1','2025-06-20 19:59:27','jesse.18@163.com','jesse.18@163.com','2025-06-20 19:59:27',1),(43,'报表图形',36,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(44,'本地数据库nxin_etl_2024_001_mybatis',31,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(45,'本地数据库nxin_etl_2024_001_mybatis',31,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(46,'world',32,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(47,'world',32,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(48,'mysql jdbc',33,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(49,'mysql jdbc',33,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(50,'oracle',34,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(51,'oracle',34,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(52,'postgres',35,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(53,'postgres',35,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(54,'第一组',37,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(55,'第一组',37,'RW',NULL,'1',NULL,NULL,NULL,NULL,1),(56,'第七组',38,'R',NULL,'1','2025-06-22 15:16:28','jesse.18@163.com','jesse.18@163.com','2025-06-22 15:16:28',1),(57,'第七组',38,'RW',NULL,'1','2025-06-22 15:16:28','jesse.18@163.com','jesse.18@163.com','2025-06-22 15:16:28',1),(58,'ABC',39,'R',NULL,'1',NULL,NULL,NULL,NULL,1),(59,'ABC',39,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (3,'ROOT',1,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (13,'首页',2,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (14,'工程管理',3,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (15,'数据源管理',4,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (16,'下载中心',5,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (17,'在线设计',6,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (18,'脚本发布',7,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (19,'批处理任务',8,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (20,'流处理任务',9,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (21,'进程管理',10,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (22,'日志跟踪',11,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (23,'模型设计',12,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (24,'统计设置',13,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (25,'布局设置',14,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (26,'用户管理',15,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (27,'集群性能',16,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (28,'权限管理',18,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (43,'报表图形',36,'RW',NULL,'1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (35,'样例基础柱状图',27,'R',NULL,'1','2025-06-16 11:39:08','jesse.18@163.com','jesse.18@163.com','2025-06-16 11:39:08',1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (36,'样例基础柱状图',27,'RW',NULL,'1','2025-06-16 11:39:08','jesse.18@163.com','jesse.18@163.com','2025-06-16 11:39:08',1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (68,'样例基础饼图',44,'R',NULL,'1','2025-07-07 10:45:10','jesse.18@163.com','jesse.18@163.com','2025-07-07 10:45:10',1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (69,'样例基础饼图',44,'RW',NULL,'1','2025-07-07 10:45:10','jesse.18@163.com','jesse.18@163.com','2025-07-07 10:45:10',1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (72,'样例基础折线图',46,'R',NULL,'1','2025-07-07 11:05:01','jesse.18@163.com','jesse.18@163.com','2025-07-07 11:05:01',1);
+INSERT INTO `auth_privilege` (`id`,`name`,`resource_id`,`category`,`description`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (73,'样例基础折线图',46,'RW',NULL,'1','2025-07-07 11:05:01','jesse.18@163.com','jesse.18@163.com','2025-07-07 11:05:01',1);
 /*!40000 ALTER TABLE `auth_privilege` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `auth_privilege_resource_启弃`
---
-
-DROP TABLE IF EXISTS `auth_privilege_resource_启弃`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `auth_privilege_resource_启弃` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `privilege_id` bigint DEFAULT NULL,
-  `resource_id` bigint DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_resource_privilege` (`resource_id`,`privilege_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `auth_privilege_resource_启弃`
---
-
-LOCK TABLES `auth_privilege_resource_启弃` WRITE;
-/*!40000 ALTER TABLE `auth_privilege_resource_启弃` DISABLE KEYS */;
-INSERT INTO `auth_privilege_resource_启弃` VALUES (1,3,1),(6,8,22),(9,9,23);
-/*!40000 ALTER TABLE `auth_privilege_resource_启弃` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -131,7 +127,7 @@ CREATE TABLE `auth_resource` (
   `version` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_status_code_level_cateogry` (`status`,`code`,`level`,`category`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -140,7 +136,28 @@ CREATE TABLE `auth_resource` (
 
 LOCK TABLES `auth_resource` WRITE;
 /*!40000 ALTER TABLE `auth_resource` DISABLE KEYS */;
-INSERT INTO `auth_resource` VALUES (1,'ROOT','ROOT','ROOT','0','1',NULL,NULL,NULL,NULL,1),(2,'HOME','首页','HOME','1','1',NULL,NULL,NULL,NULL,0),(3,'PROJECT','工程管理','BASIC','1','1',NULL,NULL,NULL,NULL,0),(4,'DATASOURCE','数据源管理','BASIC','1','1',NULL,NULL,NULL,NULL,0),(5,'ATTACHMENT','下载中心','BASIC','1','1',NULL,NULL,NULL,NULL,0),(6,'DESIGNER','在线设计','ETL','1','1',NULL,NULL,NULL,NULL,0),(7,'PUBLISH','脚本发布','ETL','1','1',NULL,NULL,NULL,NULL,0),(8,'BATCH','批处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(9,'STREAMING','流处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(10,'PROCESS','进程管理','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(11,'LOG','日志跟踪','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0),(12,'MODEL','模型设计','BI','1','1',NULL,NULL,NULL,NULL,0),(13,'REPORT','统计设置','BI','1','1',NULL,NULL,NULL,NULL,0),(14,'LAYOUT','布局设置','BI','1','1',NULL,NULL,NULL,NULL,0),(15,'MEMBER','成员管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(16,'USER','用户管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(17,'METRICS','集群性能','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(18,'PRIVILEGE','权限管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0),(21,'9','第二组','PROJECT','2','0','2024-01-17 00:58:46','jesse.18@163.com','jesse.18@163.com','2024-01-17 00:58:46',1),(22,'10','第三组','PROJECT','2','1','2024-01-17 01:00:12','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:00:12',1),(23,'11','第四组','PROJECT','2','1','2024-01-17 01:03:45','jesse.18@163.com','jesse.18@163.com','2024-01-17 01:03:45',1),(24,'12','第五组','PROJECT','2','1','2024-01-22 20:17:30','jesse.18@163.com','jesse.18@163.com','2024-01-22 20:17:30',1),(25,'13','第六组','PROJECT','2','1','2025-06-03 12:10:31','jesse.18@163.com','jesse.18@163.com','2025-06-03 12:10:31',1),(27,'1','样例基础柱状图','CHART','2','1','2025-06-16 11:39:08','jesse.18@163.com','jesse.18@163.com','2025-06-16 11:39:08',1),(28,'1','样例产品销售报表','REPORT','2','1','2025-06-19 11:10:35','jesse.18@163.com','jesse.18@163.com','2025-06-19 11:10:35',1),(30,'3','产品销售模型','MODEL','2','1','2025-06-20 19:59:27','jesse.18@163.com','jesse.18@163.com','2025-06-20 19:59:27',1),(31,'1','本地数据库nxin_etl_2024_001_mybatis','DATASOURCE','2','1',NULL,NULL,NULL,NULL,1),(32,'2','world','DATASOURCE','2','1',NULL,NULL,NULL,NULL,1),(33,'3','mysql jdbc','DATASOURCE','2','1',NULL,NULL,NULL,NULL,1),(34,'7','oracle','DATASOURCE','2','1',NULL,NULL,NULL,NULL,1),(35,'8','postgres','DATASOURCE','2','1',NULL,NULL,NULL,NULL,1),(36,'CHART','报表图形','BI','1','1',NULL,NULL,NULL,NULL,1),(37,'1','第一组','PROJECT','2','1',NULL,NULL,NULL,NULL,1),(38,'14','第七组','PROJECT','2','1','2025-06-22 15:16:28','jesse.18@163.com','jesse.18@163.com','2025-06-22 15:16:28',1),(39,'1','ABC','MODEL','2','1','2025-06-20 19:59:27','jesse.18@163.com','jesse.18@163.com','2025-06-20 19:59:27',1);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (1,'ROOT','ROOT','ROOT','0','1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (2,'HOME','首页','HOME','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (3,'PROJECT','工程管理','BASIC','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (4,'DATASOURCE','数据源管理','BASIC','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (5,'ATTACHMENT','下载中心','BASIC','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (6,'DESIGNER','在线设计','ETL','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (7,'PUBLISH','脚本发布','ETL','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (8,'BATCH','批处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (9,'STREAMING','流处理任务','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (10,'PROCESS','进程管理','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (11,'LOG','日志跟踪','SCHEDULE','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (12,'MODEL','模型设计','BI','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (13,'REPORT','统计设置','BI','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (14,'LAYOUT','布局设置','BI','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (15,'MEMBER','成员管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (16,'USER','用户管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (17,'METRICS','集群性能','SYSTEM','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (18,'PRIVILEGE','权限管理','SYSTEM','1','1',NULL,NULL,NULL,NULL,0);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (27,'1','样例基础柱状图','CHART','2','1','2025-06-16 11:39:08','jesse.18@163.com','jesse.18@163.com','2025-06-16 11:39:08',1);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (36,'CHART','报表图形','BI','1','1',NULL,NULL,NULL,NULL,1);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (44,'2','样例基础饼图','CHART','2','1','2025-07-07 10:45:10','jesse.18@163.com','jesse.18@163.com','2025-07-07 10:45:10',1);
+INSERT INTO `auth_resource` (`id`,`code`,`name`,`category`,`level`,`status`,`create_time`,`creator`,`modifier`,`modify_time`,`version`) VALUES (46,'3','样例基础折线图','CHART','2','1','2025-07-07 11:05:01','jesse.18@163.com','jesse.18@163.com','2025-07-07 11:05:01',1);
 /*!40000 ALTER TABLE `auth_resource` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -195,7 +212,7 @@ CREATE TABLE `auth_user_privilege` (
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`) /*!80000 INVISIBLE */,
   KEY `idx_privilege_id` (`privilege_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -204,7 +221,29 @@ CREATE TABLE `auth_user_privilege` (
 
 LOCK TABLES `auth_user_privilege` WRITE;
 /*!40000 ALTER TABLE `auth_user_privilege` DISABLE KEYS */;
-INSERT INTO `auth_user_privilege` VALUES (5,3,1),(16,9,2),(19,13,1),(20,14,1),(21,15,1),(22,16,1),(23,17,1),(24,18,1),(25,19,1),(26,20,1),(27,21,1),(28,22,1),(29,23,1),(30,24,1),(31,25,1),(32,26,1),(33,27,1),(34,28,1),(35,14,3),(36,13,3),(37,9,1),(39,8,2),(42,29,3),(43,30,3),(44,32,1),(45,31,2),(46,34,1),(47,36,1),(48,38,1),(50,42,1),(51,55,2),(52,57,1),(53,28,3);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (5,3,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (19,13,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (20,14,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (21,15,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (22,16,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (23,17,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (24,18,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (25,19,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (26,20,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (27,21,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (28,22,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (29,23,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (30,24,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (31,25,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (32,26,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (33,27,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (34,28,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (35,14,3);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (36,13,3);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (47,36,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (53,28,3);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (59,69,1);
+INSERT INTO `auth_user_privilege` (`id`,`privilege_id`,`user_id`) VALUES (61,73,1);
 /*!40000 ALTER TABLE `auth_user_privilege` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -258,7 +297,6 @@ CREATE TABLE `basic_datasource` (
 
 LOCK TABLES `basic_datasource` WRITE;
 /*!40000 ALTER TABLE `basic_datasource` DISABLE KEYS */;
-INSERT INTO `basic_datasource` VALUES (1,'本地数据库nxin_etl_2024_001_mybatis','mysql',_binary '\0',11,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"userSSL\",\"value\":\"true\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'nxin_etl_2024_001_mybatis','127.0.0.1',3306,NULL,NULL,NULL,NULL,NULL,'1',NULL,'jesse.18@163.com','jesse.18@163.com','2024-01-26 00:59:21',5),(2,'world','MYSQL',_binary '\0',1,_binary '',_binary '\0','root','1qaz@WSX','[{\"name\":\"defaultFetchSize\",\"value\":\"500\"},{\"name\":\"useCursorFetch\",\"value\":\"true\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'world','127.0.0.1',3306,NULL,NULL,NULL,NULL,NULL,'1','2024-02-19 11:36:09','jesse.18@163.com','jesse.18@163.com','2025-06-04 12:14:31',4),(3,'mysql jdbc','MYSQL',_binary '',1,_binary '\0',_binary '\0','root','1qaz@WSX','[{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'jdbc:mysql://localhost:3306/nxin_etl_2024_001_mybatis?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&autoReconnect=true&failOverReadOnly=false&maxReconnects=10','com.mysql.cj.jdbc.Driver',NULL,'1','2024-04-10 23:31:35','jesse.18@163.com','jesse.18@163.com','2025-06-04 12:14:18',3),(7,'oracle','ORACLE',_binary '\0',1,_binary '\0',_binary '\0','scott','tiger','[{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'orcl','192.168.153.128',1521,NULL,NULL,NULL,NULL,NULL,'1','2025-04-22 11:24:37','jesse.18@163.com','jesse.18@163.com','2025-06-04 12:14:12',2),(8,'postgres','POSTGRESQL',_binary '\0',1,_binary '\0',_binary '\0','postgres','1qaz@WSX','[{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"},{\"name\":\"\",\"value\":\"\"}]',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'postgres','localhost',5432,NULL,NULL,NULL,NULL,NULL,'1','2025-05-29 10:05:49','jesse.18@163.com','jesse.18@163.com','2025-06-04 12:14:07',2);
 /*!40000 ALTER TABLE `basic_datasource` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -370,7 +408,6 @@ CREATE TABLE `basic_ftp` (
 
 LOCK TABLES `basic_ftp` WRITE;
 /*!40000 ALTER TABLE `basic_ftp` DISABLE KEYS */;
-INSERT INTO `basic_ftp` VALUES (1,'localhost','SFTP',1,'nxin','1qaz@WSX',_binary '\0',NULL,NULL,'127.0.0.1',22,NULL,NULL,NULL,NULL,NULL,'1',NULL,'jesse.18@163.com',NULL,NULL,0),(2,'docker','FTP',1,'admin','admin',_binary '\0',NULL,NULL,'127.0.0.1',21000,NULL,NULL,NULL,NULL,NULL,'1',NULL,'jesse.18@163.com',NULL,NULL,0),(3,'ubuntu','SFTP',1,'hanlei',NULL,_binary '','-----BEGIN OPENSSH PRIVATE KEY-----\n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\n-----END OPENSSH PRIVATE KEY-----\n',NULL,'172.29.74.100',22,NULL,NULL,NULL,NULL,NULL,'1',NULL,'jesse.18@163.com',NULL,NULL,0);
 /*!40000 ALTER TABLE `basic_ftp` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -404,7 +441,6 @@ CREATE TABLE `basic_project` (
 
 LOCK TABLES `basic_project` WRITE;
 /*!40000 ALTER TABLE `basic_project` DISABLE KEYS */;
-INSERT INTO `basic_project` VALUES (1,'第一组',1,'第一组','1',NULL,'jesse.18@163.com','jesse.18@163.com','2024-02-17 20:16:31',25),(2,'第二组',1,'21','0',NULL,'jesse.18@163.com','jesse.18@163.com','2024-01-12 01:00:02',4),(3,'第三组',1,'3','0',NULL,'jesse.18@163.com','jesse.18@163.com','2024-01-12 00:47:33',3),(4,'第四组',1,NULL,'0','2024-01-12 00:47:43','jesse.18@163.com','jesse.18@163.com','2024-01-12 00:47:43',0),(9,'第二组',1,NULL,'0','2024-01-17 00:58:46','jesse.18@163.com','jesse.18@163.com','2024-01-18 13:43:34',2),(10,'第三组',1,NULL,'1','2024-01-17 01:00:12','jesse.18@163.com','jesse.18@163.com','2024-01-18 22:09:18',19),(11,'第四组',1,NULL,'1','2024-01-17 01:03:45','jesse.18@163.com','jesse.18@163.com','2024-02-17 23:50:38',11),(12,'第五组',1,NULL,'1','2024-01-22 20:17:30','jesse.18@163.com','jesse.18@163.com','2024-01-22 20:17:30',0),(13,'第六组',1,NULL,'1','2025-06-03 12:10:31','jesse.18@163.com','jesse.18@163.com','2025-06-03 12:10:31',1),(14,'第七组',1,NULL,'1','2025-06-22 15:16:28','jesse.18@163.com','jesse.18@163.com','2025-06-22 15:16:28',1);
 /*!40000 ALTER TABLE `basic_project` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -431,7 +467,6 @@ CREATE TABLE `basic_project_user` (
 
 LOCK TABLES `basic_project_user` WRITE;
 /*!40000 ALTER TABLE `basic_project_user` DISABLE KEYS */;
-INSERT INTO `basic_project_user` VALUES (1,1,1),(2,2,1),(3,3,1),(4,4,1);
 /*!40000 ALTER TABLE `basic_project_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -460,7 +495,7 @@ CREATE TABLE `bi_chart` (
   `version` int NOT NULL COMMENT '版本',
   PRIMARY KEY (`id`),
   KEY `idx_status_name` (`status`,`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='展示图标';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='展示图标';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -469,7 +504,7 @@ CREATE TABLE `bi_chart` (
 
 LOCK TABLES `bi_chart` WRITE;
 /*!40000 ALTER TABLE `bi_chart` DISABLE KEYS */;
-INSERT INTO `bi_chart` VALUES (1,'demo-basic-bar','样例基础柱状图','pie','{\n  \"legend\": {},\n  \"tooltip\": {},\n  \"dataset\": {\n    \"dimensions\": [<#list dimensions as dim>\"${dim}\"<#if dim_has_next>,</#if></#list>],\n    \"source\": [<#list source as row>{<#list row?keys as key>\"${key}\": \"${row[key]}\"<#if key_has_next>,</#if></#list>}<#if row_has_next>,</#if></#list>]\n  },\n  \"xAxis\": {\"type\": \"category\"},\n  \"yAxis\": {},\n  \"series\": [<#list dimensions as dim><#if dim_index gt 0>{ \"type\": \"bar\" }<#if dim_has_next>,</#if></#if></#list>]\n}','{\n \"dimensions\": [\"product\", \"2015\", \"2016\", \"2017\"],\n \"source\": [\n      { \"product\": \"Matcha Latte\", \"2015\": 43.3, \"2016\": 85.8, \"2017\": 93.7 },\n      { \"product\": \"Milk Tea\", \"2015\": 83.1, \"2016\": 73.4, \"2017\": 55.1 },\n      { \"product\": \"Cheese Cocoa\", \"2015\": 86.4, \"2016\": 65.2, \"2017\": 82.5 },\n      { \"product\": \"Walnut Brownie\", \"2015\": 72.4, \"2016\": 53.9, \"2017\": 39.1 }\n    ]\n}','x轴为【dimensions】中第一个元素在source集合中的枚举值，y轴为【dimensions】中剩余元素在source集合中对应的数值',_binary '','2025-06-20 23:21:40','1','2025-06-15 00:00:00','jesse.18@163.com','jesse.18@163.com','2025-06-20 23:21:40',1);
+INSERT INTO `bi_chart` VALUES (1,'demo-basic-bar','样例基础柱状图','bar','{\n  \"legend\": {},\n  \"tooltip\": {},\n  \"dataset\": {\n    \"dimensions\": [<#list dimensions as dim>\"${dim}\"<#if dim_has_next>,</#if></#list>],\n    \"source\": [<#list source as row>{<#list row?keys as key>\"${key}\": \"${row[key]}\"<#if key_has_next>,</#if></#list>}<#if row_has_next>,</#if></#list>]\n  },\n  \"xAxis\": {\"type\": \"category\"},\n  \"yAxis\": {},\n  \"series\": [<#list dimensions as dim><#if dim_index gt 0>{ \"type\": \"bar\" }<#if dim_has_next>,</#if></#if></#list>]\n}','{\n \"dimensions\": [\"product\", \"2015\", \"2016\", \"2017\"],\n \"source\": [\n      { \"product\": \"Matcha Latte\", \"2015\": 43.3, \"2016\": 85.8, \"2017\": 93.7 },\n      { \"product\": \"Milk Tea\", \"2015\": 83.1, \"2016\": 73.4, \"2017\": 55.1 },\n      { \"product\": \"Cheese Cocoa\", \"2015\": 86.4, \"2016\": 65.2, \"2017\": 82.5 },\n      { \"product\": \"Walnut Brownie\", \"2015\": 72.4, \"2016\": 53.9, \"2017\": 39.1 }\n    ]\n}','x轴为【dimensions】中第一个元素在source集合中的枚举值，y轴为【dimensions】中剩余元素在source集合中对应的数值',_binary '','2025-06-20 23:21:40','1','2025-06-15 00:00:00','jesse.18@163.com','jesse.18@163.com','2025-07-07 10:43:42',3),(2,'demo-basic-pie','样例基础饼图','pie','{\n  \"legend\": {},\n  \"tooltip\": {},\n  \"dataset\": {\n    \"dimensions\": [<#list dimensions as dim>\"${dim}\"<#if dim_has_next>,</#if></#list>],\n    \"source\": [<#list source as row>{<#list row?keys as key>\"${key}\": \"${row[key]}\"<#if key_has_next>,</#if></#list>}<#if row_has_next>,</#if></#list>]\n  },\n  \"xAxis\": {\"type\": \"category\"},\n  \"yAxis\": {},\n  \"series\": [<#list dimensions as dim><#if dim_index gt 0>{ \"type\": \"pie\" }<#if dim_has_next>,</#if></#if></#list>]\n}','{\n \"dimensions\": [\"product\", \"2015\", \"2016\", \"2017\"],\n \"source\": [\n      { \"product\": \"Matcha Latte\", \"2015\": 43.3, \"2016\": 85.8, \"2017\": 93.7 },\n      { \"product\": \"Milk Tea\", \"2015\": 83.1, \"2016\": 73.4, \"2017\": 55.1 },\n      { \"product\": \"Cheese Cocoa\", \"2015\": 86.4, \"2016\": 65.2, \"2017\": 82.5 },\n      { \"product\": \"Walnut Brownie\", \"2015\": 72.4, \"2016\": 53.9, \"2017\": 39.1 }\n    ]\n}',NULL,_binary '','2025-07-07 10:45:14','1','2025-07-07 10:45:10','jesse.18@163.com','jesse.18@163.com','2025-07-07 10:45:14',2),(3,'demo-basic-line','样例基础折线图','line','{\n  \"legend\": {},\n  \"tooltip\": {},\n  \"dataset\": {\n    \"dimensions\": [<#list dimensions as dim>\"${dim}\"<#if dim_has_next>,</#if></#list>],\n    \"source\": [<#list source as row>{<#list row?keys as key>\"${key}\": \"${row[key]}\"<#if key_has_next>,</#if></#list>}<#if row_has_next>,</#if></#list>]\n  },\n  \"xAxis\": {\"type\": \"category\"},\n  \"yAxis\": {},\n  \"series\": [<#list dimensions as dim><#if dim_index gt 0>{ \"type\": \"line\" }<#if dim_has_next>,</#if></#if></#list>]\n}','{\n \"dimensions\": [\"year\", \"Matcha Latte\", \"Milk Tea\", \"Cheese Cocoa\", \"Walnut Brownie\"],\n \"source\": [\n      { \"year\": \"2015\", \"Matcha Latte\": 43.3, \"Milk Tea\": 83.1, \"Cheese Cocoa\": 86.4, \"Walnut Brownie\": 72.4 },\n      { \"year\": \"2016\", \"Matcha Latte\": 85.8, \"Milk Tea\": 73.4, \"Cheese Cocoa\": 65.2, \"Walnut Brownie\": 53.9 },\n      { \"year\": \"2017\", \"Matcha Latte\": 93.7, \"Milk Tea\": 55.1, \"Cheese Cocoa\": 82.5, \"Walnut Brownie\": 39.1 }\n    ]\n}',NULL,_binary '','2025-07-07 11:05:05','1','2025-07-07 11:05:01','jesse.18@163.com','jesse.18@163.com','2025-07-07 11:05:05',2);
 /*!40000 ALTER TABLE `bi_chart` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -496,7 +531,7 @@ CREATE TABLE `bi_chart_params` (
   `version` int NOT NULL COMMENT '版本',
   PRIMARY KEY (`id`),
   KEY `idx_status_chart_id` (`status`,`chart_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表图形参数';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表图形参数';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -505,8 +540,76 @@ CREATE TABLE `bi_chart_params` (
 
 LOCK TABLES `bi_chart_params` WRITE;
 /*!40000 ALTER TABLE `bi_chart_params` DISABLE KEYS */;
-INSERT INTO `bi_chart_params` VALUES (1,'dimensions','array','维度集合',NULL,NULL,1,'1','2025-06-15 00:00:00',NULL,NULL,NULL,1),(2,'source','array','数据集',NULL,NULL,1,'1','2025-06-15 00:00:00',NULL,NULL,NULL,1);
+INSERT INTO `bi_chart_params` VALUES (1,'dimensions','array','维度集合',NULL,NULL,1,'1','2025-06-15 00:00:00',NULL,NULL,NULL,1),(2,'source','array','数据集',NULL,NULL,1,'1','2025-06-15 00:00:00',NULL,NULL,NULL,1),(3,'dimensions','array','维度集合',NULL,NULL,2,'1','2025-07-07 00:00:00',NULL,NULL,NULL,1),(4,'source','array','数据集',NULL,NULL,2,'1','2025-07-07 00:00:00',NULL,NULL,NULL,1),(5,'dimensions','array','维度集合',NULL,NULL,3,'1','2025-07-07 11:05:01','jesse.18@163.com','jesse.18@163.com','2025-07-07 11:05:01',1),(6,'source','array','数据集',NULL,NULL,3,'1','2025-07-07 11:05:01','jesse.18@163.com','jesse.18@163.com','2025-07-07 11:05:01',1);
 /*!40000 ALTER TABLE `bi_chart_params` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bi_layout`
+--
+
+DROP TABLE IF EXISTS `bi_layout`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bi_layout` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL COMMENT '名称',
+  `authenticate` bit(1) DEFAULT NULL COMMENT '是否需要权限认证',
+  `description` varchar(255) DEFAULT NULL COMMENT '描述',
+  `status` varchar(1) DEFAULT NULL COMMENT '状态',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `creator` varchar(255) DEFAULT NULL COMMENT '创建者',
+  `modifier` varchar(255) DEFAULT NULL COMMENT '修改者',
+  `modify_time` datetime DEFAULT NULL COMMENT '最后修改时间',
+  `version` int NOT NULL COMMENT '版本',
+  PRIMARY KEY (`id`),
+  KEY `idx_status_name` (`status`,`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表布局';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bi_layout`
+--
+
+LOCK TABLES `bi_layout` WRITE;
+/*!40000 ALTER TABLE `bi_layout` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bi_layout` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bi_layout_report`
+--
+
+DROP TABLE IF EXISTS `bi_layout_report`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bi_layout_report` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `layout_id` bigint DEFAULT NULL COMMENT '布局ID',
+  `report_id` bigint DEFAULT NULL COMMENT '报表ID',
+  `frequency` int DEFAULT NULL COMMENT '刷新频率',
+  `x` int DEFAULT NULL COMMENT '坐标X',
+  `y` int DEFAULT NULL COMMENT '坐标Y',
+  `w` int DEFAULT NULL COMMENT '组件宽',
+  `h` int DEFAULT NULL COMMENT '组件长',
+  `status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '状态',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `creator` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '创建者',
+  `modifier` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '修改者',
+  `modify_time` datetime DEFAULT NULL COMMENT '修改时间',
+  `version` int NOT NULL COMMENT '版本',
+  PRIMARY KEY (`id`),
+  KEY `idx_status_layout_id` (`status`,`layout_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表图形参数';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bi_layout_report`
+--
+
+LOCK TABLES `bi_layout_report` WRITE;
+/*!40000 ALTER TABLE `bi_layout_report` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bi_layout_report` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -535,7 +638,7 @@ CREATE TABLE `bi_metadata` (
   PRIMARY KEY (`id`),
   KEY `idx_status_model_id` (`status`,`model_id`) /*!80000 INVISIBLE */,
   KEY `idx_foreign_model_id` (`column_foreign_model_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='模型元数据';
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='模型元数据';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -544,7 +647,6 @@ CREATE TABLE `bi_metadata` (
 
 LOCK TABLES `bi_metadata` WRITE;
 /*!40000 ALTER TABLE `bi_metadata` DISABLE KEYS */;
-INSERT INTO `bi_metadata` VALUES (1,'编码','code','varchar',50,NULL,NULL,1,1,'2025-06-20 19:16:00',NULL,'2025-06-20 20:34:54','jesse.18@163.com','1',2),(2,'名称','name','varchar',255,NULL,NULL,NULL,1,'2025-06-20 19:16:00',NULL,'2025-06-20 20:34:54','jesse.18@163.com','1',2),(3,'数量','amount','int',NULL,NULL,NULL,NULL,1,'2025-06-20 19:16:00',NULL,'2025-06-20 20:34:54','jesse.18@163.com','1',2),(4,'价格','price','float',10,2,NULL,NULL,1,'2025-06-20 19:16:00',NULL,'2025-06-20 20:34:54','jesse.18@163.com','1',2),(5,'类型(销售/退货)','category','varchar',10,NULL,NULL,NULL,1,'2025-06-20 19:16:00',NULL,'2025-06-20 20:34:54','jesse.18@163.com','1',2),(6,'发生时间','created','datetime',NULL,NULL,NULL,NULL,1,'2025-06-20 19:16:00',NULL,'2025-06-20 20:34:54','jesse.18@163.com','1',2),(7,'产品','product','varchar',100,NULL,NULL,NULL,3,'2025-06-20 19:59:27','jesse.18@163.com','2025-06-20 20:50:42','jesse.18@163.com','1',5),(8,'年份','year','varchar',10,NULL,NULL,NULL,3,'2025-06-20 19:59:27','jesse.18@163.com','2025-06-20 20:50:42','jesse.18@163.com','1',5),(9,'销售金额','sales','decimal',8,2,NULL,NULL,3,'2025-06-20 19:59:27','jesse.18@163.com','2025-06-20 20:50:42','jesse.18@163.com','1',5),(10,'说明','description','varchar',255,NULL,NULL,NULL,3,'2025-06-20 20:03:28','jesse.18@163.com','2025-06-20 20:50:42','jesse.18@163.com','0',5),(11,'说明','description','varchar',255,NULL,NULL,NULL,1,'2025-06-20 20:34:54','jesse.18@163.com','2025-06-20 20:34:54','jesse.18@163.com','1',1),(12,'备注','remark','varchar',255,NULL,NULL,NULL,3,'2025-06-20 20:50:42','jesse.18@163.com','2025-06-20 20:50:42','jesse.18@163.com','1',1);
 /*!40000 ALTER TABLE `bi_metadata` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -581,7 +683,6 @@ CREATE TABLE `bi_model` (
 
 LOCK TABLES `bi_model` WRITE;
 /*!40000 ALTER TABLE `bi_model` DISABLE KEYS */;
-INSERT INTO `bi_model` VALUES (1,'abc','ABC',NULL,2,1,_binary '','2025-06-20 20:47:01','2025-06-20 19:15:56','jesse.18@163.com','2025-06-20 20:47:01','jesse.18@163.com','1',6),(3,'DEMO-PRODUCT_SALE','产品销售模型',NULL,2,1,_binary '','2025-06-20 20:52:17','2025-06-20 19:59:27','jesse.18@163.com','2025-06-20 20:52:17','jesse.18@163.com','1',8);
 /*!40000 ALTER TABLE `bi_model` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -612,7 +713,7 @@ CREATE TABLE `bi_report` (
   `version` int NOT NULL COMMENT '版本',
   PRIMARY KEY (`id`),
   KEY `idx_status_project_id_name` (`status`,`project_id`,`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表设计';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表设计';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -621,7 +722,6 @@ CREATE TABLE `bi_report` (
 
 LOCK TABLES `bi_report` WRITE;
 /*!40000 ALTER TABLE `bi_report` DISABLE KEYS */;
-INSERT INTO `bi_report` VALUES (1,'DEMO-REPORT-PRODUCT-SALE','样例产品销售报表',1,1,1,NULL,NULL,NULL,_binary '','2025-06-22 20:41:00','1','2025-06-22 00:00:00','jesse.18@163.com','jesse.18@163.com','2025-06-22 22:32:23',3);
 /*!40000 ALTER TABLE `bi_report` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -647,7 +747,7 @@ CREATE TABLE `bi_report_chart_params` (
   `version` int NOT NULL COMMENT '版本',
   PRIMARY KEY (`id`),
   KEY `idx_status_report_id` (`status`,`report_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表模型图形参数定义';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报表模型图形参数定义';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -656,7 +756,6 @@ CREATE TABLE `bi_report_chart_params` (
 
 LOCK TABLES `bi_report_chart_params` WRITE;
 /*!40000 ALTER TABLE `bi_report_chart_params` DISABLE KEYS */;
-INSERT INTO `bi_report_chart_params` VALUES (5,1,1,NULL,'constant','[\'name\',\'数量\']','1','2025-06-22 22:27:29','jesse.18@163.com','jesse.18@163.com','2025-06-22 22:32:23',1),(6,1,2,NULL,'sql','select name,amount as 数量 from abc','1','2025-06-22 22:27:29','jesse.18@163.com','jesse.18@163.com','2025-06-22 22:32:23',1);
 /*!40000 ALTER TABLE `bi_report_chart_params` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -724,7 +823,7 @@ CREATE TABLE `kettle_running_process` (
   PRIMARY KEY (`id`),
   KEY `idx_shell_id` (`shell_id`),
   KEY `idx_shell_publish_id` (`shell_publish_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1272 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -763,7 +862,7 @@ CREATE TABLE `kettle_shell` (
   `version` int NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unq_name_parent_id` (`name`,`parent_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -804,7 +903,7 @@ CREATE TABLE `kettle_shell_publish` (
   `version` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_shell_id` (`shell_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1075,7 +1174,7 @@ CREATE TABLE `task_history` (
   `begin_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1531 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1096,4 +1195,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-24 21:11:01
+-- Dump completed on 2025-07-08 15:41:09
