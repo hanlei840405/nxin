@@ -73,7 +73,7 @@ public class LayoutService extends ServiceImpl<LayoutMapper, Layout> {
             layout.setVersion(1);
             upsert = getBaseMapper().insert(layout);
             User user = userService.one(LoginUtils.getUsername());
-            resourceService.registryBusinessResource(String.valueOf(layout.getId()), layout.getName(), Constant.RESOURCE_CATEGORY_CHART, user);
+            resourceService.registryBusinessResource(String.valueOf(layout.getId()), layout.getName(), Constant.RESOURCE_CATEGORY_LAYOUT, user);
         }
         LambdaQueryWrapper<LayoutReport> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(LayoutReport::getLayoutId, layout.getId());

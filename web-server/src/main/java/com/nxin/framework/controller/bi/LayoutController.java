@@ -10,7 +10,6 @@ import com.nxin.framework.entity.auth.Resource;
 import com.nxin.framework.entity.auth.User;
 import com.nxin.framework.entity.bi.Layout;
 import com.nxin.framework.entity.bi.LayoutReport;
-import com.nxin.framework.entity.bi.Metadata;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.auth.ResourceService;
 import com.nxin.framework.service.auth.UserService;
@@ -59,6 +58,11 @@ public class LayoutController {
     public ResponseEntity<LayoutVo> one(@PathVariable Long id) {
         Layout layout = layoutService.one(id);
         if (layout != null) {
+            User loginUser = userService.one(LoginUtils.getUsername());
+            List<User> members = userService.findByResource(id.toString(), Constant.RESOURCE_CATEGORY_LAYOUT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+            if (!members.contains(loginUser)) {
+                return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+            }
             LayoutVo layoutVo = layoutConverter.convert(layout);
             LambdaQueryWrapper<LayoutReport> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(LayoutReport::getLayoutId, id);
@@ -74,7 +78,7 @@ public class LayoutController {
     @PostMapping("/layoutPage")
     public ResponseEntity<PageVo<LayoutVo>> page(@RequestBody LayoutDto layoutDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
-        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS);
+        List<Resource> resources = resourceService.findByUserIdCategoryAndLevel(loginUser.getId(), Constant.RESOURCE_CATEGORY_LAYOUT, Constant.RESOURCE_LEVEL_BUSINESS);
         List<Long> layoutIdList = resources.stream().map(resource -> Long.valueOf(resource.getCode())).distinct().collect(Collectors.toList());
         IPage<Layout> chartIPage = layoutService.search(layoutIdList, layoutDto.getPayload(), layoutDto.getPageNo(), layoutDto.getPageSize());
         return ResponseEntity.ok(new PageVo<>(chartIPage.getTotal(), layoutConverter.convert(chartIPage.getRecords())));
@@ -86,7 +90,7 @@ public class LayoutController {
         User loginUser = userService.one(LoginUtils.getUsername());
         Layout layout = new Layout();
         if (layoutDto.getId() != null) {
-            List<User> members = userService.findByResource(layoutDto.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+            List<User> members = userService.findByResource(layoutDto.getId().toString(), Constant.RESOURCE_CATEGORY_LAYOUT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
             if (!members.contains(loginUser)) {
                 return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
             }
@@ -107,12 +111,34 @@ public class LayoutController {
         User loginUser = userService.one(LoginUtils.getUsername());
         Layout persisted = layoutService.one(id);
         if (persisted != null) {
-            List<User> members = userService.findByResource(persisted.getId().toString(), Constant.RESOURCE_CATEGORY_CHART, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
+            List<User> members = userService.findByResource(persisted.getId().toString(), Constant.RESOURCE_CATEGORY_LAYOUT, Constant.RESOURCE_LEVEL_BUSINESS, Constant.PRIVILEGE_READ_WRITE);
             if (members.contains(loginUser)) {
                 layoutService.delete(persisted);
                 return ResponseEntity.ok().build();
             }
         }
         return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+    }
+
+    @GetMapping("/layout/view/{id}")
+    public ResponseEntity<LayoutVo> view(@PathVariable Long id) {
+        Layout layout = layoutService.one(id);
+        if (layout != null) {
+            if (layout.getAuthenticate()) {
+                User loginUser = userService.one(LoginUtils.getUsername());
+                List<User> members = userService.findByResource(id.toString(), Constant.RESOURCE_CATEGORY_LAYOUT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+                if (!members.contains(loginUser)) {
+                    return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+                }
+            }
+            LayoutVo layoutVo = layoutConverter.convert(layout);
+            LambdaQueryWrapper<LayoutReport> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(LayoutReport::getLayoutId, id);
+            queryWrapper.eq(LayoutReport::getStatus, Constant.ACTIVE);
+            List<LayoutReport> layoutReportList = layoutReportService.list(queryWrapper);
+            layoutVo.setLayoutReportList(layoutReportConverter.convert(layoutReportList));
+            return ResponseEntity.ok(layoutVo);
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 }

@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
  * @since 2024-07-24
  */
 @Slf4j
-@PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
 @RestController
 @RequestMapping
 public class ReportController {
@@ -82,6 +81,7 @@ public class ReportController {
     private static final String FIELD_CATEGORY_ARRAY = "array";
     private static final String FIELD_CATEGORY_OBJECT = "object";
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
     @GetMapping("/report/{id}")
     public ResponseEntity<ReportVo> one(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -115,6 +115,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
     @PostMapping("/reportPage")
     public ResponseEntity<PageVo<ReportVo>> page(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -139,6 +140,7 @@ public class ReportController {
         return ResponseEntity.ok(new PageVo<>(reportIPage.getTotal(), reportConverter.convert(reportIPage.getRecords())));
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
     @PostMapping("/reportList")
     public ResponseEntity<List<ReportVo>> list(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -157,6 +159,7 @@ public class ReportController {
         return ResponseEntity.ok(reportConverter.convert(reportService.list(queryWrapper)));
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
     @PostMapping("/report")
     public ResponseEntity save(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -178,6 +181,7 @@ public class ReportController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
     @PostMapping("/report/publish")
     public ResponseEntity publish(@RequestBody ReportDto reportDto) {
         User loginUser = userService.one(LoginUtils.getUsername());
@@ -195,6 +199,7 @@ public class ReportController {
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOT') or hasAuthority('REPORT')")
     @DeleteMapping("/report/{id}")
     public ResponseEntity<ReportVo> delete(@PathVariable Long id) {
         User loginUser = userService.one(LoginUtils.getUsername());
