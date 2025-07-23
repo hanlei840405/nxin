@@ -50,6 +50,34 @@ LOCK TABLES `auth_apply` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `auth_log`
+--
+
+DROP TABLE IF EXISTS `auth_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `auth_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint DEFAULT NULL COMMENT '权限拥有者',
+  `privilege_id` bigint DEFAULT NULL COMMENT '权限',
+  `action` char(1) DEFAULT NULL COMMENT '动作:A:增加,D:删除,E:失效',
+  `action_time` datetime DEFAULT NULL COMMENT '发生时间',
+  `operator` varchar(255) DEFAULT NULL COMMENT '操作者',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='权限操作日志';
+
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `auth_log`
+--
+
+LOCK TABLES `auth_log` WRITE;
+/*!40000 ALTER TABLE `auth_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `auth_log` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `auth_privilege`
 --
 
@@ -209,9 +237,11 @@ CREATE TABLE `auth_user_privilege` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `privilege_id` bigint DEFAULT NULL,
   `user_id` bigint DEFAULT NULL,
+  `expire_date` datetime DEFAULT NULL COMMENT '失效时间',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`) /*!80000 INVISIBLE */,
-  KEY `idx_privilege_id` (`privilege_id`)
+  KEY `idx_privilege_id` (`privilege_id`),
+  KEY `idx_expire_date` (`expire_date`)
 ) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

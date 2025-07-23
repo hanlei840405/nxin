@@ -2,15 +2,12 @@ package com.nxin.framework.service.task;
 
 import com.alibaba.fastjson2.util.DateUtils;
 import com.nxin.framework.entity.basic.Ftp;
-import com.nxin.framework.entity.kettle.RunningProcess;
-import com.nxin.framework.entity.task.TaskHistory;
 import com.nxin.framework.enums.Constant;
 import com.nxin.framework.service.basic.FtpService;
 import com.nxin.framework.service.io.FileService;
-import com.nxin.framework.service.kettle.RunningProcessService;
+import com.nxin.framework.utils.SpringContextUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.exception.KettleJobException;
 import org.pentaho.di.core.logging.*;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
@@ -21,49 +18,30 @@ import org.pentaho.di.www.CarteSingleton;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.quartz.QuartzJobBean;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
-@Component
-@Transactional
 public class EtlTaskComp extends QuartzJobBean {
-    @Autowired
-    private RunningProcessService runningProcessService;
-    @Autowired
-    private FileService fileService;
-    @Autowired
-    private TransactionTemplate transactionTemplate;
-    @Autowired
-    private FtpService ftpService;
-    @Value("${production.dir}")
-    private String productionDir;
-    @Value("${attachment.dir}")
-    private String attachmentDir;
-    @Value("${download.dir}")
-    private String downloadDir;
-    @Value("${log.dir}")
-    private String logDir;
 
     /**
      * 可以选择将任务发布到kettle集群执行
      */
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+        FileService fileUtils = SpringContextUtils.getBean(FileService.class);
+        FtpService ftpService = SpringContextUtils.getBean(FtpService.class);
+        Environment environment = SpringContextUtils.getBean(Environment.class);
+        String productionDir = environment.getProperty("production.dir");
+        String logDir = environment.getProperty("log.dir");
         JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
         String uuid = jobDataMap.getString("uuid");
         long shellId = jobDataMap.getLong("shellId");
@@ -98,7 +76,7 @@ public class EtlTaskComp extends QuartzJobBean {
             }
             String entryJobPath = null;
             for (Map<String, String> referencePathMap : referencePathList) {
-                String path = fileService.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
+                String path = fileUtils.downloadFile(Constant.ENV_PUBLISH, productionDir + rootPath, referencePathMap);
                 if (referencePathMap.containsKey(shellId + Constant.DOT + Constant.JOB_SUFFIX)) {
                     entryJobPath = path;
                 }
@@ -142,7 +120,7 @@ public class EtlTaskComp extends QuartzJobBean {
                         } catch (KettleException e) {
                             log.error(e.getMessage(), e);
                         }
-                        fileService.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
+                        fileUtils.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
                     }
                 }
             }

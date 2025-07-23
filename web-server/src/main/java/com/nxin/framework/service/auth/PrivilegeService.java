@@ -25,6 +25,9 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
     @Autowired
     private ResourceService resourceService;
 
+    @Autowired
+    private AuthLogService authLogService;
+
     public List<Privilege> findByRwAndResource(String resourceCode, String resourceCategory, String resourceLevel, String rw) {
         return getBaseMapper().findByRwAndResource(resourceCode, resourceCategory, resourceLevel, rw);
     }
@@ -91,11 +94,14 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
         copyPrivilegeIds.removeIf(grantedList::contains);
         if (!copyPrivilegeIds.isEmpty()) {
             getBaseMapper().grantPrivileges(userId, copyPrivilegeIds);
+            authLogService.save(userId, copyPrivilegeIds);
         }
     }
 
+    @Transactional
     public void deleteGrantedPrivileges(Long userId, List<Long> privilegeIds) {
         getBaseMapper().deleteGrantedPrivileges(userId, privilegeIds);
+        authLogService.save(userId, privilegeIds);
     }
 
     public void deletePrivilegesByUserId(Long userId) {

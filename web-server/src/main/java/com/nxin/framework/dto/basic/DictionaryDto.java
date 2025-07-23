@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -20,8 +21,9 @@ import java.util.List;
 @Data
 public class DictionaryDto extends CrudDto {
 
-    private Long id;
+    @NotNull
     private String code;
+    @NotNull
     private String name;
     private String description;
     private List<DictionaryItemDto> dictionaryItemList;

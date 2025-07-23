@@ -93,4 +93,6 @@ public interface Constant {
     String AUDIT_STATUS_PASS = "1";
     String AUDIT_STATUS_REJECT = "9";
     String WEB_SOCKET_DESTINATION_MESSAGE = "message";
+    String ACTION_ADD = "A";
+    String ACTION_DEL = "D";
 }

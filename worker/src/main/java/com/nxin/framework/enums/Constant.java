@@ -78,4 +78,5 @@ public interface Constant {
     int EXCEPTION_FORBIDDEN_REMOVE_SELF = 10015;
     String SSH_PATH = "ssh";
     Map<String, FileLoggingEventListener> logMapping = new HashMap<>();
+    String ACTION_EXPIRE = "E";
 }

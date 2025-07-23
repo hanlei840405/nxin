@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * <p>
  * 字典项
@@ -18,9 +20,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class DictionaryItemDto extends CrudDto {
 
-    private Long id;
     private Long dictionaryId;
+    @NotNull
     private String name;
+    @NotNull
     private String value;
     private String description;
 }

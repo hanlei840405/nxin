@@ -6,6 +6,7 @@ import com.nxin.framework.entity.bi.ReportChartParams;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -13,12 +14,23 @@ import java.util.List;
 @Data
 public class ReportDto extends CrudDto implements Serializable {
 
+    @NotNull
     private String code;
+    @NotNull
     private String name;
+    @NotNull
     private Long projectId;
+    @NotNull
     private Long chartId;
+    @NotNull
     private Long modelId;
+    /**
+     * 预留字段
+     */
     private String script;
+    /**
+     * 预留字段
+     */
     private String mapping;
     private String description;
     private List<ReportChartParamsDto> reportChartParamsList;

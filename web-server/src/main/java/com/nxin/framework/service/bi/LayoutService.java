@@ -66,14 +66,16 @@ public class LayoutService extends ServiceImpl<LayoutMapper, Layout> {
         int upsert;
         if (layout.getId() != null) {
             Layout persisted = one(layout.getId());
-            BeanUtils.copyProperties(layout, persisted, "version");
+            BeanUtils.copyProperties(layout, persisted, "authenticate", "version");
             upsert = getBaseMapper().updateById(persisted);
         } else {
             layout.setStatus(Constant.ACTIVE);
             layout.setVersion(1);
             upsert = getBaseMapper().insert(layout);
             User user = userService.one(LoginUtils.getUsername());
-            resourceService.registryBusinessResource(String.valueOf(layout.getId()), layout.getName(), Constant.RESOURCE_CATEGORY_LAYOUT, user);
+            if (layout.getAuthenticate()) {
+                resourceService.registryBusinessResource(String.valueOf(layout.getId()), layout.getName(), Constant.RESOURCE_CATEGORY_LAYOUT, user);
+            }
         }
         LambdaQueryWrapper<LayoutReport> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(LayoutReport::getLayoutId, layout.getId());

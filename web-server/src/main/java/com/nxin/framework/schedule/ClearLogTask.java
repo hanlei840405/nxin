@@ -1,4 +1,4 @@
-package com.nxin.framework.task;
+package com.nxin.framework.schedule;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

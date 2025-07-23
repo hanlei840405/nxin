@@ -122,6 +122,7 @@ public class ApplyService extends ServiceImpl<ApplyMapper, Apply> {
                 GrantDto grantDto = new GrantDto();
                 grantDto.setPrivilegeId(apply.getPrivilegeId());
                 grantDto.setUserId(userMap.getOrDefault(apply.getCreator(), new User()).getId());
+                grantDto.setExpireDate(apply.getExpireDate());
                 grantDtoList.add(grantDto);
             }
         }
