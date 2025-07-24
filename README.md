@@ -69,7 +69,7 @@ $ quasar dev
 
 所有ETL运行时依赖的数据库、数据看板依赖的数据库均在本模块下维护，系统自带支持MySql，Oracle，PostgreSql，支持用户扩展其他数据库产品
 
-<img src="pic\数据库.jpg" width="400" height="240">
+<img src="pic\database.jpg" width="400" height="240">
 
 ####  FTP服务器管理
 
