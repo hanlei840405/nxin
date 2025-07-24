@@ -63,7 +63,7 @@ $ quasar dev
 
 同时工程模块可绑定使用者，用户经绑定后可以看到同模块下的数据源、服务器信息、ETL脚本数据及数据看板信息
 
-<img src="pic\project.png" width="400" height="240">
+<img src="pic/project.png" width="400" height="240">
 
 ####  数据源管理
 
