@@ -75,7 +75,7 @@ $ quasar dev
 
 所有ETL运行时依赖的FTP服务器，均在本模块下维护，例如导出的excel、csv数据等
 
-<img src="pic\FTP.png" width="400" height="240">
+<img src="FTP.png" width="400" height="240">
 
 ####  字典管理
 
