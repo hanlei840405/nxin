@@ -24,6 +24,7 @@ import com.nxin.framework.vo.auth.UserVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -202,7 +203,9 @@ public class PrivilegeController {
             if (members.size() == 1) {
                 return ResponseEntity.status(Constant.EXCEPTION_FORBIDDEN_REMOVE_SELF).build();
             }
-            privilegeService.deleteGrantedPrivileges(userId, Collections.singletonList(privilegeId));
+            Privilege deleted = new Privilege();
+            deleted.setId(privilegeId);
+            privilegeService.deleteGrantedPrivileges(userId, Collections.singletonList(deleted));
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();

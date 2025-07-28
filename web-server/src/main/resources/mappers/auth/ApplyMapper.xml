@@ -2,7 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.nxin.framework.mapper.auth.ApplyMapper">
     <select id="selectUnAudit" resultType="com.nxin.framework.entity.auth.Apply">
-        SELECT auth_apply.privilege_id,
+        SELECT auth_apply.id,
+        auth_apply.privilege_id,
         auth_apply.reason,
         auth_apply.creator,
         auth_apply.expire_date,
