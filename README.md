@@ -44,6 +44,8 @@ $ mvn clean install -DskipTests
 
 前端基于Nodejs的工程结构，使用quasar V1( https://quasar.dev ) 命令编译
 
+配置【client】工程quasar.conf.js文件中build.env.API,设置开发环境及正式环境后端域名
+
 ```
 $ quasar build
 ```
@@ -53,6 +55,19 @@ $ quasar build
 ```
 $ quasar dev
 ```
+
+## 部署
+
+修改【web-server】工程属性文件application.yml中worker的地址，替换为正式环境集群地址
+
+* worker.schedule-create-job-uri 创建批处理调度任务
+* worker.schedule-find-all-cron-trigger-uri 查询所有批处理调度任务
+* worker.schedule-pause-uri 暂停批处理调度任务
+* worker.schedule-stop-uri 下线【批/流】处理任务
+* worker.schedule-resume-uri 恢复批处理调度任务
+* worker.schedule-modify-uri 修改批处理任务配置
+* worker.schedule-create-streaming-uri 创建流处理任务
+
 
 ## 功能简介
 
