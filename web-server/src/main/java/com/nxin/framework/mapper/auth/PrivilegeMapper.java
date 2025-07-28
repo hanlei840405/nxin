@@ -27,11 +27,11 @@ public interface PrivilegeMapper extends BaseMapper<Privilege> {
 
     IPage<Privilege> selectBusinessPrivilegeByUserAndName(IPage<Privilege> page, @Param("userId") Long userId, @Param("name") String name);
 
-    void grantPrivileges(@Param("userId") Long userId, @Param("privileges") List<Long> privileges);
+    void grantPrivileges(@Param("userId") Long userId, @Param("privileges") List<Privilege> privileges);
 
     int deletePrivilegesByUserId(@Param("userId") Long userId);
 
     int deletePrivilegesByResourceAndUsers(@Param("resourceCode") String resourceCode, @Param("resourceCategory") String resourceCategory, @Param("resourceLevel") String resourceLevel, @Param("users") List<Long> users, @Param("privilegeCategory") String privilegeCategory);
 
-    int deleteGrantedPrivileges(@Param("userId") Long userId, @Param("privileges") List<Long> privileges);
+    int deleteGrantedPrivileges(@Param("userId") Long userId, @Param("privileges") List<Privilege> privileges);
 }

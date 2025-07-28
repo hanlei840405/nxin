@@ -70,7 +70,7 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
         privilegeLambdaUpdateWrapper.set(Privilege::getStatus, Constant.INACTIVE);
         privilegeService.update(privilegeLambdaUpdateWrapper);
         // 删除权限与用户的关联关系
-        privilegeService.deletePrivilegesByResourceAndUser(code, category, Constant.RESOURCE_LEVEL_BUSINESS, Collections.EMPTY_LIST, null);
+        privilegeService.deletePrivilegesByResourceAndUser(code, category, Constant.RESOURCE_LEVEL_BUSINESS, Collections.emptyList(), null);
     }
 
     @Transactional
@@ -100,7 +100,7 @@ public class ResourceService extends ServiceImpl<ResourceMapper, Resource> {
         privilegeService.saveBatch(Arrays.asList(privilegeR, privilegeRw));
         // 为创建者分配R+W级别权限
         if (user != null) {
-            privilegeService.grant(Collections.singletonList(privilegeRw.getId()), user.getId(), false);
+            privilegeService.grant(Collections.singletonList(privilegeRw), user.getId(), false);
         }
     }
 }
