@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModel;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -46,6 +47,9 @@ public class Privilege implements Serializable {
 
     @Version
     private Integer version;
+
+    @TableField(exist = false)
+    private LocalDateTime expireDate;
 
     public Long getId() {
         return id;
@@ -125,6 +129,14 @@ public class Privilege implements Serializable {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public LocalDateTime getExpireDate() {
+        return expireDate;
+    }
+
+    public void setExpireDate(LocalDateTime expireDate) {
+        this.expireDate = expireDate;
     }
 
     @Override

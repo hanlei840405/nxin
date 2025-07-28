@@ -69,39 +69,44 @@ public class PrivilegeService extends ServiceImpl<PrivilegeMapper, Privilege> {
         for (GrantDto grantDto : grantDtos) {
             for (UserPrivilegeDto userPrivilegeDto : grantDto.getUserPrivileges()) {
                 List<Privilege> privileges = findByRwAndResource(grantDto.getResourceCode(), grantDto.getResourceCategory(), grantDto.getResourceLevel(), userPrivilegeDto.getRw());
-                grant(privileges.stream().map(Privilege::getId).collect(Collectors.toList()), userPrivilegeDto.getUserId(), false);
+                grant(privileges, userPrivilegeDto.getUserId(), false);
             }
         }
     }
 
     @Transactional
     public void grant(List<GrantDto> grantDtos) {
-        Map<Long, List<Long>> records = grantDtos.stream().collect(Collectors.groupingBy(GrantDto::getUserId, Collectors.mapping(GrantDto::getPrivilegeId, Collectors.toList())));
+        Map<Long, List<Privilege>> records = grantDtos.stream().collect(Collectors.groupingBy(GrantDto::getUserId, Collectors.mapping(dto -> {
+            Privilege privilege = new Privilege();
+            privilege.setId(dto.getPrivilegeId());
+            privilege.setExpireDate(dto.getExpireDate());
+            return privilege;
+        }, Collectors.toList())));
         records.forEach((k, v) -> grant(v, k, false));
     }
 
     @Transactional
-    public void grant(List<Long> privilegeIds, Long userId, boolean delete) {
+    public void grant(List<Privilege> privileges, Long userId, boolean delete) {
         // 查找用户之前的授权数据
-        List<Long> grantedList = findByUserId(userId).stream().map(Privilege::getId).collect(Collectors.toList());
+        List<Privilege> grantedList = findByUserId(userId);
         if (delete) {
             // 删除本次取消的授权
-            grantedList.removeIf(privilegeIds::contains);
+            grantedList.removeIf(granted -> privileges.stream().anyMatch(privilege -> privilege.getId().equals(granted.getId())));
             deleteGrantedPrivileges(userId, grantedList);
         }
         // 新增授权
-        List<Long> copyPrivilegeIds = new ArrayList<>(privilegeIds);
-        copyPrivilegeIds.removeIf(grantedList::contains);
-        if (!copyPrivilegeIds.isEmpty()) {
-            getBaseMapper().grantPrivileges(userId, copyPrivilegeIds);
-            authLogService.save(userId, copyPrivilegeIds);
+        List<Privilege> copyPrivileges = new ArrayList<>(privileges);
+        copyPrivileges.removeIf(privilege -> grantedList.stream().anyMatch(granted -> granted.getId().equals(privilege.getId())));
+        if (!copyPrivileges.isEmpty()) {
+            getBaseMapper().grantPrivileges(userId, copyPrivileges);
+            authLogService.save(userId, copyPrivileges);
         }
     }
 
     @Transactional
-    public void deleteGrantedPrivileges(Long userId, List<Long> privilegeIds) {
-        getBaseMapper().deleteGrantedPrivileges(userId, privilegeIds);
-        authLogService.save(userId, privilegeIds);
+    public void deleteGrantedPrivileges(Long userId, List<Privilege> privileges) {
+        getBaseMapper().deleteGrantedPrivileges(userId, privileges);
+        authLogService.save(userId, privileges);
     }
 
     public void deletePrivilegesByUserId(Long userId) {
