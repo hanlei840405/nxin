@@ -512,7 +512,7 @@ CREATE TABLE `bi_chart` (
   `code` varchar(255) DEFAULT NULL COMMENT '编码',
   `name` varchar(255) DEFAULT NULL COMMENT '名称',
   `category` varchar(255) DEFAULT NULL COMMENT '图形类型',
-  `options` varchar(1000) DEFAULT NULL COMMENT '选项',
+  `options` text COMMENT '选项',
   `data` text COMMENT '样例数据',
   `description` varchar(255) DEFAULT NULL COMMENT '描述',
   `publish` bit(1) DEFAULT NULL COMMENT '是否发布',
