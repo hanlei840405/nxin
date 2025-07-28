@@ -124,9 +124,9 @@
     </select>
 
     <insert id="grantPrivileges">
-        insert into auth_user_privilege (user_id, privilege_id, expire_date) values
+        insert into auth_user_privilege (user_id, privilege_id) values
         <foreach collection="privileges" item="privilegeId" separator=",">
-            (#{userId}, #{privilegeId}, #{expireDate})
+            (#{userId}, #{privilegeId})
         </foreach>
     </insert>
 
