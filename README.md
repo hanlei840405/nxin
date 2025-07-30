@@ -34,6 +34,24 @@ Java工程使用Maven命令构建
 * Java JDK 8
 * Nodejs v10+（除11，13）
 
+## 开发
+
+系统强依赖的中间件，在application.yml文件中需要根据实际情况设置
+* 数据源
+
+  * web-server与worker共用同一个数据源(spring.datasource)
+  * etl执行日志可与web-server/worker使用同一个数据库，也可单独配置独立数据源(etl.log.datasource)
+* redis
+
+  * 存储找回密码的验证码
+  * web-server与worker间推送控制指令的通道，可使用其他消息中间件替代(ActiveMQ，RabbitMQ等)
+* mail
+
+  * 发送密码找回邮件
+* sftp
+
+  * etl脚本创建后，web-server服务会将脚本推送至sftp服务器，用户需提供一个可用的sftp服务，将地址/用户名/密码设置在vfs信息描述中
+
 ## 编译
 
 后端基于Maven的工程结构，使用下面命令编译
