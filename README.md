@@ -9,8 +9,8 @@
 ## 体验地址
 
     http://132.232.194.157
-* 用户名：jesse.18@163.com
-* 密码：123456
+  * 用户名：jesse.18@163.com
+  * 密码：123456
 
 **请勿修改密码**
 
@@ -222,7 +222,64 @@ $ quasar dev
 
 <img src="pic/报表图形1.png" width="400" height="240">
 
-####  预览
+###### 配置说明
+  * 模板编辑
+    ```
+    {
+      "legend": {},
+      "tooltip": {},
+      "title": {
+      "text": "${title['text']}",
+      "left": "${title['left']}",
+      "top": "${title['top']}"
+      },
+      "dataset": {
+      "dimensions": [<#list dimensions as dim>"${dim}"<#if dim_has_next>,</#if></#list>],
+      "source": [<#list source as row>{<#list row?keys as key>"${key}": "${row[key]}"<#if key_has_next>,</#if></#list>}<#if row_has_next>,</#if></#list>]
+      },
+      "xAxis": {"type": "category"},
+      "yAxis": {},
+      "series": [<#list dimensions as dim><#if dim_index gt 0>{ "type": "bar" }<#if dim_has_next>,</#if></#if></#list>]
+    }
+    ```
+  * 经过模板转移后生成echarts标准模板
+    ```
+    {
+      "legend": {},
+      "tooltip": {},
+      "title": {
+      "text": "2015到2017年产品销售报表",
+      "left": "center",
+      "top": "bottom"
+      },
+      "dataset": {
+      "dimensions": ["product","2015","2016","2017"],
+      "source": [{"product": "Matcha Latte","2017": "93.7","2016": "85.8","2015": "43.3"},{"product": "Milk Tea","2017": "55.1","2016": "73.4","2015": "83.1"},{"product": "Cheese Cocoa","2017": "82.5","2016": "65.2","2015": "86.4"},{"product": "Walnut Brownie","2017": "39.1","2016": "53.9","2015": "72.4"}]
+      },
+      "xAxis": {"type": "category"},
+      "yAxis": {},
+      "series": [{ "type": "bar" },{ "type": "bar" },{ "type": "bar" }]
+    }
+    ```
+  * 模板参数赋值
+    ```
+    {
+      "title": {
+        "text": "2015到2017年产品销售报表",
+        "left": "center",
+        "top": "bottom"
+      },
+      "dimensions": ["product", "2015", "2016", "2017"],
+      "source": [
+        { "product": "Matcha Latte", "2015": 43.3, "2016": 85.8, "2017": 93.7 },
+        { "product": "Milk Tea", "2015": 83.1, "2016": 73.4, "2017": 55.1 },
+        { "product": "Cheese Cocoa", "2015": 86.4, "2016": 65.2, "2017": 82.5 },
+        { "product": "Walnut Brownie", "2015": 72.4, "2016": 53.9, "2017": 39.1 }
+      ]
+    }
+    ```
+  * 其他图形配置请直接访问 http://132.232.194.157/#/bi-chart
+######  预览
 
 在样例数据处填入演示数据，完成图形预览操作，方便报表设计套用时，直观的展示图形
 
