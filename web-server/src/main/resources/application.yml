@@ -67,6 +67,7 @@ spring:
             required: true
     from:
     forgotSubject: 新恩数造找回密码
+  # 根据实际情况配置redis
   redis:
     host: 127.0.0.1
     port: 6379
@@ -103,10 +104,13 @@ jwt:
   secret: nxin
   expirationDateInMs: 0
   refreshExpirationDateInMs: 9000000
+# etl脚本调试时生成的附件存放位置
 attachment:
   dir: ${user.home}/.etl-designer/attachment/
+# etl脚本调试时脚本存放位置
 dev:
   dir: ${user.home}/.etl-designer/dev/
+# etl脚本调试时拉取数据文件（excel，csv等）存放位置
 download:
   dir: ${user.home}/.etl-designer/download/
 setting:
@@ -132,8 +136,10 @@ springfox:
   documentation:
     swagger-ui:
       enabled: true
+# 新建用户初始密码
 init:
   password: 123456
+# etl脚本创建后，脚本文件存放的sftp信息
 vfs:
   lang: zh
   host: 127.0.0.1:22
@@ -141,6 +147,7 @@ vfs:
   schema: sftp
   username: nxin
   password: 1qaz@WSX
+# web与worker集群通讯的web控制地址
 worker:
   schedule-create-job-uri: http://127.0.0.1:8001/schedule/create
   schedule-find-all-cron-trigger-uri: http://127.0.0.1:8001/schedule/findAllCronTrigger
@@ -149,5 +156,6 @@ worker:
   schedule-resume-uri: http://127.0.0.1:8001/schedule/resume
   schedule-modify-uri: http://127.0.0.1:8001/schedule/modify
   schedule-create-streaming-uri: http://127.0.0.1:8001/schedule/createStreaming
+# web与worker集群通讯的消息控制方式（推送指令等）
 message:
   sender: redis
