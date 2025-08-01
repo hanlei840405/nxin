@@ -82,6 +82,7 @@ public interface Constant {
     int EXCEPTION_XML_PARSE = 10017;
     int EXCEPTION_PLUGIN_CONVERT = 10018;
     int EXCEPTION_PUBLISHED = 10019;
+    int EXCEPTION_REQUEST_AI = 10020;
     String GENERIC = "Generic";
     String EXCEPTION_PLUGIN_CONVERT_NAME = "EXCEPTION_PLUGIN_CONVERT_NAME";
     String SHELL_INFO = "shellInfo";

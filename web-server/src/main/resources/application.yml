@@ -159,3 +159,9 @@ worker:
 # web与worker集群通讯的消息控制方式（推送指令等）
 message:
   sender: redis
+logging:
+  level:
+    root: INFO
+ai:
+  url: http://localhost:11434/api/generate
+  model: qwen2.5-coder:1.5b-base-q8_0
