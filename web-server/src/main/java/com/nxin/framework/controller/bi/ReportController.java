@@ -31,12 +31,15 @@ import freemarker.template.TemplateExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.util.NumberUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -73,6 +76,17 @@ public class ReportController {
     private DatasourceService datasourceService;
     @Autowired
     private ModelService modelService;
+    @Autowired
+    private MetadataService metadataService;
+    @Autowired
+    private Configuration configuration;
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${ai.url}")
+    private String aiURL;
+    @Value("${ai.model}")
+    private String aiModel;
 
     private static final BeanConverter<ReportVo, Report> reportConverter = new ReportConverter();
     private static final BeanConverter<ReportChartParamsVo, ReportChartParams> reportChartParamsConverter = new ReportChartParamsConverter();
@@ -205,7 +219,7 @@ public class ReportController {
         User loginUser = userService.one(LoginUtils.getUsername());
         Report persisted = reportService.one(id);
         if (persisted != null) {
-            List<User> members = userService.findByResource(persisted.getProjectId().toString(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS, null);
+            List<User> members = userService.findByResource(id.toString(), Constant.RESOURCE_CATEGORY_REPORT, Constant.RESOURCE_LEVEL_BUSINESS, null);
             if (members.contains(loginUser)) {
                 reportService.delete(persisted);
                 return ResponseEntity.ok().build();
@@ -239,7 +253,6 @@ public class ReportController {
                 cfg.setTemplateLoader(stringLoader);
                 Template template = cfg.getTemplate("chartTemplate");
                 Map<String, Object> params = new HashMap<>();
-                // todo 解析mapping内容为可执行参数
                 JSONObject source = JSON.parseObject(reportDto.getMapping());
                 for (Map.Entry<String, Object> entry : source.entrySet()) {
                     params.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
@@ -364,5 +377,54 @@ public class ReportController {
             log.error(e.getMessage(), e);
             return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
         }
+    }
+
+    @PostMapping("/report/ai")
+    public ResponseEntity<String> ai(@RequestBody ReportDto reportDto) {
+        User loginUser = userService.one(LoginUtils.getUsername());
+        List<User> members = userService.findByResource(reportDto.getModelId().toString(), Constant.RESOURCE_CATEGORY_MODEL, Constant.RESOURCE_LEVEL_BUSINESS, null);
+        if (!members.contains(loginUser)) {
+            return ResponseEntity.status(Constant.EXCEPTION_UNAUTHORIZED).build();
+        }
+        Model model = modelService.one(reportDto.getModelId());
+        if (model != null) {
+            LambdaQueryWrapper<Metadata> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Metadata::getModelId, model.getId());
+            queryWrapper.eq(Metadata::getStatus, Constant.ACTIVE);
+            List<Metadata> metadataList = metadataService.list(queryWrapper);
+            Datasource datasource = datasourceService.one(model.getDatasourceId());
+            try {
+                Template t = configuration.getTemplate(datasource.getCategory().toLowerCase(Locale.ROOT) + ".ftl");
+                Map<String, Object> params = new HashMap<>();
+                params.put("code", model.getCode());
+                params.put("name", model.getName());
+                params.put("charset", datasource.getCharset());
+                params.put("columns", metadataList);
+                String sql = FreeMarkerTemplateUtils.processTemplateIntoString(t, params);
+                String content = "你是一名dba，下面是建表SQL语句:" + sql.split(";")[0] + ";" + reportDto.getPayload();
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("model", aiModel);
+                requestBody.put("stream", false);
+                requestBody.put("prompt", content);
+                JSONObject options = new JSONObject();
+                options.put("temperature", 0.01);
+                options.put("max_tokens", 1024);
+                requestBody.put("options", options);
+
+
+                HttpEntity<JSONObject> requestEntity = new HttpEntity<>(requestBody);
+                ResponseEntity<String> response = restTemplate.postForEntity(aiURL, requestEntity, String.class);
+                if (!response.getStatusCode().is2xxSuccessful()) {
+                    return ResponseEntity.status(Constant.EXCEPTION_REQUEST_AI).build();
+                }
+                JSONObject responseBody = JSON.parseObject(response.getBody());
+                assert responseBody != null;
+                return ResponseEntity.ok(responseBody.getString("response"));
+            } catch (IOException | TemplateException e) {
+                log.error(e.getMessage(), e);
+                return ResponseEntity.status(Constant.EXCEPTION_XML_PARSE).build();
+            }
+        }
+        return ResponseEntity.status(Constant.EXCEPTION_NOT_FOUNT).build();
     }
 }
