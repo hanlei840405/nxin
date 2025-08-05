@@ -50,15 +50,15 @@ public class EtlTaskComp extends QuartzJobBean {
         List<Map<String, String>> referencePathList = (List<Map<String, String>>) jobDataMap.get("referencePathList");
         List<String> attachmentOrDownloadDirList = (List<String>) jobDataMap.get("attachmentOrDownloadDirList");
         SimpleLoggingObject spoonLoggingObject = new SimpleLoggingObject("SPOON", LoggingObjectType.SPOON, null);
+        spoonLoggingObject.setLogLevel(LogLevel.BASIC);
         spoonLoggingObject.setContainerObjectId(uuid);
         JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
-        jobExecutionConfiguration.setLogLevel(LogLevel.BASIC);
-        CarteObjectEntry carteObjectEntry = null;
-        FileLoggingEventListener fileLoggingEventListener = null;
+        jobExecutionConfiguration.setLogLevel(spoonLoggingObject.getLogLevel());
         try {
             List<Ftp> ftps = ftpService.all(projectId, "SFTP");
             for (Ftp ftp : ftps) {
                 if (ftp.getUsePrivateKey()) {
+                    assert productionDir != null;
                     String sshFilePath = productionDir.concat(rootPath).concat(Constant.SSH_PATH).concat(File.separator).concat(String.valueOf(projectId));
                     File sshFileFolder = new File(sshFilePath);
                     if (!sshFileFolder.exists()) {
@@ -84,13 +84,11 @@ public class EtlTaskComp extends QuartzJobBean {
             if (StringUtils.hasLength(entryJobPath)) {
                 JobMeta jobMeta = new JobMeta(entryJobPath, null);
                 JobConfiguration jobConfiguration = new JobConfiguration(jobMeta, jobExecutionConfiguration);
-                spoonLoggingObject.setLogLevel(jobExecutionConfiguration.getLogLevel());
                 Job job = new Job(null, jobMeta, spoonLoggingObject);
-                carteObjectEntry = new CarteObjectEntry(job.getJobMeta().getName(), uuid);
                 job.injectVariables(jobConfiguration.getJobExecutionConfiguration().getVariables());
                 job.setGatheringMetrics(true);
 
-                fileLoggingEventListener = new FileLoggingEventListener(job.getLogChannelId(), logDir + job.getLogChannelId() + ".out", true);
+                FileLoggingEventListener fileLoggingEventListener = new FileLoggingEventListener(job.getLogChannelId(), logDir + job.getLogChannelId() + ".out", true);
                 Constant.logMapping.put(uuid, fileLoggingEventListener);
                 KettleLogStore.getAppender().addLoggingEventListener(fileLoggingEventListener);
                 CarteSingleton.getInstance().getJobMap().addJob(job.getJobMeta().getName(), uuid, job, jobConfiguration);
@@ -108,21 +106,19 @@ public class EtlTaskComp extends QuartzJobBean {
             log.error(e.getMessage(), e);
             throw new JobExecutionException();
         } finally {
-            if (carteObjectEntry != null) {
-                Job job = CarteSingleton.getInstance().getJobMap().getJob(carteObjectEntry);
-                if (job != null) {
-                    CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
-                    Constant.logMapping.remove(carteObjectEntry.getId());
-                    if (fileLoggingEventListener != null) {
-                        KettleLogStore.getAppender().removeLoggingEventListener(fileLoggingEventListener);
-                        try {
-                            fileLoggingEventListener.close();
-                        } catch (KettleException e) {
-                            log.error(e.getMessage(), e);
-                        }
-                        fileUtils.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
-                    }
+            Job job = CarteSingleton.getInstance().getJobMap().findJob(uuid);
+            if (job != null) {
+                CarteObjectEntry carteObjectEntry = CarteSingleton.getInstance().getJobMap().getFirstCarteObjectEntry(job.getObjectName());
+                CarteSingleton.getInstance().getJobMap().removeJob(carteObjectEntry);
+                FileLoggingEventListener fileLoggingEventListener = Constant.logMapping.get(uuid);
+                Constant.logMapping.remove(uuid);
+                KettleLogStore.getAppender().removeLoggingEventListener(fileLoggingEventListener);
+                try {
+                    fileLoggingEventListener.close();
+                } catch (KettleException e) {
+                    log.error(e.getMessage(), e);
                 }
+                fileUtils.createFile("log" + File.separator + DateUtils.format(new Date(), "yyyy-MM-dd") + File.separator + job.getLogChannelId() + ".out", fileLoggingEventListener.getFile());
             }
         }
     }
