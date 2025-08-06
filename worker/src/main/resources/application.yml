@@ -122,5 +122,7 @@ vfs:
   schema: sftp
   username: nxin
   password: 1qaz@WSX
+  privateKey:
+  passPhrase:
 message:
   sender: redis

@@ -147,6 +147,8 @@ vfs:
   schema: sftp
   username: nxin
   password: 1qaz@WSX
+  privateKey:
+  passPhrase:
 # web与worker集群通讯的web控制地址
 worker:
   schedule-create-job-uri: http://127.0.0.1:8001/schedule/create
