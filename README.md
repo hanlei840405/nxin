@@ -29,7 +29,7 @@ ETL数据处理模块基于Kettle二次开发，重写50余种常用组件，
 * **worker:**
   任务调度集群，实现ETL执行及其他定时任务
 * **client:**
-  前端客户端页面，前端工程地址：https://gitcode.com/firegunner/nxin_client.git
+  前端客户端页面，前端工程地址：https://gitee.com/team-designer/etl-designer-client
 
 构建及部署
 --------------
