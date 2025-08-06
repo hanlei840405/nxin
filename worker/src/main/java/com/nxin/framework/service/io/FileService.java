@@ -1,16 +1,12 @@
 package com.nxin.framework.service.io;
 
 import com.google.common.io.Files;
-import com.nxin.framework.enums.Constant;
+import com.qcloud.cos.utils.IOUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.vfs2.*;
-import org.apache.commons.vfs2.filter.NameFileFilter;
-import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.dom4j.io.XMLWriter;
+import org.apache.commons.vfs2.provider.sftp.BytesIdentityInfo;
+import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -18,14 +14,11 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -43,59 +36,77 @@ public class FileService {
     private String username;
     @Value("${vfs.password}")
     private String password;
+    @Value("${vfs.privateKey}")
+    private String privateKey;
+    @Value("${vfs.passPhrase}")
+    private String passPhrase;
     private String baseUrl;
+
+    private static final String MODE_FTP = "ftp";
 
     @PostConstruct
     public void init() {
-        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
-            fileSystemManager.init();
-            baseUrl = String.format("%s://%s:%s@%s%s", schema, username, URLEncoder.encode(password, "utf-8"), host, path);
-            FileObject dir = fileSystemManager.resolveFile(baseUrl + "log/", getOptions());
+        try {
+            if (!StringUtils.hasLength(privateKey)) {
+                baseUrl = String.format("%s://%s:%s@%s%s", schema, username, URLEncoder.encode(password, "utf-8"), host, path);
+            } else {
+                baseUrl = String.format("%s://%s@%s%s", schema, username, host, path);
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void createEnv(String env) {
+        try {
+            FileObject dir = VFS.getManager().resolveFile(baseUrl + env, getOptions());
             if (!dir.exists()) {
                 dir.createFolder();
             }
-        } catch (UnsupportedEncodingException | FileSystemException e) {
+        } catch (FileSystemException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public void createFile(String path, FileObject source) {
-        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
-            fileSystemManager.init();
-            FileObject target = fileSystemManager.resolveFile(baseUrl + path, getOptions());
+    public String createFile(String env, String path, String text) {
+        try {
+            // 创建临时文件
+            File tempFile = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
+            Files.write(text.getBytes(StandardCharsets.UTF_8), tempFile);
+            FileObject source = VFS.getManager().resolveFile(tempFile.getAbsolutePath());
+            FileObject target = VFS.getManager().resolveFile(baseUrl + env + File.separator + path, getOptions());
             target.copyFrom(source, Selectors.SELECT_SELF);
-            source.delete();
+            tempFile.delete();
+            return DigestUtils.md5DigestAsHex(text.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public synchronized String downloadFile(String env, String localRootPath, Map<String, String> pathMap) {
-        try (StandardFileSystemManager fileSystemManager = new StandardFileSystemManager()) {
-            fileSystemManager.init();
-            for (Map.Entry<String, String> entry : pathMap.entrySet()) {
-                String[] array = entry.getValue().split(",");
-                String ossPath = array[0];
-                String nativePath = array[1];
-                String directory = localRootPath + nativePath;
-                String rename = directory + entry.getKey();
-                FileObject renameFileObject = fileSystemManager.resolveFile(rename, getOptions());
-                if (!renameFileObject.exists()) {
-                    FileObject localDirectory = fileSystemManager.resolveFile(directory, getOptions());
-                    FileObject fileToCopy = fileSystemManager.resolveFile(baseUrl + env + File.separator + ossPath, getOptions());
-                    NameFileFilter nameFileFilter = new NameFileFilter(Collections.singletonList(fileToCopy.getName().getBaseName()));
-                    FileSelector fileSelector = new FileFilterSelector(nameFileFilter);
-                    localDirectory.copyFrom(fileToCopy.getParent(), fileSelector);
-                    String oldName = directory + fileToCopy.getName().getBaseName();
-                    FileObject oldFileObject = fileSystemManager.resolveFile(oldName, getOptions());
-                    if (oldFileObject.canRenameTo(renameFileObject)) {
-                        oldFileObject.moveTo(renameFileObject);
-                        modifyFileContent(rename, localRootPath);
-                    }
+    public void createFolder(String env, String path) {
+        try {
+            String remotePath = baseUrl + env + File.separator + path;
+            FileObject dir = VFS.getManager().resolveFile(remotePath, getOptions());
+            if (!dir.exists()) {
+                dir.createFolder();
+            }
+        } catch (FileSystemException e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String content(String env, String path) {
+        try {
+            // 这里替换成你的文件路径
+            FileObject file = VFS.getManager().resolveFile(baseUrl + env + File.separator + path, getOptions());
+            if (file.exists()) {
+                // 打开文件输入流
+                try (InputStream is = file.getContent().getInputStream()) {
+                    return IOUtils.toString(is);
                 }
-                return rename;
             }
             return null;
         } catch (Exception e) {
@@ -105,68 +116,29 @@ public class FileService {
     }
 
     private FileSystemOptions getOptions() {
-        FtpFileSystemConfigBuilder builder = FtpFileSystemConfigBuilder.getInstance();
-        FileSystemOptions options = new FileSystemOptions();
-        //解决中文乱码
-        builder.setServerLanguageCode(options, lang);
-//        builder.setControlEncoding(options, "UTF-8");
-        builder.setAutodetectUtf8(options, true);
-        //设置超时时间
-        builder.setConnectTimeout(options, 30 * 1000);
-        //设置 被动模式，防止 由于防火墙导致连接不上
-        builder.setPassiveMode(options, true);
-        return options;
-    }
-
-    private void modifyFileContent(String file, String target) {
-        target = target.substring(0, target.lastIndexOf(File.separator));
-        try {
-            SAXReader reader = new SAXReader();
-            Document document = reader.read(new File(file));
-            Element rootElement = document.getRootElement();
-            if (file.endsWith(Constant.DOT + Constant.JOB_SUFFIX)) {
-                List<Element> entries = rootElement.element("entries").elements();
-                for (Element entry : entries) {
-                    Element filenameElement = entry.element("filename");
-                    if (filenameElement != null) {
-                        Element nameElement = entry.element("name");
-                        if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
-                            String value = filenameElement.getTextTrim();
-                            if (StringUtils.hasLength(value)) {
-                                filenameElement.setText(target + value);
-                            }
-                        }
-                    }
-                    Element keyfilenameElement = entry.element("keyfilename");
-                    if (keyfilenameElement != null) {
-                        Element nameElement = entry.element("name");
-                        if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
-                            String value = keyfilenameElement.getTextTrim();
-                            if (StringUtils.hasLength(value)) {
-                                keyfilenameElement.setText(target + value);
-                            }
-                        }
-                    }
+        FileSystemOptions opts = new FileSystemOptions();
+        if (MODE_FTP.equals(schema)) {
+            FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, true);
+            //解决中文乱码
+            FtpFileSystemConfigBuilder.getInstance().setServerLanguageCode(opts, lang);
+            //builder.setControlEncoding(options, "UTF-8");
+            FtpFileSystemConfigBuilder.getInstance().setAutodetectUtf8(opts, true);
+            //设置超时时间
+            FtpFileSystemConfigBuilder.getInstance().setConnectTimeout(opts, 30 * 1000);
+            //设置 被动模式，防止 由于防火墙导致连接不上
+            FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, true);
+        } else {
+            try {
+                SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(opts, "no"); // 可选：关闭主机密钥检查以避免首次连接时的警告
+                SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, true); // 根目录为用户的家目录
+                if (StringUtils.hasLength(privateKey)) {
+                    BytesIdentityInfo identityInfo = new BytesIdentityInfo(privateKey.getBytes(StandardCharsets.UTF_8), StringUtils.hasLength(passPhrase) ? passPhrase.getBytes(StandardCharsets.UTF_8) : null);
+                    SftpFileSystemConfigBuilder.getInstance().setIdentityProvider(opts, identityInfo);
                 }
-            } else {
-                List<Element> steps = rootElement.element("step").elements();
-                for (Element step : steps) {
-                    if ("transformationPath".equals(step.getName())) {
-                        if (StringUtils.hasLength(step.getText())) {
-                            String value = step.getTextTrim();
-                            if (StringUtils.hasLength(value)) {
-                                step.setText(target + value);
-                            }
-                        }
-                    }
-                }
+            } catch (FileSystemException e) {
+                throw new RuntimeException(e);
             }
-            XMLWriter writer = new XMLWriter(new FileWriter(file));
-            //写入数据
-            writer.write(document);
-            writer.close();
-        } catch (Exception e) {
-            log.error(e.toString());
         }
+        return opts;
     }
 }
