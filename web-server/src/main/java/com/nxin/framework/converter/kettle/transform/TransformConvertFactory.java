@@ -98,6 +98,7 @@ public class TransformConvertFactory extends ConvertFactory {
         TransformConvertChain synchronizeAfterMergeChain = new SynchronizeAfterMergeChain();
         TransformConvertChain combinationLookupChain = new CombinationLookupChain();
         TransformConvertChain dimensionLookupChain = new DimensionLookupChain();
+        TransformConvertChain blockUntilStepsFinishChain = new BlockUntilStepsFinishChain();
         TransformConvertChain endChain = new EndChain();
         tableInputChain.setDatasourceService(datasourceService);
         tableOutputChain.setDatasourceService(datasourceService);
@@ -176,7 +177,8 @@ public class TransformConvertFactory extends ConvertFactory {
         mergeRowChain.setNext(synchronizeAfterMergeChain);
         synchronizeAfterMergeChain.setNext(combinationLookupChain);
         combinationLookupChain.setNext(dimensionLookupChain);
-        dimensionLookupChain.setNext(endChain);
+        dimensionLookupChain.setNext(blockUntilStepsFinishChain);
+        blockUntilStepsFinishChain.setNext(endChain);
         TransformConvertFactory.beginChain = beginChain;
     }
 
