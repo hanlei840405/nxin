@@ -1,25 +1,30 @@
 package com.nxin.framework.service.io;
 
-import com.google.common.io.Files;
-import com.qcloud.cos.utils.IOUtils;
+import com.nxin.framework.enums.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.vfs2.*;
+import org.apache.commons.vfs2.filter.NameFileFilter;
 import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.sftp.BytesIdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -52,61 +57,50 @@ public class FileService {
             } else {
                 baseUrl = String.format("%s://%s@%s%s", schema, username, host, path);
             }
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void createEnv(String env) {
-        try {
-            FileObject dir = VFS.getManager().resolveFile(baseUrl + env, getOptions());
+            FileObject dir = VFS.getManager().resolveFile(baseUrl + "log/", getOptions());
             if (!dir.exists()) {
                 dir.createFolder();
             }
-        } catch (FileSystemException e) {
+        } catch (UnsupportedEncodingException | FileSystemException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public String createFile(String env, String path, String text) {
+    public void createFile(String path, FileObject source) {
         try {
-            // 创建临时文件
-            File tempFile = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
-            Files.write(text.getBytes(StandardCharsets.UTF_8), tempFile);
-            FileObject source = VFS.getManager().resolveFile(tempFile.getAbsolutePath());
-            FileObject target = VFS.getManager().resolveFile(baseUrl + env + File.separator + path, getOptions());
+            FileObject target = VFS.getManager().resolveFile(baseUrl + path, getOptions());
             target.copyFrom(source, Selectors.SELECT_SELF);
-            tempFile.delete();
-            return DigestUtils.md5DigestAsHex(text.getBytes(StandardCharsets.UTF_8));
+            source.delete();
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public void createFolder(String env, String path) {
+    public synchronized String downloadFile(String env, String localRootPath, Map<String, String> pathMap) {
         try {
-            String remotePath = baseUrl + env + File.separator + path;
-            FileObject dir = VFS.getManager().resolveFile(remotePath, getOptions());
-            if (!dir.exists()) {
-                dir.createFolder();
-            }
-        } catch (FileSystemException e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String content(String env, String path) {
-        try {
-            // 这里替换成你的文件路径
-            FileObject file = VFS.getManager().resolveFile(baseUrl + env + File.separator + path, getOptions());
-            if (file.exists()) {
-                // 打开文件输入流
-                try (InputStream is = file.getContent().getInputStream()) {
-                    return IOUtils.toString(is);
+            for (Map.Entry<String, String> entry : pathMap.entrySet()) {
+                String[] array = entry.getValue().split(",");
+                String ossPath = array[0];
+                String nativePath = array[1];
+                String directory = localRootPath + nativePath;
+                String rename = directory + entry.getKey();
+                FileObject renameFileObject = VFS.getManager().resolveFile(rename, getOptions());
+                if (!renameFileObject.exists()) {
+                    FileObject localDirectory = VFS.getManager().resolveFile(directory, getOptions());
+                    FileObject fileToCopy = VFS.getManager().resolveFile(baseUrl + env + File.separator + ossPath, getOptions());
+                    NameFileFilter nameFileFilter = new NameFileFilter(Collections.singletonList(fileToCopy.getName().getBaseName()));
+                    FileSelector fileSelector = new FileFilterSelector(nameFileFilter);
+                    localDirectory.copyFrom(fileToCopy.getParent(), fileSelector);
+                    String oldName = directory + fileToCopy.getName().getBaseName();
+                    FileObject oldFileObject = VFS.getManager().resolveFile(oldName, getOptions());
+                    if (oldFileObject.canRenameTo(renameFileObject)) {
+                        oldFileObject.moveTo(renameFileObject);
+                        modifyFileContent(rename, localRootPath);
+                    }
                 }
+                return rename;
             }
             return null;
         } catch (Exception e) {
@@ -140,5 +134,57 @@ public class FileService {
             }
         }
         return opts;
+    }
+
+    private void modifyFileContent(String file, String target) {
+        target = target.substring(0, target.lastIndexOf(File.separator));
+        try {
+            SAXReader reader = new SAXReader();
+            Document document = reader.read(new File(file));
+            Element rootElement = document.getRootElement();
+            if (file.endsWith(Constant.DOT + Constant.JOB_SUFFIX)) {
+                List<Element> entries = rootElement.element("entries").elements();
+                for (Element entry : entries) {
+                    Element filenameElement = entry.element("filename");
+                    if (filenameElement != null) {
+                        Element nameElement = entry.element("name");
+                        if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
+                            String value = filenameElement.getTextTrim();
+                            if (StringUtils.hasLength(value)) {
+                                filenameElement.setText(target + value);
+                            }
+                        }
+                    }
+                    Element keyfilenameElement = entry.element("keyfilename");
+                    if (keyfilenameElement != null) {
+                        Element nameElement = entry.element("name");
+                        if (nameElement != null && StringUtils.hasLength(nameElement.getText())) {
+                            String value = keyfilenameElement.getTextTrim();
+                            if (StringUtils.hasLength(value)) {
+                                keyfilenameElement.setText(target + value);
+                            }
+                        }
+                    }
+                }
+            } else {
+                List<Element> steps = rootElement.element("step").elements();
+                for (Element step : steps) {
+                    if ("transformationPath".equals(step.getName())) {
+                        if (StringUtils.hasLength(step.getText())) {
+                            String value = step.getTextTrim();
+                            if (StringUtils.hasLength(value)) {
+                                step.setText(target + value);
+                            }
+                        }
+                    }
+                }
+            }
+            XMLWriter writer = new XMLWriter(new FileWriter(file));
+            //写入数据
+            writer.write(document);
+            writer.close();
+        } catch (Exception e) {
+            log.error(e.toString());
+        }
     }
 }
